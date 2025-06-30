@@ -1,0 +1,15 @@
+[package]
+name = "escaping-the-depths"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = "^0.16"
+
+[dev-dependencies]
+cucumber = "^0.21"
+futures = "^0.3"
+
+[[test]]
+name = "mvp"
+harness = false

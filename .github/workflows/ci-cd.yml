@@ -1,0 +1,75 @@
+on: [push]
+
+name: Continuous Integration and Deployment
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Check Code
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      # Used the following as reference to install dependencies for Bevy:
+      # https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md#ubuntu
+      - name: Install Bevy Dependencies for Linux
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+               sudo apt update && sudo apt-get install g++ pkg-config libx11-dev libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+          fi
+        shell: bash
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo check
+        run: cargo check
+
+      - name: Run cargo test
+        run: cargo test
+
+  deploy:
+    name: Upload compiled project to GitHub.
+    needs: check
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Bevy Dependencies for Linux
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+               sudo apt update && sudo apt-get install g++ pkg-config libx11-dev libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+          fi
+        shell: bash
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build a release of the project
+        run: cargo build --release
+
+      - name: Upload the project binary if this is not a release.
+        uses: actions/upload-artifact@v4
+        if: github.ref_type != 'tag'
+        with:
+          path: target/release/escaping-the-depths
+          name: escaping-the-depths-${{ matrix.os }}
