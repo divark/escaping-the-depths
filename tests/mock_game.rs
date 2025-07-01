@@ -23,9 +23,7 @@ impl TestRoomGenerator {
     }
 
     pub fn generate(&mut self) -> CaveRoom {
-        let mut room_generated = CaveRoom::new(self.width, self.height);
-
-        room_generated.set(1, 1, RoomObject::Explorer);
+        let room_generated = CaveRoom::new(self.width, self.height);
 
         room_generated
     }
@@ -113,11 +111,21 @@ impl MockGame {
     }
 
     pub fn place(&mut self, object_type: RoomObject, object_x: usize, object_y: usize) {
-        self.broadcast(PlaceRoomObject::new(object_type, object_x, object_y, 1));
+        let depth_to_place = if object_type == RoomObject::Explorer {
+            2
+        } else {
+            1
+        };
+
+        self.broadcast(PlaceRoomObject::new(
+            object_type,
+            object_x,
+            object_y,
+            depth_to_place,
+        ));
+
         self.tick();
     }
-
-    pub fn move_explorer_to(&mut self, desired_x: usize, desired_y: usize) {}
 
     pub fn get_door_state(&mut self) -> ExitDoorState {
         let found_door_state = self.get_one::<ExitDoorState>();

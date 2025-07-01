@@ -1,4 +1,4 @@
-use crate::{CaveRoom, ExitDoorState, RoomObject};
+use crate::{CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject};
 
 use bevy::prelude::*;
 
@@ -49,6 +49,24 @@ impl SpriteBundle {
         self.position = new_position;
     }
 }
+
+#[derive(Bundle, Default)]
+pub struct TileBundle {
+    sprite_bundle: SpriteBundle,
+    logical_coordinates: LogicalCoordinates,
+}
+
+#[derive(Component)]
+pub enum ExplorerState {
+    Alive,
+    Dead,
+}
+
+#[derive(Component)]
+pub struct ExitDoor;
+
+#[derive(Component)]
+pub struct HiddenFloorSwitch;
 
 pub fn spawn_new_room(
     mut spawn_room_requests: EventReader<ChangeRoom>,
@@ -113,7 +131,7 @@ fn get_tile_position(tile_to_place: &PlaceRoomObject) -> Transform {
 fn convert_to_rendered_tile(
     tile_to_place: &PlaceRoomObject,
     asset_server: &AssetServer,
-) -> SpriteBundle {
+) -> TileBundle {
     let mut tile_sprite_bundle = SpriteBundle::default();
 
     let tile_sprite = get_tile_sprite(tile_to_place, asset_server);
@@ -122,7 +140,19 @@ fn convert_to_rendered_tile(
     let tile_position = get_tile_position(tile_to_place);
     tile_sprite_bundle.set_position(tile_position);
 
-    tile_sprite_bundle
+    let tile_logical_position = LogicalCoordinates::new(tile_to_place.x, tile_to_place.y);
+    let tile_bundle = TileBundle::new(tile_sprite_bundle, tile_logical_position);
+
+    tile_bundle
+}
+
+impl TileBundle {
+    pub fn new(sprite_bundle: SpriteBundle, logical_coordinates: LogicalCoordinates) -> Self {
+        Self {
+            sprite_bundle,
+            logical_coordinates,
+        }
+    }
 }
 
 pub fn place_tile(
@@ -132,11 +162,43 @@ pub fn place_tile(
 ) {
     for tile_to_place in place_tile_requests.read() {
         let rendered_tile = convert_to_rendered_tile(tile_to_place, &asset_server);
-        if tile_to_place.object_type == RoomObject::ExitDoor {
-            commands.spawn((rendered_tile, ExitDoorState::Closed));
-            continue;
+        match tile_to_place.object_type {
+            RoomObject::Explorer => {
+                commands.spawn((rendered_tile, ExplorerState::Alive));
+            }
+            RoomObject::ExitDoor => {
+                commands.spawn((rendered_tile, ExitDoorState::Closed));
+            }
+            RoomObject::HiddenFloorSwitch => {
+                commands.spawn((rendered_tile, HiddenFloorSwitch));
+            }
+            _ => {
+                commands.spawn(rendered_tile);
+            }
         }
+    }
+}
 
-        commands.spawn(rendered_tile);
+pub fn unlock_exit_door(
+    explorer: Query<&LogicalCoordinates, (With<ExplorerState>, Changed<LogicalCoordinates>)>,
+    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
+    mut exit_door: Query<&mut ExitDoorState>,
+) {
+    if explorer.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
+        return;
+    }
+
+    let explorer_logical_coordinates = explorer
+        .single()
+        .expect("unlock_exit_door: Could not find the explorer.");
+    let hidden_floor_switch_coordinates = hidden_floor_switch
+        .single()
+        .expect("unlock_hidden_door: Could not find the coordinates of the hidden floor switch.");
+    let mut exit_door_state = exit_door
+        .single_mut()
+        .expect("unlock_exit_door: Could not find the exit door.");
+
+    if *explorer_logical_coordinates == *hidden_floor_switch_coordinates {
+        *exit_door_state = ExitDoorState::Open;
     }
 }

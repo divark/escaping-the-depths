@@ -21,7 +21,7 @@ fn place_object(game: &mut MockGame, object_name: String, object_x: usize, objec
 
 #[when(regex = r"the explorer is on Tile ([0-9]+), ([0-9]+),")]
 fn move_explorer_to_tile(game: &mut MockGame, desired_x: usize, desired_y: usize) {
-    game.move_explorer_to(desired_x, desired_y);
+    game.place(RoomObject::Explorer, desired_x, desired_y);
 }
 
 #[then("the exit door will be opened.")]
