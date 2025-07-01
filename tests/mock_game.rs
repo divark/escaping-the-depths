@@ -1,3 +1,12 @@
+use std::sync::{Arc, Mutex};
+
+use bevy::input::InputPlugin;
+use bevy::render::RenderPlugin;
+use bevy::render::settings::WgpuSettings;
+use bevy::render::view::screenshot::CapturedScreenshots;
+use bevy::sprite::SpritePlugin;
+use bevy::state::app::StatesPlugin;
+use bevy::window::WindowResolution;
 use cucumber::World;
 
 use bevy::prelude::*;
@@ -45,6 +54,29 @@ pub struct MockGame {
 impl MockGame {
     pub fn new() -> Self {
         let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(InputPlugin::default());
+        app.add_plugins(WindowPlugin {
+            primary_window: Some(Window {
+                resolution: WindowResolution::new(1280.0, 720.0),
+                ..default()
+            }),
+            ..default()
+        });
+        app.add_plugins(AssetPlugin::default());
+        app.add_plugins(RenderPlugin {
+            render_creation: WgpuSettings {
+                backends: None,
+                ..default()
+            }
+            .into(),
+            ..default()
+        });
+        app.add_plugins(ImagePlugin::default());
+        app.add_plugins(SpritePlugin::default());
+        app.add_plugins(StatesPlugin);
+        app.add_plugins(DefaultPickingPlugins);
+
         app.add_plugins(CoreLogic);
 
         Self { app }
@@ -72,7 +104,7 @@ impl MockGame {
     }
 
     pub fn place(&mut self, object_type: RoomObject, object_x: usize, object_y: usize) {
-        self.broadcast(PlaceRoomObject::new(object_type, object_x, object_y));
+        self.broadcast(PlaceRoomObject::new(object_type, object_x, object_y, 1));
         self.tick();
     }
 
