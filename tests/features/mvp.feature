@@ -4,14 +4,14 @@ Feature: All of the basic features are implemented and working as intended.
         And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 4, 2,
         When the explorer is on Tile 1, 3,
-        Then the exit door at Tile 4, 2 will be opened.
+        Then the exit door will be opened.
 
     Scenario: The exit door opens when a viewer clicks the hidden floor switch.
         Given a 4x4 cave room,
         And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 4, 2,
         When a viewer clicks on Tile 1, 3,
-        Then the exit door at Tile 4, 2 will be opened.
+        Then the exit door will be opened.
 
     Scenario: The explorer heads for the exit when the exit door is opened.
         Given a 4x4 cave room,

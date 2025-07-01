@@ -24,10 +24,10 @@ fn move_explorer_to_tile(game: &mut MockGame, desired_x: usize, desired_y: usize
     game.move_explorer_to(desired_x, desired_y);
 }
 
-#[then(regex = r"the exit door at Tile ([0-9]+), ([0-9]+) will be opened.")]
-fn verify_exit_door_opened(game: &mut MockGame, exit_door_x: usize, exit_door_y: usize) {
+#[then("the exit door will be opened.")]
+fn verify_exit_door_opened(game: &mut MockGame) {
     let expected_door_state = ExitDoorState::Open;
-    let actual_door_state = game.get_door_state(exit_door_x, exit_door_y);
+    let actual_door_state = game.get_door_state();
     assert_eq!(expected_door_state, actual_door_state);
 }
 

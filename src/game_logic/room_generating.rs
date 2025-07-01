@@ -1,4 +1,4 @@
-use crate::{CaveRoom, RoomObject};
+use crate::{CaveRoom, ExitDoorState, RoomObject};
 
 use bevy::prelude::*;
 
@@ -132,6 +132,11 @@ pub fn place_tile(
 ) {
     for tile_to_place in place_tile_requests.read() {
         let rendered_tile = convert_to_rendered_tile(tile_to_place, &asset_server);
+        if tile_to_place.object_type == RoomObject::ExitDoor {
+            commands.spawn((rendered_tile, ExitDoorState::Closed));
+            continue;
+        }
+
         commands.spawn(rendered_tile);
     }
 }

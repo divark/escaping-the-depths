@@ -1,9 +1,6 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::input::InputPlugin;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::WgpuSettings;
-use bevy::render::view::screenshot::CapturedScreenshots;
 use bevy::sprite::SpritePlugin;
 use bevy::state::app::StatesPlugin;
 use bevy::window::WindowResolution;
@@ -98,6 +95,18 @@ impl MockGame {
         self.tick();
     }
 
+    fn get_one<T>(&mut self) -> &T
+    where
+        T: Component,
+    {
+        self.app
+            .world_mut()
+            .query::<&T>()
+            .iter(self.app.world_mut())
+            .next()
+            .expect("get_one: Could not find one instance of the specified component.")
+    }
+
     pub fn spawn_room(&mut self, room: CaveRoom) {
         self.broadcast(ChangeRoom::new(room));
         self.tick();
@@ -110,7 +119,8 @@ impl MockGame {
 
     pub fn move_explorer_to(&mut self, desired_x: usize, desired_y: usize) {}
 
-    pub fn get_door_state(&mut self, door_x: usize, door_y: usize) -> ExitDoorState {
-        ExitDoorState::Closed
+    pub fn get_door_state(&mut self) -> ExitDoorState {
+        let found_door_state = self.get_one::<ExitDoorState>();
+        *found_door_state
     }
 }

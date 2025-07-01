@@ -1,6 +1,8 @@
+use bevy::prelude::*;
+
 pub mod game_logic;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, PartialEq, Default)]
 pub enum RoomObject {
     #[default]
     Empty,
@@ -56,7 +58,7 @@ impl Tile {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Component, PartialEq)]
 pub enum ExitDoorState {
     Closed,
     Open,
