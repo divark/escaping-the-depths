@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use cucumber::{World, given, then, when};
 
 mod mock_game;
@@ -24,6 +26,11 @@ fn move_explorer_to_tile(game: &mut MockGame, desired_x: usize, desired_y: usize
     game.place(RoomObject::Explorer, desired_x, desired_y);
 }
 
+#[when(regex = r"a viewer clicks with UV coordinates ([0-9]+.[0-9]+), ([0-9]+.[0-9]+),")]
+fn simulate_click(game: &mut MockGame, uv_x: f32, uv_y: f32) {
+    game.click(uv_x, uv_y);
+}
+
 #[then("the exit door will be opened.")]
 fn verify_exit_door_opened(game: &mut MockGame) {
     let expected_door_state = ExitDoorState::Open;
@@ -32,5 +39,8 @@ fn verify_exit_door_opened(game: &mut MockGame) {
 }
 
 fn main() {
-    futures::executor::block_on(MockGame::run("tests/features/mvp.feature"));
+    let mut feature_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    feature_path.push("tests/features/mvp.feature");
+
+    futures::executor::block_on(MockGame::run(feature_path));
 }

@@ -11,7 +11,7 @@ pub enum RoomObject {
     HiddenFloorSwitch,
 }
 
-#[derive(Component, Clone, Copy, PartialEq, Default)]
+#[derive(Event, Component, Clone, Copy, PartialEq, Default)]
 pub struct LogicalCoordinates {
     x: usize,
     y: usize,

@@ -9,6 +9,7 @@ use cucumber::World;
 use bevy::prelude::*;
 
 use escaping_the_depths::game_logic::room_generating::*;
+use escaping_the_depths::game_logic::viewer_interaction::ViewerClick;
 use escaping_the_depths::game_logic::*;
 use escaping_the_depths::*;
 
@@ -123,6 +124,12 @@ impl MockGame {
             object_y,
             depth_to_place,
         ));
+
+        self.tick();
+    }
+
+    pub fn click(&mut self, uv_x: f32, uv_y: f32) {
+        self.broadcast(ViewerClick::new(uv_x, uv_y));
 
         self.tick();
     }

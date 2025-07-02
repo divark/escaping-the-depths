@@ -10,7 +10,7 @@ Feature: All of the basic features are implemented and working as intended.
         Given a 4x4 cave room,
         And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 4, 2,
-        When a viewer clicks on Tile 1, 3,
+        When a viewer clicks with UV coordinates 0.0125, 0.0666,
         Then the exit door will be opened.
 
     Scenario: The explorer heads for the exit when the exit door is opened.

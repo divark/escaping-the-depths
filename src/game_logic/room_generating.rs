@@ -179,26 +179,40 @@ pub fn place_tile(
     }
 }
 
-pub fn unlock_exit_door(
+pub fn broadcast_location_when_explorer_moves(
     explorer: Query<&LogicalCoordinates, (With<ExplorerState>, Changed<LogicalCoordinates>)>,
-    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
-    mut exit_door: Query<&mut ExitDoorState>,
+    mut movement_broadcaster: EventWriter<LogicalCoordinates>,
 ) {
-    if explorer.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
+    if explorer.is_empty() {
         return;
     }
 
     let explorer_logical_coordinates = explorer
         .single()
         .expect("unlock_exit_door: Could not find the explorer.");
-    let hidden_floor_switch_coordinates = hidden_floor_switch
-        .single()
-        .expect("unlock_hidden_door: Could not find the coordinates of the hidden floor switch.");
-    let mut exit_door_state = exit_door
-        .single_mut()
-        .expect("unlock_exit_door: Could not find the exit door.");
 
-    if *explorer_logical_coordinates == *hidden_floor_switch_coordinates {
-        *exit_door_state = ExitDoorState::Open;
+    movement_broadcaster.write(*explorer_logical_coordinates);
+}
+
+pub fn unlock_exit_door(
+    mut movement_changes: EventReader<LogicalCoordinates>,
+    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
+    mut exit_door: Query<&mut ExitDoorState>,
+) {
+    if movement_changes.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
+        return;
+    }
+
+    for movement_coordinates in movement_changes.read() {
+        let hidden_floor_switch_coordinates = hidden_floor_switch.single().expect(
+            "unlock_hidden_door: Could not find the coordinates of the hidden floor switch.",
+        );
+        let mut exit_door_state = exit_door
+            .single_mut()
+            .expect("unlock_exit_door: Could not find the exit door.");
+
+        if *movement_coordinates == *hidden_floor_switch_coordinates {
+            *exit_door_state = ExitDoorState::Open;
+        }
     }
 }
