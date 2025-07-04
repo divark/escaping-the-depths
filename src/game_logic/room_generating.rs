@@ -105,9 +105,11 @@ pub fn spawn_new_room(
     }
 
     let centered_on_map_camera = Camera2d::default();
+    let cave_room_px_width = cave_room.get_width() * 16;
+    let cave_room_px_height = cave_room.get_height() * 16;
     let camera_position = Transform::from_xyz(
-        cave_room.get_width() as f32 / 2.0,
-        cave_room.get_height() as f32 / 2.0,
+        cave_room_px_width as f32 / 2.0,
+        cave_room_px_height as f32 / 2.0,
         3.0,
     );
     commands.spawn((centered_on_map_camera, camera_position));
