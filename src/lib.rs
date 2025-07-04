@@ -65,6 +65,9 @@ pub enum ExitDoorState {
 }
 
 pub struct CaveRoom {
+    width: usize,
+    height: usize,
+
     room_tiles: Vec<Tile>,
     room_objects: Vec<Tile>,
 }
@@ -79,6 +82,9 @@ impl CaveRoom {
         }
 
         Self {
+            width,
+            height,
+
             room_tiles,
             room_objects: Vec::new(),
         }
@@ -98,5 +104,13 @@ impl CaveRoom {
 
     pub fn get_objects(&self) -> &Vec<Tile> {
         &self.room_objects
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.height
     }
 }

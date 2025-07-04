@@ -22,12 +22,34 @@ impl ViewerClick {
     }
 }
 
+fn convert_to_coords(
+    uv_coordinates: &ViewerClick,
+    window_width: f32,
+    window_height: f32,
+) -> Transform {
+    let screen_x = (uv_coordinates.get_x() * window_width) - (window_width / 2.0);
+    let screen_y = (uv_coordinates.get_y() * window_height) - (window_height / 2.0);
+
+    Transform::from_xyz(screen_x, screen_y, 2.0)
+}
+
+fn adjust_from_camera(screen_coordinates: Transform, camera: &Transform) -> Transform {
+    *camera * screen_coordinates
+}
+
+fn convert_to_tilepos(game_coordinates: Transform, tile_size: usize) -> LogicalCoordinates {
+    let x_pos = game_coordinates.translation.x / tile_size as f32;
+    let y_pos = game_coordinates.translation.y / tile_size as f32;
+    LogicalCoordinates::new(x_pos as usize, y_pos as usize)
+}
+
 pub fn convert_viewer_click_to_tile_click(
     mut viewer_clicks: EventReader<ViewerClick>,
     mut movement_broadcaster: EventWriter<LogicalCoordinates>,
     window_info: Query<&Window>,
+    camera: Query<&Transform, With<Camera2d>>,
 ) {
-    if window_info.is_empty() {
+    if window_info.is_empty() || camera.is_empty() {
         return;
     }
 
@@ -37,11 +59,15 @@ pub fn convert_viewer_click_to_tile_click(
     let window_width = window.width();
     let window_height = window.height();
 
-    for viewer_click in viewer_clicks.read() {
-        let x_pos = (window_width * viewer_click.get_x() / 16.0).round() as usize;
-        let y_pos = (window_height * viewer_click.get_y() / 16.0).round() as usize;
+    let camera_position = camera
+        .single()
+        .expect("convert_viewer_click_to_tile_click: Could not get the camera.");
 
-        let converted_tile_pos = LogicalCoordinates::new(x_pos as usize, y_pos as usize);
+    for viewer_click in viewer_clicks.read() {
+        let game_coords = convert_to_coords(viewer_click, window_width, window_height);
+        let adjusted_game_coords = adjust_from_camera(game_coords, camera_position);
+        let converted_tile_pos = convert_to_tilepos(adjusted_game_coords, 16);
+
         movement_broadcaster.write(converted_tile_pos);
     }
 }

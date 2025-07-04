@@ -10,19 +10,18 @@ Feature: All of the basic features are implemented and working as intended.
         Given a 4x4 cave room,
         And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 4, 2,
-        When a viewer clicks with UV coordinates 0.0125, 0.0666,
+        When a viewer clicks with UV coordinates 0.5125, 0.5667,
         Then the exit door will be opened.
 
     Scenario: The explorer heads for the exit when the exit door is opened.
         Given a 4x4 cave room,
         And an exit door placed at coordinates 4, 2,
-        And the explorer placed at coordinates 2, 2,
-        When the exit door at Tile 4, 2 is now open,
+        When the explorer is on Tile 2, 2,
         Then the explorer's goal is to reach Tile 4, 2.
 
     Scenario: The explorer finding treasure increases the current score.
         Given a 4x4 cave room,
-        And a piece of treasure worth 500 points placed at coordinates 2, 2,
+        And some piece of treasure worth 500 points placed at coordinates 2, 2,
         When the explorer is on Tile 2, 2,
         Then the current score will be 500 points.
 

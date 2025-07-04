@@ -71,6 +71,7 @@ pub struct HiddenFloorSwitch;
 pub fn spawn_new_room(
     mut spawn_room_requests: EventReader<ChangeRoom>,
     mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
+    mut commands: Commands,
 ) {
     if spawn_room_requests.is_empty() {
         return;
@@ -102,6 +103,14 @@ pub fn spawn_new_room(
             1,
         ));
     }
+
+    let centered_on_map_camera = Camera2d::default();
+    let camera_position = Transform::from_xyz(
+        cave_room.get_width() as f32 / 2.0,
+        cave_room.get_height() as f32 / 2.0,
+        3.0,
+    );
+    commands.spawn((centered_on_map_camera, camera_position));
 }
 
 fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) -> Sprite {
