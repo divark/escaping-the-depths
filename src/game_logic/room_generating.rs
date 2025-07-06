@@ -1,4 +1,6 @@
-use crate::{CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject};
+use crate::{
+    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, game_logic::scores::TreasureScore,
+};
 
 use bevy::prelude::*;
 
@@ -122,6 +124,7 @@ fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) 
         RoomObject::Explorer => "characters/npc_merchant_2.png",
         RoomObject::ExitDoor => "environment/door_closed.png",
         RoomObject::HiddenFloorSwitch => "environment/floor_mud_n_1.png",
+        RoomObject::Treasure(_) => "environment/treasure.png",
     };
 
     let spritesheet_image = asset_server.load(sprite_file_path);
@@ -182,6 +185,9 @@ pub fn place_tile(
             }
             RoomObject::HiddenFloorSwitch => {
                 commands.spawn((rendered_tile, HiddenFloorSwitch));
+            }
+            RoomObject::Treasure(treasure_value) => {
+                commands.spawn((rendered_tile, TreasureScore::new(treasure_value)));
             }
             _ => {
                 commands.spawn(rendered_tile);

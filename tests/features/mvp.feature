@@ -21,20 +21,20 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: The explorer finding treasure increases the current score.
         Given a 4x4 cave room,
-        And some piece of treasure worth 500 points placed at coordinates 2, 2,
+        And some piece of treasure worth 500 points placed on coordinates 2, 2,
         When the explorer is on Tile 2, 2,
         Then the current score will be 500 points.
 
     Scenario: The current score increases when a viewer clicks on some treasure.
-        Given a 4x4 cave room,
-        And a piece of treasure worth 500 points placed at coordinates 2, 2,
-        When a viewer clicks on Tile 2, 2,
+        Given a 3x3 cave room,
+        And some piece of treasure worth 500 points placed on coordinates 2, 0,
+        When a viewer clicks with UV coordinates 0.50625, 0.4667,
         Then the current score will be 500 points.
 
     Scenario: An armed trap is disarmed when a viewer clicks on it.
-        Given a 4x4 cave room,
+        Given a 3x3 cave room,
         And an armed trap placed at coordinates 2, 3,
-        When a viewer clicks on Tile 2, 3,
+        When a viewer clicks with UV coordinates 0.50625, 0.4667,
         Then the trap at Tile 2, 3 will be disarmed.
 
     Scenario: The health of the explorer will go down if the explorer steps on an armed trap.

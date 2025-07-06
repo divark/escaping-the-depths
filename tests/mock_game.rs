@@ -138,4 +138,9 @@ impl MockGame {
         let found_door_state = self.get_one::<ExitDoorState>();
         *found_door_state
     }
+
+    pub fn get_current_score(&mut self) -> usize {
+        let current_record = self.get_one::<CurrentRecords>();
+        current_record.get_current_score()
+    }
 }

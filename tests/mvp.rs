@@ -21,6 +21,19 @@ fn place_object(game: &mut MockGame, object_name: String, object_x: usize, objec
     game.place(object_type, object_x, object_y);
 }
 
+#[given(
+    regex = r"some piece of treasure worth ([0-9]+) points placed on coordinates ([0-9]+), ([0-9]+),"
+)]
+fn place_treasure(
+    game: &mut MockGame,
+    treasure_point_value: usize,
+    treasure_x: usize,
+    treasure_y: usize,
+) {
+    let treasure = RoomObject::Treasure(treasure_point_value);
+    game.place(treasure, treasure_x, treasure_y);
+}
+
 #[when(regex = r"the explorer is on Tile ([0-9]+), ([0-9]+),")]
 fn move_explorer_to_tile(game: &mut MockGame, desired_x: usize, desired_y: usize) {
     game.place(RoomObject::Explorer, desired_x, desired_y);
@@ -36,6 +49,12 @@ fn verify_exit_door_opened(game: &mut MockGame) {
     let expected_door_state = ExitDoorState::Open;
     let actual_door_state = game.get_door_state();
     assert_eq!(expected_door_state, actual_door_state);
+}
+
+#[then(regex = r"the current score will be ([0-9]+) points.")]
+fn verify_current_score(game: &mut MockGame, expected_current_score: usize) {
+    let actual_current_score = game.get_current_score();
+    assert_eq!(expected_current_score, actual_current_score);
 }
 
 fn main() {

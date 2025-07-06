@@ -9,6 +9,7 @@ pub enum RoomObject {
     Explorer,
     ExitDoor,
     HiddenFloorSwitch,
+    Treasure(usize),
 }
 
 #[derive(Event, Component, Clone, Copy, PartialEq, Default)]
@@ -62,6 +63,21 @@ impl Tile {
 pub enum ExitDoorState {
     Closed,
     Open,
+}
+
+#[derive(Component, Debug, Default)]
+pub struct CurrentRecords {
+    current_score: usize,
+}
+
+impl CurrentRecords {
+    pub fn get_current_score(&self) -> usize {
+        self.current_score
+    }
+
+    pub fn add_score(&mut self, score_to_add: usize) {
+        self.current_score += score_to_add;
+    }
 }
 
 pub struct CaveRoom {
