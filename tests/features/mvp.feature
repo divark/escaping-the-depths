@@ -33,9 +33,9 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: An armed trap is disarmed when a viewer clicks on it.
         Given a 3x3 cave room,
-        And an armed trap placed at coordinates 2, 3,
+        And an armed trap placed at coordinates 2, 0,
         When a viewer clicks with UV coordinates 0.50625, 0.4667,
-        Then the trap at Tile 2, 3 will be disarmed.
+        Then the trap at Tile 2, 0 will be disarmed.
 
     Scenario: The health of the explorer will go down if the explorer steps on an armed trap.
         Given a 4x4 cave room,

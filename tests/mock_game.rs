@@ -34,6 +34,7 @@ pub fn parse_object_type(object_name: String) -> RoomObject {
     match object_name.as_str() {
         "hidden floor switch" => RoomObject::HiddenFloorSwitch,
         "exit door" => RoomObject::ExitDoor,
+        "armed trap" => RoomObject::Trap,
         _ => panic!(
             "parse_object_type: {} is not a known room object.",
             object_name
@@ -106,6 +107,19 @@ impl MockGame {
             .expect("get_one: Could not find one instance of the specified component.")
     }
 
+    fn get_at<T>(&mut self, logical_coordinates: &LogicalCoordinates) -> &T
+    where
+        T: Component,
+    {
+        self.app
+            .world_mut()
+            .query::<(&T, &LogicalCoordinates)>()
+            .iter(self.app.world_mut())
+            .find(|trap| trap.1 == logical_coordinates)
+            .expect("get_at: Could not find component at logical coordinates.")
+            .0
+    }
+
     pub fn spawn_room(&mut self, room: CaveRoom) {
         self.broadcast(ChangeRoom::new(room));
         self.tick();
@@ -142,5 +156,11 @@ impl MockGame {
     pub fn get_current_score(&mut self) -> usize {
         let current_record = self.get_one::<CurrentRecords>();
         current_record.get_current_score()
+    }
+
+    pub fn get_trap_at(&mut self, trap_tile_x: usize, trap_tile_y: usize) -> TrapState {
+        let trap_logical_position = LogicalCoordinates::new(trap_tile_x, trap_tile_y);
+        let found_trap_state = self.get_at::<TrapState>(&trap_logical_position);
+        *found_trap_state
     }
 }

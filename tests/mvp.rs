@@ -57,6 +57,13 @@ fn verify_current_score(game: &mut MockGame, expected_current_score: usize) {
     assert_eq!(expected_current_score, actual_current_score);
 }
 
+#[then(regex = r"the trap at Tile ([0-9]+), ([0-9]+) will be disarmed.")]
+fn verify_specific_trap_disarmed(game: &mut MockGame, tile_x: usize, tile_y: usize) {
+    let expected_trap_state = TrapState::Unarmed;
+    let actual_trap_state = game.get_trap_at(tile_x, tile_y);
+    assert_eq!(expected_trap_state, actual_trap_state);
+}
+
 fn main() {
     let mut feature_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     feature_path.push("tests/features/mvp.feature");

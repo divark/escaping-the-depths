@@ -9,7 +9,7 @@ use room_generating::{
 use scores::{claim_treasure_with_explorer, initialize_records};
 use viewer_interaction::{
     ViewerClick, claim_treasure_with_viewer_click, convert_viewer_click_to_tile_click,
-    unlock_exit_door_with_viewer_click,
+    disarm_trap_with_viewer_click, unlock_exit_door_with_viewer_click,
 };
 
 use crate::LogicalCoordinates;
@@ -30,6 +30,7 @@ impl Plugin for CoreLogic {
         app.add_systems(Update, convert_viewer_click_to_tile_click);
         app.add_systems(Update, unlock_exit_door_with_viewer_click);
         app.add_systems(Update, claim_treasure_with_viewer_click);
+        app.add_systems(Update, disarm_trap_with_viewer_click);
 
         app.add_systems(Update, unlock_exit_door_with_explorer);
         app.add_systems(Update, claim_treasure_with_explorer);

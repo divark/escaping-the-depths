@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::{room_generating::HiddenFloorSwitch, scores::TreasureScore};
-use crate::{CurrentRecords, ExitDoorState, LogicalCoordinates};
+use crate::{CurrentRecords, ExitDoorState, LogicalCoordinates, TrapState};
 
 #[derive(Event)]
 pub struct ViewerClick {
@@ -118,6 +118,25 @@ pub fn claim_treasure_with_viewer_click(
 
             current_records.add_score(treasure_score.value());
             commands.entity(treasure_entity).despawn();
+        }
+    }
+}
+
+pub fn disarm_trap_with_viewer_click(
+    mut viewer_tiles_clicked: EventReader<LogicalCoordinates>,
+    mut traps: Query<(&LogicalCoordinates, &mut TrapState)>,
+) {
+    if traps.is_empty() {
+        return;
+    }
+
+    for viewer_tile_clicked in viewer_tiles_clicked.read() {
+        for (trap_tile, mut trap_state) in traps.iter_mut() {
+            if trap_tile != viewer_tile_clicked {
+                continue;
+            }
+
+            *trap_state = TrapState::Unarmed;
         }
     }
 }

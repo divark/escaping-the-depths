@@ -10,6 +10,7 @@ pub enum RoomObject {
     ExitDoor,
     HiddenFloorSwitch,
     Treasure(usize),
+    Trap,
 }
 
 #[derive(Event, Component, Clone, Copy, PartialEq, Default)]
@@ -63,6 +64,12 @@ impl Tile {
 pub enum ExitDoorState {
     Closed,
     Open,
+}
+
+#[derive(Clone, Copy, Debug, Component, PartialEq)]
+pub enum TrapState {
+    Armed,
+    Unarmed,
 }
 
 #[derive(Component, Debug, Default)]
