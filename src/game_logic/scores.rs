@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 use crate::{CurrentRecords, LogicalCoordinates};
 
+use super::room_generating::ExplorerState;
+
 #[derive(Component)]
 pub struct TreasureScore {
     value: usize,
@@ -22,8 +24,11 @@ pub fn initialize_records(mut commands: Commands) {
     commands.spawn(current_records);
 }
 
-pub fn claim_treasure(
-    mut explorer_movement: EventReader<LogicalCoordinates>,
+pub fn claim_treasure_with_explorer(
+    explorer_movement: Query<
+        &LogicalCoordinates,
+        (With<ExplorerState>, Changed<LogicalCoordinates>),
+    >,
     treasures: Query<(Entity, &LogicalCoordinates, &TreasureScore)>,
     mut records: Query<&mut CurrentRecords>,
     mut commands: Commands,
@@ -34,9 +39,9 @@ pub fn claim_treasure(
 
     let mut current_records = records
         .single_mut()
-        .expect("claim_treasure: Could not find current records.");
+        .expect("claim_treasure_with_explorer: Could not find current records.");
 
-    for explorer_location in explorer_movement.read() {
+    for explorer_location in explorer_movement.iter() {
         for (treasure_entity, treasure_location, treasure_score) in treasures {
             if treasure_location != explorer_location {
                 continue;
