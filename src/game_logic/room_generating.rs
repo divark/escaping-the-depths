@@ -255,7 +255,7 @@ pub fn unlock_exit_door_with_explorer(
 }
 
 pub fn make_explorer_go_to_exit_door(
-    exit_door: Query<(&ExitDoorState, &LogicalCoordinates)>,
+    exit_door: Query<(&ExitDoorState, &LogicalCoordinates), Changed<ExitDoorState>>,
     explorer: Query<(Entity, &LogicalCoordinates), (With<ExplorerState>, Without<Pathfinding>)>,
     room_traversal_graph: Query<&Graph>,
     mut commands: Commands,

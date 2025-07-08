@@ -35,7 +35,10 @@ impl Plugin for CoreLogic {
         app.add_systems(Update, disarm_trap_with_viewer_click);
 
         app.add_systems(Update, unlock_exit_door_with_explorer);
-        app.add_systems(Update, make_explorer_go_to_exit_door);
+        app.add_systems(
+            Update,
+            make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
+        );
         app.add_systems(Update, claim_treasure_with_explorer);
     }
 }
