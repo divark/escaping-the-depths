@@ -179,6 +179,8 @@ impl MockGame {
     }
 
     pub fn get_explorer_destination_overall(&mut self) -> LogicalCoordinates {
+        self.tick();
+
         let explorer_path = self.get_with::<Pathfinding, ExplorerState>();
         let explorer_destination_overall = *explorer_path.get_destination();
         explorer_destination_overall

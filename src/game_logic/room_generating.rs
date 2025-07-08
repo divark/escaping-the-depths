@@ -1,5 +1,5 @@
 use crate::{
-    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, Tile, TrapState,
+    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, TrapState,
     game_logic::scores::TreasureScore,
 };
 
@@ -255,8 +255,8 @@ pub fn unlock_exit_door_with_explorer(
 }
 
 pub fn make_explorer_go_to_exit_door(
-    exit_door: Query<(&ExitDoorState, &LogicalCoordinates), Changed<ExitDoorState>>,
-    explorer: Query<(Entity, &LogicalCoordinates), With<ExplorerState>>,
+    exit_door: Query<(&ExitDoorState, &LogicalCoordinates)>,
+    explorer: Query<(Entity, &LogicalCoordinates), (With<ExplorerState>, Without<Pathfinding>)>,
     room_traversal_graph: Query<&Graph>,
     mut commands: Commands,
 ) {
