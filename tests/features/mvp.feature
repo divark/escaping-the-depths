@@ -15,9 +15,11 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: The explorer heads for the exit when the exit door is opened.
         Given a 4x4 cave room,
+        And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 3, 2,
-        When the explorer is on Tile 2, 2,
-        Then the explorer's goal is to reach Tile 4, 2.
+        When the explorer is on Tile 1, 3,
+        Then the exit door will be opened.
+        And the explorer's goal is to reach Tile 3, 2.
 
     Scenario: The explorer finding treasure increases the current score.
         Given a 4x4 cave room,

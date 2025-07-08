@@ -8,6 +8,7 @@ use cucumber::World;
 
 use bevy::prelude::*;
 
+use escaping_the_depths::game_logic::pathfinding::Pathfinding;
 use escaping_the_depths::game_logic::room_generating::*;
 use escaping_the_depths::game_logic::viewer_interaction::ViewerClick;
 use escaping_the_depths::game_logic::*;
@@ -120,6 +121,19 @@ impl MockGame {
             .0
     }
 
+    fn get_with<T, U>(&mut self) -> &T
+    where
+        T: Component,
+        U: Component,
+    {
+        self.app
+            .world_mut()
+            .query_filtered::<&T, With<U>>()
+            .iter(self.app.world_mut())
+            .next()
+            .expect("get_with: Could not find component with dependency.")
+    }
+
     pub fn spawn_room(&mut self, room: CaveRoom) {
         self.broadcast(ChangeRoom::new(room));
         self.tick();
@@ -162,5 +176,11 @@ impl MockGame {
         let trap_logical_position = LogicalCoordinates::new(trap_tile_x, trap_tile_y);
         let found_trap_state = self.get_at::<TrapState>(&trap_logical_position);
         *found_trap_state
+    }
+
+    pub fn get_explorer_destination_overall(&mut self) -> LogicalCoordinates {
+        let explorer_path = self.get_with::<Pathfinding, ExplorerState>();
+        let explorer_destination_overall = *explorer_path.get_destination();
+        explorer_destination_overall
     }
 }

@@ -13,7 +13,7 @@ pub enum RoomObject {
     Trap,
 }
 
-#[derive(Event, Component, Clone, Copy, PartialEq, Default)]
+#[derive(Event, Component, Clone, Copy, Debug, PartialEq, Default)]
 pub struct LogicalCoordinates {
     x: usize,
     y: usize,
@@ -30,6 +30,10 @@ impl LogicalCoordinates {
 
     pub fn get_y(&self) -> usize {
         self.y
+    }
+
+    pub fn to_1d(&self, world_tile_dimensions: &WorldTileDimensions) -> usize {
+        (world_tile_dimensions.get_height() * self.get_y()) + self.get_x()
     }
 }
 
@@ -87,9 +91,28 @@ impl CurrentRecords {
     }
 }
 
-pub struct CaveRoom {
+#[derive(Clone)]
+pub struct WorldTileDimensions {
     width: usize,
     height: usize,
+}
+
+impl WorldTileDimensions {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self { width, height }
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
+}
+
+pub struct CaveRoom {
+    world_tile_dimensions: WorldTileDimensions,
 
     room_tiles: Vec<Tile>,
     room_objects: Vec<Tile>,
@@ -104,10 +127,9 @@ impl CaveRoom {
             }
         }
 
+        let world_tile_dimensions = WorldTileDimensions::new(width, height);
         Self {
-            width,
-            height,
-
+            world_tile_dimensions,
             room_tiles,
             room_objects: Vec::new(),
         }
@@ -130,10 +152,14 @@ impl CaveRoom {
     }
 
     pub fn get_width(&self) -> usize {
-        self.width
+        self.world_tile_dimensions.get_width()
     }
 
     pub fn get_height(&self) -> usize {
-        self.height
+        self.world_tile_dimensions.get_height()
+    }
+
+    pub fn get_dimensions(&self) -> &WorldTileDimensions {
+        &self.world_tile_dimensions
     }
 }

@@ -64,6 +64,13 @@ fn verify_specific_trap_disarmed(game: &mut MockGame, tile_x: usize, tile_y: usi
     assert_eq!(expected_trap_state, actual_trap_state);
 }
 
+#[then(regex = r"the explorer's goal is to reach Tile ([0-9]+), ([0-9]+).")]
+fn verify_explorer_target(game: &mut MockGame, expected_tile_x: usize, expected_tile_y: usize) {
+    let expected_target_position = LogicalCoordinates::new(expected_tile_x, expected_tile_y);
+    let actual_target_position = game.get_explorer_destination_overall();
+    assert_eq!(expected_target_position, actual_target_position);
+}
+
 fn main() {
     let mut feature_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     feature_path.push("tests/features/mvp.feature");

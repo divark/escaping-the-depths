@@ -1,9 +1,11 @@
 use crate::{
-    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, TrapState,
+    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, Tile, TrapState,
     game_logic::scores::TreasureScore,
 };
 
 use bevy::prelude::*;
+
+use super::pathfinding::{Graph, Pathfinding};
 
 #[derive(Event)]
 pub struct ChangeRoom(CaveRoom);
@@ -71,16 +73,7 @@ pub struct ExitDoor;
 #[derive(Component)]
 pub struct HiddenFloorSwitch;
 
-pub fn spawn_new_room(
-    mut spawn_room_requests: EventReader<ChangeRoom>,
-    mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
-    mut commands: Commands,
-) {
-    if spawn_room_requests.is_empty() {
-        return;
-    }
-
-    let cave_room = spawn_room_requests.read().next().unwrap().get_room();
+fn spawn_room(cave_room: &CaveRoom, place_tile_broadcaster: &mut EventWriter<PlaceRoomObject>) {
     let cave_room_tiles = cave_room.get_tiles();
     for tile in cave_room_tiles {
         let tile_type = tile.get_type();
@@ -93,7 +86,12 @@ pub fn spawn_new_room(
             0,
         ));
     }
+}
 
+fn spawn_objects_in_room(
+    cave_room: &CaveRoom,
+    place_tile_broadcaster: &mut EventWriter<PlaceRoomObject>,
+) {
     let cave_room_objects = cave_room.get_objects();
     for room_object in cave_room_objects {
         let tile_type = room_object.get_type();
@@ -106,7 +104,9 @@ pub fn spawn_new_room(
             1,
         ));
     }
+}
 
+fn spawn_centered_camera(cave_room: &CaveRoom, commands: &mut Commands) {
     let centered_on_map_camera = Camera2d::default();
     let cave_room_px_width = cave_room.get_width() * 16;
     let cave_room_px_height = cave_room.get_height() * 16;
@@ -116,6 +116,33 @@ pub fn spawn_new_room(
         3.0,
     );
     commands.spawn((centered_on_map_camera, camera_position));
+}
+
+fn spawn_room_traversal_graph(cave_room: &CaveRoom, commands: &mut Commands) {
+    let room_tile_locations = cave_room
+        .get_tiles()
+        .iter()
+        .map(|tile| *tile.get_logical_coordinates())
+        .collect();
+
+    let traversal_graph = Graph::from_tiles(&room_tile_locations, cave_room.get_dimensions());
+    commands.spawn(traversal_graph);
+}
+
+pub fn spawn_new_room(
+    mut spawn_room_requests: EventReader<ChangeRoom>,
+    mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
+    mut commands: Commands,
+) {
+    if spawn_room_requests.is_empty() {
+        return;
+    }
+
+    let cave_room = spawn_room_requests.read().next().unwrap().get_room();
+    spawn_room(cave_room, &mut place_tile_broadcaster);
+    spawn_objects_in_room(cave_room, &mut place_tile_broadcaster);
+    spawn_room_traversal_graph(cave_room, &mut commands);
+    spawn_centered_camera(cave_room, &mut commands);
 }
 
 fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) -> Sprite {
@@ -225,4 +252,33 @@ pub fn unlock_exit_door_with_explorer(
             *exit_door_state = ExitDoorState::Open;
         }
     }
+}
+
+pub fn make_explorer_go_to_exit_door(
+    exit_door: Query<(&ExitDoorState, &LogicalCoordinates), Changed<ExitDoorState>>,
+    explorer: Query<(Entity, &LogicalCoordinates), With<ExplorerState>>,
+    room_traversal_graph: Query<&Graph>,
+    mut commands: Commands,
+) {
+    if exit_door.is_empty() || explorer.is_empty() || room_traversal_graph.is_empty() {
+        return;
+    }
+
+    let (explorer_entity, explorer_location) = explorer
+        .single()
+        .expect("make_explorer_go_to_exit_door: Could not find explorer.");
+    let (exit_door_state, exit_door_location) = exit_door
+        .single()
+        .expect("make_explorer_go_to_exit_door: Could not get exit door.");
+    let room_graph = room_traversal_graph
+        .single()
+        .expect("make_explorer_go_to_exit_door: Could not get room graph");
+
+    if *exit_door_state == ExitDoorState::Closed {
+        return;
+    }
+
+    let explorer_path =
+        Pathfinding::shortest_path(explorer_location, exit_door_location, room_graph);
+    commands.entity(explorer_entity).insert(explorer_path);
 }
