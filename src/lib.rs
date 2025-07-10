@@ -111,6 +111,32 @@ impl WorldTileDimensions {
     }
 }
 
+#[derive(Component, Debug, PartialEq)]
+pub struct ExplorerHealth {
+    current: usize,
+    total: usize,
+}
+
+impl ExplorerHealth {
+    pub fn new(current: usize, total: usize) -> Self {
+        Self { current, total }
+    }
+
+    pub fn get_current_health(&self) -> usize {
+        self.current
+    }
+
+    pub fn decrease_current_health(&mut self) {
+        if self.current != 0 {
+            self.current -= 1;
+        }
+    }
+
+    pub fn get_total_health(&self) -> usize {
+        self.total
+    }
+}
+
 pub struct CaveRoom {
     world_tile_dimensions: WorldTileDimensions,
 

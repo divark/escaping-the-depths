@@ -71,6 +71,27 @@ fn verify_explorer_target(game: &mut MockGame, expected_tile_x: usize, expected_
     assert_eq!(expected_target_position, actual_target_position);
 }
 
+#[then(regex = r"the explorer's health should be ([0-9]+) out of ([0-9]+).")]
+fn verify_explorer_health(
+    game: &mut MockGame,
+    expected_current_health: usize,
+    expected_total_health: usize,
+) {
+    let actual_health = game.get_explorer_health();
+
+    let actual_current_health = actual_health.get_current_health();
+    assert_eq!(
+        expected_current_health, actual_current_health,
+        "Current health mismatch"
+    );
+
+    let actual_total_health = actual_health.get_total_health();
+    assert_eq!(
+        expected_total_health, actual_total_health,
+        "Total health mismatch"
+    );
+}
+
 fn main() {
     let mut feature_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     feature_path.push("tests/features/mvp.feature");

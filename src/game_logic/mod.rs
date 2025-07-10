@@ -1,6 +1,7 @@
 pub mod pathfinding;
 pub mod room_generating;
 pub mod scores;
+pub mod traps;
 pub mod viewer_interaction;
 
 use bevy::prelude::*;
@@ -8,10 +9,10 @@ use room_generating::{
     ChangeRoom, PlaceRoomObject, make_explorer_go_to_exit_door, place_tile, spawn_new_room,
     unlock_exit_door_with_explorer,
 };
-use scores::{claim_treasure_with_explorer, initialize_records};
+use scores::{claim_treasure_with_explorer, claim_treasure_with_viewer_click, initialize_records};
+use traps::{disarm_trap_with_viewer_click, hurt_explorer_with_armed_trap};
 use viewer_interaction::{
-    ViewerClick, claim_treasure_with_viewer_click, convert_viewer_click_to_tile_click,
-    disarm_trap_with_viewer_click, unlock_exit_door_with_viewer_click,
+    ViewerClick, convert_viewer_click_to_tile_click, unlock_exit_door_with_viewer_click,
 };
 
 use crate::LogicalCoordinates;
@@ -40,5 +41,6 @@ impl Plugin for CoreLogic {
             make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
         );
         app.add_systems(Update, claim_treasure_with_explorer);
+        app.add_systems(Update, hurt_explorer_with_armed_trap);
     }
 }

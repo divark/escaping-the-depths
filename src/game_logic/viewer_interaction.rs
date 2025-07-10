@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-use super::{room_generating::HiddenFloorSwitch, scores::TreasureScore};
-use crate::{CurrentRecords, ExitDoorState, LogicalCoordinates, TrapState};
+use super::room_generating::HiddenFloorSwitch;
+use crate::{ExitDoorState, LogicalCoordinates};
 
 #[derive(Event)]
 pub struct ViewerClick {
@@ -92,51 +92,6 @@ pub fn unlock_exit_door_with_viewer_click(
 
         if *movement_coordinates == *hidden_floor_switch_coordinates {
             *exit_door_state = ExitDoorState::Open;
-        }
-    }
-}
-
-pub fn claim_treasure_with_viewer_click(
-    mut explorer_movement: EventReader<LogicalCoordinates>,
-    treasures: Query<(Entity, &LogicalCoordinates, &TreasureScore)>,
-    mut records: Query<&mut CurrentRecords>,
-    mut commands: Commands,
-) {
-    if treasures.is_empty() || records.is_empty() {
-        return;
-    }
-
-    let mut current_records = records
-        .single_mut()
-        .expect("claim_treasure_with_viewer_click: Could not find current records.");
-
-    for explorer_location in explorer_movement.read() {
-        for (treasure_entity, treasure_location, treasure_score) in treasures {
-            if treasure_location != explorer_location {
-                continue;
-            }
-
-            current_records.add_score(treasure_score.value());
-            commands.entity(treasure_entity).despawn();
-        }
-    }
-}
-
-pub fn disarm_trap_with_viewer_click(
-    mut viewer_tiles_clicked: EventReader<LogicalCoordinates>,
-    mut traps: Query<(&LogicalCoordinates, &mut TrapState)>,
-) {
-    if traps.is_empty() {
-        return;
-    }
-
-    for viewer_tile_clicked in viewer_tiles_clicked.read() {
-        for (trap_tile, mut trap_state) in traps.iter_mut() {
-            if trap_tile != viewer_tile_clicked {
-                continue;
-            }
-
-            *trap_state = TrapState::Unarmed;
         }
     }
 }

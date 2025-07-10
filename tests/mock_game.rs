@@ -183,4 +183,9 @@ impl MockGame {
         let explorer_destination_overall = *explorer_path.get_destination();
         explorer_destination_overall
     }
+
+    pub fn get_explorer_health(&mut self) -> &ExplorerHealth {
+        let explorer_health = self.get_one::<ExplorerHealth>();
+        explorer_health
+    }
 }

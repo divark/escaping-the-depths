@@ -44,6 +44,7 @@ Feature: All of the basic features are implemented and working as intended.
         And an armed trap placed at coordinates 2, 3,
         When the explorer is on Tile 2, 3,
         Then the explorer's health should be 2 out of 3.
+        And the trap at Tile 2, 3 will be disarmed.
 
     Scenario: The explorer is passed out if all of her health is gone.
         Given a 4x4 cave room,
