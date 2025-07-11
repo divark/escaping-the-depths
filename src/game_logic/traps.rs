@@ -24,8 +24,9 @@ pub fn disarm_trap_with_viewer_click(
 }
 
 pub fn hurt_explorer_with_armed_trap(
+    mut explorer_health: ResMut<ExplorerHealth>,
     mut explorer: Query<
-        (&LogicalCoordinates, &mut ExplorerHealth),
+        (&LogicalCoordinates, &mut ExplorerState),
         (Changed<LogicalCoordinates>, With<ExplorerState>),
     >,
     mut traps: Query<(&LogicalCoordinates, &mut TrapState)>,
@@ -34,7 +35,7 @@ pub fn hurt_explorer_with_armed_trap(
         return;
     }
 
-    let (explorer_location, mut explorer_health) = explorer
+    let (explorer_location, mut explorer_state) = explorer
         .single_mut()
         .expect("hurt_explorer_with_armed_trap: Could not find Explorer.");
 
@@ -49,5 +50,9 @@ pub fn hurt_explorer_with_armed_trap(
 
         explorer_health.decrease_current_health();
         *trap_state = TrapState::Unarmed;
+
+        if explorer_health.get_current_health() == 0 {
+            *explorer_state = ExplorerState::Dead;
+        }
     }
 }

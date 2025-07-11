@@ -1,5 +1,5 @@
 use crate::{
-    CaveRoom, ExitDoorState, ExplorerHealth, LogicalCoordinates, RoomObject, TrapState,
+    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, TrapState,
     game_logic::scores::TreasureScore,
 };
 
@@ -61,7 +61,7 @@ pub struct TileBundle {
     logical_coordinates: LogicalCoordinates,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub enum ExplorerState {
     Alive,
     Dead,
@@ -202,15 +202,13 @@ impl TileBundle {
 pub struct ExplorerBundle {
     tile_bundle: TileBundle,
     explorer_state: ExplorerState,
-    initial_health: ExplorerHealth,
 }
 
 impl ExplorerBundle {
-    pub fn new(tile_bundle: TileBundle, initial_health: ExplorerHealth) -> Self {
+    pub fn new(tile_bundle: TileBundle) -> Self {
         Self {
             tile_bundle,
             explorer_state: ExplorerState::Alive,
-            initial_health,
         }
     }
 }
@@ -224,10 +222,7 @@ pub fn place_tile(
         let rendered_tile = convert_to_rendered_tile(tile_to_place, &asset_server);
         match tile_to_place.object_type {
             RoomObject::Explorer => {
-                commands.spawn(ExplorerBundle::new(
-                    rendered_tile,
-                    ExplorerHealth::new(3, 3),
-                ));
+                commands.spawn(ExplorerBundle::new(rendered_tile));
             }
             RoomObject::ExitDoor => {
                 commands.spawn((rendered_tile, ExitDoorState::Closed));

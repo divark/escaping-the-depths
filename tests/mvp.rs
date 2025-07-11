@@ -5,7 +5,7 @@ use cucumber::{World, given, then, when};
 mod mock_game;
 use mock_game::*;
 
-use escaping_the_depths::*;
+use escaping_the_depths::{game_logic::room_generating::ExplorerState, *};
 
 #[given(regex = r"a ([0-9]+)x([0-9]+) cave room,")]
 fn make_cave_room(game: &mut MockGame, width: usize, height: usize) {
@@ -32,6 +32,11 @@ fn place_treasure(
 ) {
     let treasure = RoomObject::Treasure(treasure_point_value);
     game.place(treasure, treasure_x, treasure_y);
+}
+
+#[given(regex = r"the explorer's initial health set to ([0-9]+) out of ([0-9]+),")]
+fn set_explorer_health(game: &mut MockGame, current_health: usize, total_health: usize) {
+    game.set_explorer_health(current_health, total_health);
 }
 
 #[when(regex = r"the explorer is on Tile ([0-9]+), ([0-9]+),")]
@@ -90,6 +95,13 @@ fn verify_explorer_health(
         expected_total_health, actual_total_health,
         "Total health mismatch"
     );
+}
+
+#[then("the explorer will be passed out.")]
+fn verify_explorer_passed_out(game: &mut MockGame) {
+    let expected_explorer_state = ExplorerState::Dead;
+    let actual_explorer_state = game.get_explorer_state();
+    assert_eq!(expected_explorer_state, actual_explorer_state);
 }
 
 fn main() {

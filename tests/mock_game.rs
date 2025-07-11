@@ -134,6 +134,26 @@ impl MockGame {
             .expect("get_with: Could not find component with dependency.")
     }
 
+    fn get_resource<T>(&mut self) -> &T
+    where
+        T: Resource,
+    {
+        self.app
+            .world_mut()
+            .get_resource::<T>()
+            .expect("get_resource: Could not find the desired resource.")
+    }
+
+    fn get_resource_mut<T>(&mut self) -> Mut<'_, T>
+    where
+        T: Resource,
+    {
+        self.app
+            .world_mut()
+            .get_resource_mut::<T>()
+            .expect("get_resource_mut: Could not find the desired resource.")
+    }
+
     pub fn spawn_room(&mut self, room: CaveRoom) {
         self.broadcast(ChangeRoom::new(room));
         self.tick();
@@ -185,7 +205,17 @@ impl MockGame {
     }
 
     pub fn get_explorer_health(&mut self) -> &ExplorerHealth {
-        let explorer_health = self.get_one::<ExplorerHealth>();
+        let explorer_health = self.get_resource::<ExplorerHealth>();
         explorer_health
+    }
+
+    pub fn set_explorer_health(&mut self, current_health: usize, total_health: usize) {
+        let mut explorer_health = self.get_resource_mut::<ExplorerHealth>();
+        explorer_health.set_current_health(current_health);
+        explorer_health.set_total_health(total_health);
+    }
+
+    pub fn get_explorer_state(&mut self) -> ExplorerState {
+        *self.get_one()
     }
 }

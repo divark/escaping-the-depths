@@ -15,7 +15,7 @@ use viewer_interaction::{
     ViewerClick, convert_viewer_click_to_tile_click, unlock_exit_door_with_viewer_click,
 };
 
-use crate::LogicalCoordinates;
+use crate::{ExplorerHealth, LogicalCoordinates};
 
 pub struct CoreLogic;
 
@@ -25,6 +25,8 @@ impl Plugin for CoreLogic {
         app.add_event::<PlaceRoomObject>();
         app.add_event::<LogicalCoordinates>();
         app.add_event::<ViewerClick>();
+
+        app.insert_resource(ExplorerHealth::new(3, 3));
 
         app.add_systems(Startup, initialize_records);
         app.add_systems(Update, spawn_new_room);

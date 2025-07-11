@@ -111,7 +111,7 @@ impl WorldTileDimensions {
     }
 }
 
-#[derive(Component, Debug, PartialEq)]
+#[derive(Resource, Debug, PartialEq)]
 pub struct ExplorerHealth {
     current: usize,
     total: usize,
@@ -124,6 +124,14 @@ impl ExplorerHealth {
 
     pub fn get_current_health(&self) -> usize {
         self.current
+    }
+
+    pub fn set_current_health(&mut self, current_health: usize) {
+        self.current = current_health;
+    }
+
+    pub fn set_total_health(&mut self, total_health: usize) {
+        self.total = total_health;
     }
 
     pub fn decrease_current_health(&mut self) {
