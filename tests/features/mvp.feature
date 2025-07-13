@@ -21,6 +21,27 @@ Feature: All of the basic features are implemented and working as intended.
         Then the exit door will be opened.
         And the explorer's goal is to reach Tile 3, 2.
 
+    Scenario: The explorer reaches the exit door when opened.
+        Given a 4x4 cave room,
+        And a hidden floor switch placed at coordinates 1, 3,
+        And an exit door placed at coordinates 3, 2,
+        When the explorer is on Tile 1, 3,
+        And the explorer has finished traveling,
+        Then the explorer should be on Tile 3, 2.
+
+    Scenario: The explorer is wandering by default.
+        Given a 4x4 cave room,
+        When the explorer is on Tile 1, 3,
+        Then the explorer should be visiting all other tiles in the room.
+
+    Scenario: The explorer stops wandering when the exit door is opened.
+        Given a 4x4 cave room,
+        And an exit door placed at coordinates 3, 2,
+        And a hidden floor switch placed at coordinates 1, 3,
+        When the explorer is on Tile 3, 3,
+        And the explorer has reached Tile 1, 3,
+        Then the explorer's goal is to reach Tile 3, 2.
+
     Scenario: The explorer finding treasure increases the current score.
         Given a 4x4 cave room,
         And some piece of treasure worth 500 points placed on coordinates 2, 2,
@@ -56,7 +77,17 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: The explorer is in a new room when she wakes up from being passed out.
         Given a 4x4 cave room,
-        And the explorer placed at coordinates 2, 3,
         And the explorer's initial health set to 0 out of 3,
-        When 5 seconds have passed,
-        Then the explorer will be at Tile 1, 1.
+        When the explorer is on Tile 2, 3,
+        And the game over timer has elapsed,
+        Then the explorer will be alive.
+        And the explorer's health should be 3 out of 3.
+        And the explorer will be at Tile 1, 1.
+
+    Scenario: The current score becomes the new record when the explorer is passed out.
+        Given a 4x4 cave room,
+        And the explorer's initial health set to 0 out of 3,
+        When the explorer is on Tile 2, 3,
+        And the game over timer has elapsed,
+        Then the current score will be 0 points.
+        And the record score will be 500 points.
