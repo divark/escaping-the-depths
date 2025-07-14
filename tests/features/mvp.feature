@@ -38,8 +38,9 @@ Feature: All of the basic features are implemented and working as intended.
         Then the explorer should be on Tile 1, 2.
         And the current room count should be 2.
 
-    Scenario: The explorer is wandering by default.
+    Scenario: The explorer is wandering when the exit door is shut.
         Given a 4x4 cave room,
+        And an exit door placed at coordinates 3, 2,
         When the explorer is on Tile 1, 3,
         Then the explorer should be visiting all other tiles in the room.
 

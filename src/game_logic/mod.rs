@@ -7,7 +7,10 @@ pub mod viewer_interaction;
 use std::time::Duration;
 
 use bevy::prelude::*;
-use pathfinding::{make_explorer_go_to_exit_door, move_explorer_to_next_tile, set_explorer_target};
+use pathfinding::{
+    make_explorer_go_to_exit_door, make_explorer_wander, move_explorer_to_next_tile,
+    set_explorer_target,
+};
 use room_generating::{
     ChangeRoom, PlaceRoomObject, place_tile, spawn_new_room, unlock_exit_door_with_explorer,
 };
@@ -68,6 +71,7 @@ impl Plugin for CoreLogic {
         );
         app.add_systems(Update, set_explorer_target);
         app.add_systems(Update, move_explorer_to_next_tile);
+        app.add_systems(Update, make_explorer_wander);
 
         app.add_systems(Update, claim_treasure_with_explorer);
         app.add_systems(Update, hurt_explorer_with_armed_trap);

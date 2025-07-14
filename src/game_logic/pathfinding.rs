@@ -152,6 +152,31 @@ pub struct Pathfinding {
 }
 
 impl Pathfinding {
+    pub fn explore_all(source: &LogicalCoordinates, world_graph: &Graph) -> Self {
+        let mut nodes_to_visit: Vec<&WorldNode> = Vec::new();
+        let source_node = world_graph.get_node_at(source);
+        nodes_to_visit.push(&source_node);
+
+        let mut path = VecDeque::new();
+        let mut visited_nodes = HashSet::new();
+        while let Some(node_to_visit) = nodes_to_visit.pop() {
+            if visited_nodes.contains(&node_to_visit.get_id()) {
+                continue;
+            }
+
+            let node_data = node_to_visit.get_data();
+            path.push_back(node_data.clone());
+            visited_nodes.insert(node_to_visit.get_id());
+
+            let node_edges = world_graph.get_edges(node_to_visit);
+            for next_node in node_edges {
+                nodes_to_visit.push(next_node);
+            }
+        }
+
+        Self { path }
+    }
+
     pub fn shortest_path(
         source: &LogicalCoordinates,
         destination: &LogicalCoordinates,
@@ -372,4 +397,32 @@ pub fn move_explorer_to_next_tile(
         commands.entity(explorer_entity).remove::<PathTarget>();
         *explorer_logical_position = explorer_target.get_logical_target();
     }
+}
+
+pub fn make_explorer_wander(
+    explorer: Query<(Entity, &LogicalCoordinates), (With<ExplorerState>, Without<Pathfinding>)>,
+    exit_door: Query<&ExitDoorState>,
+    room_traversal_graph: Query<&Graph>,
+    mut commands: Commands,
+) {
+    if explorer.is_empty() || exit_door.is_empty() || room_traversal_graph.is_empty() {
+        return;
+    }
+
+    let room_graph = room_traversal_graph
+        .single()
+        .expect("make_explorer_wander: Could not find graph for the room.");
+    let exit_door_state = exit_door
+        .single()
+        .expect("make_explorer_wander: Could not find the state of the exit door.");
+    if *exit_door_state == ExitDoorState::Open {
+        return;
+    }
+
+    let (explorer_entity, explorer_position) = explorer
+        .single()
+        .expect("make_explorer_wander: Could not find explorer.");
+
+    let explorer_path = Pathfinding::explore_all(explorer_position, room_graph);
+    commands.entity(explorer_entity).insert(explorer_path);
 }
