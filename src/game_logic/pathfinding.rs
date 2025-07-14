@@ -200,6 +200,13 @@ impl Pathfinding {
     pub fn pop_front(&mut self) -> NodeData {
         self.path.pop_front().expect("pop_front: No nodes found.")
     }
+
+    pub fn get_locations(&self) -> Vec<LogicalCoordinates> {
+        self.path
+            .iter()
+            .map(|path_node| *path_node.get_location())
+            .collect()
+    }
 }
 
 #[derive(Component)]
@@ -253,8 +260,8 @@ impl PathTarget {
 
     pub fn has_been_reached(&self) -> bool {
         let at_x = self.current_position.translation.x == self.physical_target.translation.x;
-        let at_y = self.current_position.translation.y == self.physical_target.translation.y; 
-        
+        let at_y = self.current_position.translation.y == self.physical_target.translation.y;
+
         at_x && at_y
     }
 

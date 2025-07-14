@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::time::Duration;
 
 use bevy::input::InputPlugin;
@@ -138,6 +139,17 @@ impl MockGame {
             .expect("get_with: Could not find component with dependency.")
     }
 
+    fn get_all<T>(&mut self) -> Vec<&T>
+    where
+        T: Component,
+    {
+        self.app
+            .world_mut()
+            .query::<&T>()
+            .iter(self.app.world_mut())
+            .collect()
+    }
+
     fn get_resource<T>(&mut self) -> &T
     where
         T: Resource,
@@ -237,5 +249,28 @@ impl MockGame {
 
             self.tick();
         }
+    }
+
+    pub fn get_all_tiles(&mut self) -> HashSet<LogicalCoordinates> {
+        let all_tiles = self.get_all::<LogicalCoordinates>();
+
+        let mut all_unique_tiles = HashSet::new();
+        for tile in all_tiles {
+            all_unique_tiles.insert(*tile);
+        }
+
+        all_unique_tiles
+    }
+
+    pub fn get_explorer_tiles_to_be_visited(&mut self) -> HashSet<LogicalCoordinates> {
+        let explorer_path = self.get_one::<Pathfinding>();
+        let explorer_tiles_to_be_visited = explorer_path.get_locations();
+
+        let mut unique_explorer_tiles_to_be_visited = HashSet::new();
+        for tile in explorer_tiles_to_be_visited {
+            unique_explorer_tiles_to_be_visited.insert(tile);
+        }
+
+        unique_explorer_tiles_to_be_visited
     }
 }

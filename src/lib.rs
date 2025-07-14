@@ -13,7 +13,7 @@ pub enum RoomObject {
     Trap,
 }
 
-#[derive(Event, Component, Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Event, Component, Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
 pub struct LogicalCoordinates {
     x: usize,
     y: usize,

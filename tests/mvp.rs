@@ -116,6 +116,13 @@ fn verify_explorer_position(game: &mut MockGame, expected_tile_x: usize, expecte
     assert_eq!(expected_position, actual_position);
 }
 
+#[then("the explorer should be visiting all other tiles in the room.")]
+fn verify_explorer_visiting_all_other_tiles(game: &mut MockGame) {
+    let expected_tiles_to_visit = game.get_all_tiles();
+    let actual_tiles_to_visit = game.get_explorer_tiles_to_be_visited();
+    assert_eq!(expected_tiles_to_visit, actual_tiles_to_visit);
+}
+
 fn main() {
     let mut feature_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     feature_path.push("tests/features/mvp.feature");
