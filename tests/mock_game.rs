@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::input::InputPlugin;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::WgpuSettings;
@@ -77,7 +79,7 @@ impl MockGame {
         app.add_plugins(StatesPlugin);
         app.add_plugins(DefaultPickingPlugins);
 
-        app.add_plugins(CoreLogic);
+        app.add_plugins(CoreLogic::new(MovementTime::new(Duration::from_secs(0))));
 
         Self { app }
     }
@@ -228,8 +230,8 @@ impl MockGame {
 
     pub fn wait_for_explorer_to_finish_traveling(&mut self) {
         for _i in 0..TICKING_LIMIT {
-            let explorer_path = self.get_with::<Pathfinding, ExplorerState>();
-            if !explorer_path.is_traveling() {
+            let explorer_state = self.get_one::<ExplorerState>();
+            if *explorer_state != ExplorerState::Traveling {
                 break;
             }
 

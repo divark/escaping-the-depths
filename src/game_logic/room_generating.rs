@@ -5,7 +5,7 @@ use crate::{
 
 use bevy::prelude::*;
 
-use super::pathfinding::{Graph, Pathfinding};
+use super::pathfinding::Graph;
 
 #[derive(Event)]
 pub struct ChangeRoom(CaveRoom);
@@ -65,6 +65,7 @@ pub struct TileBundle {
 pub enum ExplorerState {
     Alive,
     Dead,
+    Traveling,
 }
 
 #[derive(Component)]
@@ -267,33 +268,4 @@ pub fn unlock_exit_door_with_explorer(
             *exit_door_state = ExitDoorState::Open;
         }
     }
-}
-
-pub fn make_explorer_go_to_exit_door(
-    exit_door: Query<(&ExitDoorState, &LogicalCoordinates), Changed<ExitDoorState>>,
-    explorer: Query<(Entity, &LogicalCoordinates), (With<ExplorerState>, Without<Pathfinding>)>,
-    room_traversal_graph: Query<&Graph>,
-    mut commands: Commands,
-) {
-    if exit_door.is_empty() || explorer.is_empty() || room_traversal_graph.is_empty() {
-        return;
-    }
-
-    let (explorer_entity, explorer_location) = explorer
-        .single()
-        .expect("make_explorer_go_to_exit_door: Could not find explorer.");
-    let (exit_door_state, exit_door_location) = exit_door
-        .single()
-        .expect("make_explorer_go_to_exit_door: Could not get exit door.");
-    let room_graph = room_traversal_graph
-        .single()
-        .expect("make_explorer_go_to_exit_door: Could not get room graph");
-
-    if *exit_door_state == ExitDoorState::Closed {
-        return;
-    }
-
-    let explorer_path =
-        Pathfinding::shortest_path(explorer_location, exit_door_location, room_graph);
-    commands.entity(explorer_entity).insert(explorer_path);
 }

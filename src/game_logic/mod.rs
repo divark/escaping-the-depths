@@ -4,10 +4,12 @@ pub mod scores;
 pub mod traps;
 pub mod viewer_interaction;
 
+use std::time::Duration;
+
 use bevy::prelude::*;
+use pathfinding::{make_explorer_go_to_exit_door, move_explorer_to_next_tile, set_explorer_target};
 use room_generating::{
-    ChangeRoom, PlaceRoomObject, make_explorer_go_to_exit_door, place_tile, spawn_new_room,
-    unlock_exit_door_with_explorer,
+    ChangeRoom, PlaceRoomObject, place_tile, spawn_new_room, unlock_exit_door_with_explorer,
 };
 use scores::{claim_treasure_with_explorer, claim_treasure_with_viewer_click, initialize_records};
 use traps::{disarm_trap_with_viewer_click, hurt_explorer_with_armed_trap};
@@ -17,7 +19,28 @@ use viewer_interaction::{
 
 use crate::{ExplorerHealth, LogicalCoordinates};
 
-pub struct CoreLogic;
+#[derive(Resource, Clone)]
+pub struct MovementTime(Duration);
+
+impl MovementTime {
+    pub fn new(time: Duration) -> Self {
+        Self(time)
+    }
+
+    pub fn get_timer(&self) -> Timer {
+        Timer::new(self.0, TimerMode::Once)
+    }
+}
+
+pub struct CoreLogic {
+    movement_time: MovementTime,
+}
+
+impl CoreLogic {
+    pub fn new(movement_time: MovementTime) -> Self {
+        Self { movement_time }
+    }
+}
 
 impl Plugin for CoreLogic {
     fn build(&self, app: &mut App) {
@@ -27,6 +50,7 @@ impl Plugin for CoreLogic {
         app.add_event::<ViewerClick>();
 
         app.insert_resource(ExplorerHealth::new(3, 3));
+        app.insert_resource(self.movement_time.clone());
 
         app.add_systems(Startup, initialize_records);
         app.add_systems(Update, spawn_new_room);
@@ -42,6 +66,9 @@ impl Plugin for CoreLogic {
             Update,
             make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
         );
+        app.add_systems(Update, set_explorer_target);
+        app.add_systems(Update, move_explorer_to_next_tile);
+
         app.add_systems(Update, claim_treasure_with_explorer);
         app.add_systems(Update, hurt_explorer_with_armed_trap);
     }
