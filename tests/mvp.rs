@@ -49,6 +49,11 @@ fn simulate_click(game: &mut MockGame, uv_x: f32, uv_y: f32) {
     game.click(uv_x, uv_y);
 }
 
+#[when("the explorer has finished traveling,")]
+fn explorer_finished_traveling(game: &mut MockGame) {
+    game.wait_for_explorer_to_finish_traveling();
+}
+
 #[then("the exit door will be opened.")]
 fn verify_exit_door_opened(game: &mut MockGame) {
     let expected_door_state = ExitDoorState::Open;
@@ -102,6 +107,13 @@ fn verify_explorer_passed_out(game: &mut MockGame) {
     let expected_explorer_state = ExplorerState::Dead;
     let actual_explorer_state = game.get_explorer_state();
     assert_eq!(expected_explorer_state, actual_explorer_state);
+}
+
+#[then(regex = r"the explorer should be on Tile ([0-9]+), ([0-9]+).")]
+fn verify_explorer_position(game: &mut MockGame, expected_tile_x: usize, expected_tile_y: usize) {
+    let expected_position = LogicalCoordinates::new(expected_tile_x, expected_tile_y);
+    let actual_position = game.get_explorer_position();
+    assert_eq!(expected_position, actual_position);
 }
 
 fn main() {

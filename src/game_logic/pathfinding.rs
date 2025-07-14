@@ -189,4 +189,8 @@ impl Pathfinding {
             .expect("get_destination: Path is empty.")
             .get_location()
     }
+
+    pub fn is_traveling(&self) -> bool {
+        !self.path.is_empty()
+    }
 }

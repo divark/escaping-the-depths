@@ -14,6 +14,8 @@ use escaping_the_depths::game_logic::viewer_interaction::ViewerClick;
 use escaping_the_depths::game_logic::*;
 use escaping_the_depths::*;
 
+const TICKING_LIMIT: usize = 100;
+
 pub struct TestRoomGenerator {
     width: usize,
     height: usize,
@@ -217,5 +219,21 @@ impl MockGame {
 
     pub fn get_explorer_state(&mut self) -> ExplorerState {
         *self.get_one()
+    }
+
+    pub fn get_explorer_position(&mut self) -> LogicalCoordinates {
+        let explorer_position = *self.get_with::<LogicalCoordinates, ExplorerState>();
+        explorer_position
+    }
+
+    pub fn wait_for_explorer_to_finish_traveling(&mut self) {
+        for _i in 0..TICKING_LIMIT {
+            let explorer_path = self.get_with::<Pathfinding, ExplorerState>();
+            if !explorer_path.is_traveling() {
+                break;
+            }
+
+            self.tick();
+        }
     }
 }
