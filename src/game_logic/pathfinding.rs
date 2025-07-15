@@ -297,7 +297,13 @@ impl PathTarget {
 
 pub fn make_explorer_go_to_exit_door(
     exit_door: Query<(&ExitDoorState, &LogicalCoordinates), Changed<ExitDoorState>>,
-    mut explorer: Query<(Entity, &LogicalCoordinates, &mut ExplorerState), Without<Pathfinding>>,
+    mut explorer: Query<(
+        Entity,
+        &LogicalCoordinates,
+        &mut ExplorerState,
+        Option<&PathTarget>,
+        Option<&mut Pathfinding>,
+    )>,
     room_traversal_graph: Query<&Graph>,
     mut commands: Commands,
 ) {
@@ -305,7 +311,13 @@ pub fn make_explorer_go_to_exit_door(
         return;
     }
 
-    let (explorer_entity, explorer_location, mut explorer_state) = explorer
+    let (
+        explorer_entity,
+        explorer_location,
+        mut explorer_state,
+        explorer_current_target,
+        explorer_wandering_path,
+    ) = explorer
         .single_mut()
         .expect("make_explorer_go_to_exit_door: Could not find explorer.");
     let (exit_door_state, exit_door_location) = exit_door
@@ -318,19 +330,32 @@ pub fn make_explorer_go_to_exit_door(
     if *exit_door_state == ExitDoorState::Closed {
         return;
     }
+    
+    if *explorer_state != ExplorerState::Wandering {
+        return;
+    }
 
-    let explorer_path =
-        Pathfinding::shortest_path(explorer_location, exit_door_location, room_graph);
-    commands.entity(explorer_entity).insert(explorer_path);
+    let explorer_path = if let Some(next_explorer_location) = explorer_current_target {
+        Pathfinding::shortest_path(
+            &next_explorer_location.get_logical_target(),
+            exit_door_location,
+            room_graph,
+        )
+    } else {
+        Pathfinding::shortest_path(explorer_location, exit_door_location, room_graph)
+    };
 
-    *explorer_state = ExplorerState::Traveling;
+    if let Some(mut current_explorer_path) = explorer_wandering_path {
+        *current_explorer_path = explorer_path;
+    } else {
+        commands.entity(explorer_entity).insert(explorer_path);
+    }
+
+    *explorer_state = ExplorerState::Exiting;
 }
 
 pub fn set_explorer_target(
-    mut explorer: Query<
-        (Entity, &Transform, &mut Pathfinding, &mut ExplorerState),
-        Without<PathTarget>,
-    >,
+    mut explorer: Query<(Entity, &Transform, &mut Pathfinding), Without<PathTarget>>,
     tiles: Query<(&LogicalCoordinates, &Transform)>,
     movement_time: Res<MovementTime>,
     mut commands: Commands,
@@ -339,13 +364,12 @@ pub fn set_explorer_target(
         return;
     }
 
-    let (explorer_entity, explorer_position, mut explorer_path, mut explorer_state) = explorer
+    let (explorer_entity, explorer_position, mut explorer_path) = explorer
         .single_mut()
         .expect("set_explorer_target: Could not find explorer.");
 
     if !explorer_path.is_traveling() {
         commands.entity(explorer_entity).remove::<Pathfinding>();
-        *explorer_state = ExplorerState::Alive;
         return;
     }
 
@@ -400,27 +424,23 @@ pub fn move_explorer_to_next_tile(
 }
 
 pub fn make_explorer_wander(
-    explorer: Query<(Entity, &LogicalCoordinates), (With<ExplorerState>, Without<Pathfinding>)>,
-    exit_door: Query<&ExitDoorState>,
+    mut explorer: Query<
+        (Entity, &LogicalCoordinates),
+        (Added<ExplorerState>, Without<Pathfinding>),
+    >,
     room_traversal_graph: Query<&Graph>,
     mut commands: Commands,
 ) {
-    if explorer.is_empty() || exit_door.is_empty() || room_traversal_graph.is_empty() {
+    if explorer.is_empty() || room_traversal_graph.is_empty() {
         return;
     }
 
     let room_graph = room_traversal_graph
         .single()
         .expect("make_explorer_wander: Could not find graph for the room.");
-    let exit_door_state = exit_door
-        .single()
-        .expect("make_explorer_wander: Could not find the state of the exit door.");
-    if *exit_door_state == ExitDoorState::Open {
-        return;
-    }
 
     let (explorer_entity, explorer_position) = explorer
-        .single()
+        .single_mut()
         .expect("make_explorer_wander: Could not find explorer.");
 
     let explorer_path = Pathfinding::explore_all(explorer_position, room_graph);

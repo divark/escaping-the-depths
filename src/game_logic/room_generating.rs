@@ -61,11 +61,12 @@ pub struct TileBundle {
     logical_coordinates: LogicalCoordinates,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Default)]
 pub enum ExplorerState {
-    Alive,
+    #[default]
+    Wandering,
+    Exiting,
     Dead,
-    Traveling,
 }
 
 #[derive(Component)]
@@ -209,7 +210,7 @@ impl ExplorerBundle {
     pub fn new(tile_bundle: TileBundle) -> Self {
         Self {
             tile_bundle,
-            explorer_state: ExplorerState::Alive,
+            explorer_state: ExplorerState::default(),
         }
     }
 }

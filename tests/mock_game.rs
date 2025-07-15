@@ -240,10 +240,23 @@ impl MockGame {
         explorer_position
     }
 
-    pub fn wait_for_explorer_to_finish_traveling(&mut self) {
-        for _i in 0..TICKING_LIMIT {
-            let explorer_state = self.get_one::<ExplorerState>();
-            if *explorer_state != ExplorerState::Traveling {
+    pub fn wait_for_explorer_to_finish_exiting(&mut self) {
+        loop {
+            let explorer_state = *self.get_one::<ExplorerState>();
+            if explorer_state == ExplorerState::Wandering {
+                self.tick();
+                continue;
+            }
+
+            break;
+        }
+
+        loop {
+            let explorer_path = self.get_one::<Pathfinding>();
+            let num_places_to_visit = explorer_path.get_locations().len();
+
+            if num_places_to_visit == 0 {
+                self.tick();
                 break;
             }
 
@@ -272,5 +285,16 @@ impl MockGame {
         }
 
         unique_explorer_tiles_to_be_visited
+    }
+
+    pub fn wait_for_explorer_to_reach(&mut self, position: LogicalCoordinates) {
+        for _i in 0..TICKING_LIMIT {
+            let explorer_position = self.get_with::<LogicalCoordinates, ExplorerState>();
+            if *explorer_position == position {
+                break;
+            }
+
+            self.tick();
+        }
     }
 }

@@ -64,14 +64,17 @@ impl Plugin for CoreLogic {
         app.add_systems(Update, claim_treasure_with_viewer_click);
         app.add_systems(Update, disarm_trap_with_viewer_click);
 
-        app.add_systems(Update, unlock_exit_door_with_explorer);
+        app.add_systems(Update, make_explorer_wander);
+        app.add_systems(
+            Update,
+            unlock_exit_door_with_explorer.after(make_explorer_wander),
+        );
         app.add_systems(
             Update,
             make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
         );
         app.add_systems(Update, set_explorer_target);
         app.add_systems(Update, move_explorer_to_next_tile);
-        app.add_systems(Update, make_explorer_wander);
 
         app.add_systems(Update, claim_treasure_with_explorer);
         app.add_systems(Update, hurt_explorer_with_armed_trap);

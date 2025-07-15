@@ -26,7 +26,7 @@ Feature: All of the basic features are implemented and working as intended.
         And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 3, 2,
         When the explorer is on Tile 1, 3,
-        And the explorer has finished traveling,
+        And the explorer has finished exiting,
         Then the explorer should be on Tile 3, 2.
 
     Scenario: A new room should be made when the explorer reaches the exit door.
@@ -34,7 +34,7 @@ Feature: All of the basic features are implemented and working as intended.
         And a hidden floor switch placed at coordinates 1, 3,
         And an exit door placed at coordinates 3, 2,
         When the explorer is on Tile 1, 3,
-        And the explorer has finished traveling,
+        And the explorer has finished exiting,
         Then the explorer should be on Tile 1, 2.
         And the current room count should be 2.
 

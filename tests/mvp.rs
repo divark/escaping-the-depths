@@ -49,9 +49,15 @@ fn simulate_click(game: &mut MockGame, uv_x: f32, uv_y: f32) {
     game.click(uv_x, uv_y);
 }
 
-#[when("the explorer has finished traveling,")]
-fn explorer_finished_traveling(game: &mut MockGame) {
-    game.wait_for_explorer_to_finish_traveling();
+#[when("the explorer has finished exiting,")]
+fn explorer_finished_exiting(game: &mut MockGame) {
+    game.wait_for_explorer_to_finish_exiting();
+}
+
+#[when(regex = r"the explorer has reached Tile ([0-9]+), ([0-9]+),")]
+fn wait_until_explorer_reached_tile(game: &mut MockGame, desired_x: usize, desired_y: usize) {
+    let expected_tile_location = LogicalCoordinates::new(desired_x, desired_y);
+    game.wait_for_explorer_to_reach(expected_tile_location);
 }
 
 #[then("the exit door will be opened.")]
