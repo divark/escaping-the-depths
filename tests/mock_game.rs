@@ -19,20 +19,23 @@ use escaping_the_depths::*;
 
 const TICKING_LIMIT: usize = 100;
 
+#[derive(Clone, Resource)]
 pub struct TestRoomGenerator {
     width: usize,
     height: usize,
 }
 
-impl TestRoomGenerator {
-    pub fn new(width: usize, height: usize) -> Self {
-        Self { width, height }
-    }
-
-    pub fn generate(&mut self) -> CaveRoom {
+impl RoomGenerating for TestRoomGenerator {
+    fn generate(&self) -> CaveRoom {
         let room_generated = CaveRoom::new(self.width, self.height);
 
         room_generated
+    }
+}
+
+impl TestRoomGenerator {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self { width, height }
     }
 }
 
@@ -79,8 +82,6 @@ impl MockGame {
         app.add_plugins(SpritePlugin::default());
         app.add_plugins(StatesPlugin);
         app.add_plugins(DefaultPickingPlugins);
-
-        app.add_plugins(CoreLogic::new(MovementTime::new(Duration::from_secs(0))));
 
         Self { app }
     }
@@ -170,7 +171,14 @@ impl MockGame {
             .expect("get_resource_mut: Could not find the desired resource.")
     }
 
-    pub fn spawn_room(&mut self, room: CaveRoom) {
+    pub fn spawn_room(&mut self, width: usize, height: usize) {
+        let test_room_generator = TestRoomGenerator::new(width, height);
+        let movement_time = MovementTime::new(Duration::from_secs(0));
+        self.app
+            .add_plugins(CoreLogic::new(movement_time, test_room_generator));
+
+        let room_generator = self.get_resource::<TestRoomGenerator>();
+        let room = room_generator.generate();
         self.broadcast(ChangeRoom::new(room));
         self.tick();
     }
@@ -240,6 +248,18 @@ impl MockGame {
         explorer_position
     }
 
+    pub fn wait_for_explorer_to_wander_again(&mut self) {
+        loop {
+            let explorer_state = *self.get_one::<ExplorerState>();
+            if explorer_state != ExplorerState::Wandering {
+                self.tick();
+                continue;
+            }
+
+            break;
+        }
+    }
+
     pub fn wait_for_explorer_to_finish_exiting(&mut self) {
         loop {
             let explorer_state = *self.get_one::<ExplorerState>();
@@ -291,10 +311,17 @@ impl MockGame {
         for _i in 0..TICKING_LIMIT {
             let explorer_position = self.get_with::<LogicalCoordinates, ExplorerState>();
             if *explorer_position == position {
+                self.tick();
                 break;
             }
 
             self.tick();
         }
+    }
+
+    pub fn get_current_room_number(&mut self) -> usize {
+        let current_records = self.get_one::<CurrentRecords>();
+        let current_room_number = current_records.get_current_room_number();
+        current_room_number
     }
 }

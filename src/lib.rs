@@ -2,6 +2,10 @@ use bevy::prelude::*;
 
 pub mod game_logic;
 
+pub trait RoomGenerating {
+    fn generate(&self) -> CaveRoom;
+}
+
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum RoomObject {
     #[default]
@@ -76,9 +80,10 @@ pub enum TrapState {
     Unarmed,
 }
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug)]
 pub struct CurrentRecords {
     current_score: usize,
+    current_room_number: usize,
 }
 
 impl CurrentRecords {
@@ -86,8 +91,25 @@ impl CurrentRecords {
         self.current_score
     }
 
+    pub fn get_current_room_number(&self) -> usize {
+        self.current_room_number
+    }
+
     pub fn add_score(&mut self, score_to_add: usize) {
         self.current_score += score_to_add;
+    }
+
+    pub fn increment_room_count(&mut self) {
+        self.current_room_number += 1;
+    }
+}
+
+impl Default for CurrentRecords {
+    fn default() -> Self {
+        Self {
+            current_score: 0,
+            current_room_number: 1,
+        }
     }
 }
 
@@ -145,6 +167,7 @@ impl ExplorerHealth {
     }
 }
 
+#[derive(Clone)]
 pub struct CaveRoom {
     world_tile_dimensions: WorldTileDimensions,
 

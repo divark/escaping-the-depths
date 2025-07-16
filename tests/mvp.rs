@@ -9,10 +9,7 @@ use escaping_the_depths::{game_logic::room_generating::ExplorerState, *};
 
 #[given(regex = r"a ([0-9]+)x([0-9]+) cave room,")]
 fn make_cave_room(game: &mut MockGame, width: usize, height: usize) {
-    let mut room_generator = TestRoomGenerator::new(width, height);
-
-    let generated_room = room_generator.generate();
-    game.spawn_room(generated_room);
+    game.spawn_room(width, height);
 }
 
 #[given(regex = r"[an?|the] (.+) placed at coordinates ([0-9]+), ([0-9]+),")]
@@ -52,6 +49,11 @@ fn simulate_click(game: &mut MockGame, uv_x: f32, uv_y: f32) {
 #[when("the explorer has finished exiting,")]
 fn explorer_finished_exiting(game: &mut MockGame) {
     game.wait_for_explorer_to_finish_exiting();
+}
+
+#[when("the explorer has left the room,")]
+fn explorer_left_the_room(game: &mut MockGame) {
+    game.wait_for_explorer_to_wander_again();
 }
 
 #[when(regex = r"the explorer has reached Tile ([0-9]+), ([0-9]+),")]
@@ -127,6 +129,12 @@ fn verify_explorer_visiting_all_other_tiles(game: &mut MockGame) {
     let expected_tiles_to_visit = game.get_all_tiles();
     let actual_tiles_to_visit = game.get_explorer_tiles_to_be_visited();
     assert_eq!(expected_tiles_to_visit, actual_tiles_to_visit);
+}
+
+#[then(regex = r"the current room count should be ([0-9]+).")]
+fn verify_current_room_number(game: &mut MockGame, expected_room_number: usize) {
+    let actual_room_number = game.get_current_room_number();
+    assert_eq!(expected_room_number, actual_room_number);
 }
 
 fn main() {

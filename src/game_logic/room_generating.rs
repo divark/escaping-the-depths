@@ -1,6 +1,6 @@
 use crate::{
-    CaveRoom, ExitDoorState, LogicalCoordinates, RoomObject, TrapState,
-    game_logic::scores::TreasureScore,
+    CaveRoom, CurrentRecords, ExitDoorState, LogicalCoordinates, RoomGenerating, RoomObject,
+    TrapState, game_logic::scores::TreasureScore,
 };
 
 use bevy::prelude::*;
@@ -13,6 +13,19 @@ pub struct ChangeRoom(CaveRoom);
 impl ChangeRoom {
     pub fn new(room_to_spawn: CaveRoom) -> Self {
         Self(room_to_spawn)
+    }
+
+    pub fn get_room(&self) -> &CaveRoom {
+        &self.0
+    }
+}
+
+#[derive(Event)]
+pub struct LoadRoom(CaveRoom);
+
+impl LoadRoom {
+    pub fn from_change_room(change_room_event: &ChangeRoom) -> Self {
+        Self(change_room_event.get_room().clone())
     }
 
     pub fn get_room(&self) -> &CaveRoom {
@@ -132,7 +145,7 @@ fn spawn_room_traversal_graph(cave_room: &CaveRoom, commands: &mut Commands) {
 }
 
 pub fn spawn_new_room(
-    mut spawn_room_requests: EventReader<ChangeRoom>,
+    mut spawn_room_requests: EventReader<LoadRoom>,
     mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
     mut commands: Commands,
 ) {
@@ -145,6 +158,76 @@ pub fn spawn_new_room(
     spawn_objects_in_room(cave_room, &mut place_tile_broadcaster);
     spawn_room_traversal_graph(cave_room, &mut commands);
     spawn_centered_camera(cave_room, &mut commands);
+}
+
+pub fn spawn_next_room<T>(
+    mut change_room_broadcaster: EventWriter<ChangeRoom>,
+    explorer: Query<(&LogicalCoordinates, &ExplorerState), Changed<LogicalCoordinates>>,
+    exit_door: Query<(&LogicalCoordinates, &ExitDoorState)>,
+    mut current_records: Query<&mut CurrentRecords>,
+    room_generator: Res<T>,
+) where
+    T: Resource + RoomGenerating,
+{
+    if explorer.is_empty() || exit_door.is_empty() || current_records.is_empty() {
+        return;
+    }
+
+    let (exit_door_location, exit_door_state) = exit_door
+        .single()
+        .expect("spawn_next_room: Could not find the exit door.");
+    let (explorer_location, explorer_state) = explorer
+        .single()
+        .expect("spawn_next_room: Could not find explorer.");
+    let explorer_hasnt_reached_exit =
+        *explorer_state != ExplorerState::Exiting || explorer_location != exit_door_location;
+    let exit_door_not_opened = *exit_door_state != ExitDoorState::Open;
+    if explorer_hasnt_reached_exit || exit_door_not_opened {
+        return;
+    }
+
+    let mut current_records = current_records
+        .single_mut()
+        .expect("spawn_next_room: Could not get current records.");
+    current_records.increment_room_count();
+
+    let mut newly_generated_caveroom = room_generator.generate();
+    newly_generated_caveroom.set(explorer_location.get_x(), 0, RoomObject::Explorer);
+
+    let change_room_request = ChangeRoom::new(newly_generated_caveroom);
+    change_room_broadcaster.write(change_room_request);
+}
+
+pub fn despawn_current_room(
+    mut change_room_requests: EventReader<ChangeRoom>,
+    mut spawn_room_broadcaster: EventWriter<LoadRoom>,
+    mut commands: Commands,
+    all_room_tiles: Query<Entity, With<LogicalCoordinates>>,
+    room_graph: Query<Entity, With<Graph>>,
+    camera_in_room: Query<Entity, With<Camera2d>>,
+) {
+    if change_room_requests.is_empty() {
+        return;
+    }
+
+    for tile_entity in all_room_tiles.iter() {
+        commands.entity(tile_entity).despawn();
+    }
+
+    for room_graph_entity in room_graph.iter() {
+        commands.entity(room_graph_entity).despawn();
+    }
+
+    for camera_entity in camera_in_room.iter() {
+        commands.entity(camera_entity).despawn();
+    }
+
+    let change_room_event = change_room_requests
+        .read()
+        .next()
+        .expect("despawn_current_room: Could not get ChangeRoom request.");
+    let load_room_event = LoadRoom::from_change_room(change_room_event);
+    spawn_room_broadcaster.write(load_room_event);
 }
 
 fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) -> Sprite {
