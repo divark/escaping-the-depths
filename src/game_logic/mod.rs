@@ -12,8 +12,9 @@ use pathfinding::{
     set_explorer_target,
 };
 use room_generating::{
-    ChangeRoom, LoadRoom, PlaceRoomObject, despawn_current_room, place_tile, spawn_new_room,
-    spawn_next_room, unlock_exit_door_with_explorer,
+    ChangeRoom, LoadRoom, PlaceRoomObject, despawn_current_room, place_tile,
+    reset_to_level_one_after_game_over, spawn_new_room, spawn_next_room,
+    start_game_over_countdown_on_death, unlock_exit_door_with_explorer,
 };
 use scores::{claim_treasure_with_explorer, claim_treasure_with_viewer_click, initialize_records};
 use traps::{disarm_trap_with_viewer_click, hurt_explorer_with_armed_trap};
@@ -21,7 +22,12 @@ use viewer_interaction::{
     ViewerClick, convert_viewer_click_to_tile_click, unlock_exit_door_with_viewer_click,
 };
 
-use crate::{ExplorerHealth, LogicalCoordinates, RoomGenerating};
+use crate::{ExplorerHealth, GameState, LogicalCoordinates, RoomGenerating};
+
+#[derive(Component, Clone, Copy, PartialEq)]
+pub enum TimerType {
+    GameOver,
+}
 
 #[derive(Resource, Clone)]
 pub struct MovementTime(Duration);
@@ -36,15 +42,51 @@ impl MovementTime {
     }
 }
 
+#[derive(Resource, Clone)]
+pub struct GameOverTime(Duration);
+
+impl GameOverTime {
+    pub fn new(time: Duration) -> Self {
+        Self(time)
+    }
+
+    pub fn get_timer(&self) -> Timer {
+        Timer::new(self.0, TimerMode::Once)
+    }
+}
+
+#[derive(Component)]
+pub struct GameOverTimer(Timer);
+
+impl GameOverTimer {
+    pub fn new(game_over_time: &GameOverTime) -> Self {
+        Self(game_over_time.get_timer())
+    }
+
+    pub fn get_timer_mut(&mut self) -> &mut Timer {
+        &mut self.0
+    }
+
+    pub fn get_timer(&self) -> &Timer {
+        &self.0
+    }
+}
+
 pub struct CoreLogic<T: RoomGenerating + Resource + Clone> {
     movement_time: MovementTime,
+    game_over_time: GameOverTime,
     room_generator: T,
 }
 
 impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
-    pub fn new(movement_time: MovementTime, room_generator: T) -> Self {
+    pub fn new(
+        movement_time: MovementTime,
+        game_over_time: GameOverTime,
+        room_generator: T,
+    ) -> Self {
         Self {
             movement_time,
+            game_over_time,
             room_generator,
         }
     }
@@ -58,14 +100,17 @@ impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
         app.add_event::<LogicalCoordinates>();
         app.add_event::<ViewerClick>();
 
+        app.init_state::<GameState>();
         app.insert_resource(ExplorerHealth::new(3, 3));
         app.insert_resource(self.movement_time.clone());
+        app.insert_resource(self.game_over_time.clone());
         app.insert_resource(self.room_generator.clone());
 
         app.add_systems(Startup, initialize_records);
         app.add_systems(Update, despawn_current_room);
         app.add_systems(Update, spawn_new_room.after(despawn_current_room));
         app.add_systems(Update, place_tile.after(spawn_new_room));
+        app.add_systems(Update, spawn_next_room::<T>);
 
         app.add_systems(Update, convert_viewer_click_to_tile_click);
         app.add_systems(Update, unlock_exit_door_with_viewer_click);
@@ -82,11 +127,21 @@ impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
             make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
         );
         app.add_systems(Update, set_explorer_target);
-        app.add_systems(Update, move_explorer_to_next_tile);
-
-        app.add_systems(Update, spawn_next_room::<T>);
+        app.add_systems(
+            Update,
+            move_explorer_to_next_tile.run_if(in_state(GameState::Active)),
+        );
 
         app.add_systems(Update, claim_treasure_with_explorer);
         app.add_systems(Update, hurt_explorer_with_armed_trap);
+
+        app.add_systems(
+            Update,
+            start_game_over_countdown_on_death.run_if(in_state(GameState::Active)),
+        );
+        app.add_systems(
+            Update,
+            reset_to_level_one_after_game_over::<T>.run_if(in_state(GameState::GameOver)),
+        );
     }
 }

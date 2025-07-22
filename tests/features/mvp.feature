@@ -91,9 +91,8 @@ Feature: All of the basic features are implemented and working as intended.
         And the explorer's initial health set to 0 out of 3,
         When the explorer is on Tile 2, 3,
         And the game over timer has elapsed,
-        Then the explorer will be alive.
-        And the explorer's health should be 3 out of 3.
-        And the explorer will be at Tile 1, 1.
+        Then the explorer's health should be 3 out of 3.
+        Then the explorer should be on Tile 0, 0.
 
     Scenario: The current statistics becomes the new record when the explorer is passed out.
         Given a 4x4 cave room,

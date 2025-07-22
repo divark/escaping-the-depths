@@ -6,6 +6,13 @@ pub trait RoomGenerating {
     fn generate(&self) -> CaveRoom;
 }
 
+#[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+pub enum GameState {
+    #[default]
+    Active,
+    GameOver,
+}
+
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum RoomObject {
     #[default]

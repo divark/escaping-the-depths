@@ -1,11 +1,11 @@
 use crate::{
-    CaveRoom, CurrentRecords, ExitDoorState, LogicalCoordinates, RoomGenerating, RoomObject,
-    TrapState, game_logic::scores::TreasureScore,
+    CaveRoom, CurrentRecords, ExitDoorState, ExplorerHealth, GameState, LogicalCoordinates,
+    RoomGenerating, RoomObject, TrapState, game_logic::scores::TreasureScore,
 };
 
 use bevy::prelude::*;
 
-use super::pathfinding::Graph;
+use super::{GameOverTime, GameOverTimer, pathfinding::Graph};
 
 #[derive(Event)]
 pub struct ChangeRoom(CaveRoom);
@@ -196,6 +196,62 @@ pub fn spawn_next_room<T>(
 
     let change_room_request = ChangeRoom::new(newly_generated_caveroom);
     change_room_broadcaster.write(change_room_request);
+}
+
+pub fn start_game_over_countdown_on_death(
+    explorer_health: Res<ExplorerHealth>,
+    game_over_time: Res<GameOverTime>,
+    mut next_game_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
+) {
+    if explorer_health.get_current_health() != 0 {
+        return;
+    }
+
+    let game_over_timer = GameOverTimer::new(&game_over_time);
+    commands.spawn(game_over_timer);
+
+    next_game_state.set(GameState::GameOver);
+}
+
+pub fn reset_to_level_one_after_game_over<T>(
+    mut change_room_broadcaster: EventWriter<ChangeRoom>,
+    mut game_over_timers: Query<(Entity, &mut GameOverTimer)>,
+    time: Res<Time>,
+    room_generator: Res<T>,
+    mut next_game_state: ResMut<NextState<GameState>>,
+    mut explorer_health: ResMut<ExplorerHealth>,
+    mut commands: Commands,
+) where
+    T: Resource + RoomGenerating,
+{
+    if game_over_timers.is_empty() {
+        return;
+    }
+
+    let (game_over_timer_entity, mut game_over_timer) = game_over_timers
+        .single_mut()
+        .expect("reset_to_level_one_after_game_over: Could not find game over timer.");
+
+    let time_passed = time.delta();
+    let game_over_timer = game_over_timer.get_timer_mut();
+    game_over_timer.tick(time_passed);
+
+    if !game_over_timer.just_finished() {
+        return;
+    }
+
+    let mut newly_generated_caveroom = room_generator.generate();
+    newly_generated_caveroom.set(0, 0, RoomObject::Explorer);
+    explorer_health.set_current_health(3);
+    explorer_health.set_total_health(3);
+
+    let change_room_request = ChangeRoom::new(newly_generated_caveroom);
+    change_room_broadcaster.write(change_room_request);
+
+    commands.entity(game_over_timer_entity).despawn();
+
+    next_game_state.set(GameState::Active);
 }
 
 pub fn despawn_current_room(

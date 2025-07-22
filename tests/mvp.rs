@@ -62,6 +62,11 @@ fn wait_until_explorer_reached_tile(game: &mut MockGame, desired_x: usize, desir
     game.wait_for_explorer_to_reach(expected_tile_location);
 }
 
+#[when("the game over timer has elapsed,")]
+fn wait_for_game_over_time_to_finish(game: &mut MockGame) {
+    game.wait_for_game_over_timer_to_finish();
+}
+
 #[then("the exit door will be opened.")]
 fn verify_exit_door_opened(game: &mut MockGame) {
     let expected_door_state = ExitDoorState::Open;

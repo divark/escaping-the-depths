@@ -171,11 +171,22 @@ impl MockGame {
             .expect("get_resource_mut: Could not find the desired resource.")
     }
 
+    fn get_game_state<T>(&mut self) -> &State<T>
+    where
+        T: States,
+    {
+        self.get_resource::<State<T>>()
+    }
+
     pub fn spawn_room(&mut self, width: usize, height: usize) {
         let test_room_generator = TestRoomGenerator::new(width, height);
         let movement_time = MovementTime::new(Duration::from_secs(0));
-        self.app
-            .add_plugins(CoreLogic::new(movement_time, test_room_generator));
+        let game_over_time = GameOverTime::new(Duration::from_secs(0));
+        self.app.add_plugins(CoreLogic::new(
+            movement_time,
+            game_over_time,
+            test_room_generator,
+        ));
 
         let room_generator = self.get_resource::<TestRoomGenerator>();
         let room = room_generator.generate();
@@ -323,5 +334,16 @@ impl MockGame {
         let current_records = self.get_one::<CurrentRecords>();
         let current_room_number = current_records.get_current_room_number();
         current_room_number
+    }
+
+    pub fn wait_for_game_over_timer_to_finish(&mut self) {
+        loop {
+            self.tick();
+            let game_state = self.get_game_state::<GameState>();
+
+            if *game_state == GameState::Active {
+                break;
+            }
+        }
     }
 }
