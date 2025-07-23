@@ -112,33 +112,29 @@ impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
         app.add_systems(Update, place_tile.after(spawn_new_room));
         app.add_systems(Update, spawn_next_room::<T>);
 
-        app.add_systems(Update, convert_viewer_click_to_tile_click);
-        app.add_systems(Update, unlock_exit_door_with_viewer_click);
-        app.add_systems(Update, claim_treasure_with_viewer_click);
-        app.add_systems(Update, disarm_trap_with_viewer_click);
+        let clicking_systems = (
+            convert_viewer_click_to_tile_click,
+            unlock_exit_door_with_viewer_click,
+            claim_treasure_with_viewer_click,
+            disarm_trap_with_viewer_click,
+        );
+        app.add_systems(Update, clicking_systems.run_if(in_state(GameState::Active)));
 
-        app.add_systems(Update, make_explorer_wander);
-        app.add_systems(
-            Update,
+        let automatic_behavior_systems = (
+            make_explorer_wander,
             unlock_exit_door_with_explorer.after(make_explorer_wander),
-        );
-        app.add_systems(
-            Update,
             make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
+            set_explorer_target,
+            move_explorer_to_next_tile,
+            claim_treasure_with_explorer,
+            hurt_explorer_with_armed_trap,
+            start_game_over_countdown_on_death,
         );
-        app.add_systems(Update, set_explorer_target);
         app.add_systems(
             Update,
-            move_explorer_to_next_tile.run_if(in_state(GameState::Active)),
+            automatic_behavior_systems.run_if(in_state(GameState::Active)),
         );
 
-        app.add_systems(Update, claim_treasure_with_explorer);
-        app.add_systems(Update, hurt_explorer_with_armed_trap);
-
-        app.add_systems(
-            Update,
-            start_game_over_countdown_on_death.run_if(in_state(GameState::Active)),
-        );
         app.add_systems(
             Update,
             reset_to_level_one_after_game_over::<T>.run_if(in_state(GameState::GameOver)),
