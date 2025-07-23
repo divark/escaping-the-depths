@@ -36,6 +36,16 @@ fn set_explorer_health(game: &mut MockGame, current_health: usize, total_health:
     game.set_explorer_health(current_health, total_health);
 }
 
+#[given(regex = r"the initial room count is ([0-9]+),")]
+fn set_current_room_number(game: &mut MockGame, current_room_num: usize) {
+    game.set_current_room_number(current_room_num);
+}
+
+#[given(regex = r"the initial current score is ([0-9]+),")]
+fn set_current_score(game: &mut MockGame, current_score: usize) {
+    game.set_current_score(current_score);
+}
+
 #[when(regex = r"the explorer is on Tile ([0-9]+), ([0-9]+),")]
 fn move_explorer_to_tile(game: &mut MockGame, desired_x: usize, desired_y: usize) {
     game.place(RoomObject::Explorer, desired_x, desired_y);
@@ -140,6 +150,18 @@ fn verify_explorer_visiting_all_other_tiles(game: &mut MockGame) {
 fn verify_current_room_number(game: &mut MockGame, expected_room_number: usize) {
     let actual_room_number = game.get_current_room_number();
     assert_eq!(expected_room_number, actual_room_number);
+}
+
+#[then(regex = r"the record score will be ([0-9]+) points.")]
+fn verify_record_score(game: &mut MockGame, expected_record_score: usize) {
+    let actual_record_score = game.get_record_score();
+    assert_eq!(expected_record_score, actual_record_score);
+}
+
+#[then(regex = r"the record room count should be ([0-9]+).")]
+fn verify_record_room_number(game: &mut MockGame, expected_record_room_number: usize) {
+    let actual_record_room_number = game.get_record_room_number();
+    assert_eq!(expected_record_room_number, actual_record_room_number);
 }
 
 fn main() {

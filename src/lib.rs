@@ -91,6 +91,9 @@ pub enum TrapState {
 pub struct CurrentRecords {
     current_score: usize,
     current_room_number: usize,
+
+    record_score: usize,
+    record_room_number: usize,
 }
 
 impl CurrentRecords {
@@ -102,12 +105,38 @@ impl CurrentRecords {
         self.current_room_number
     }
 
+    pub fn set_current_room_number(&mut self, new_room_number: usize) {
+        self.current_room_number = new_room_number;
+    }
+
     pub fn add_score(&mut self, score_to_add: usize) {
         self.current_score += score_to_add;
     }
 
+    pub fn set_current_score(&mut self, new_score: usize) {
+        self.current_score = new_score;
+    }
+
+    pub fn get_record_score(&self) -> usize {
+        self.record_score
+    }
+
     pub fn increment_room_count(&mut self) {
         self.current_room_number += 1;
+    }
+
+    pub fn get_record_room_number(&self) -> usize {
+        self.record_room_number
+    }
+
+    /// Records the current records and sets all current stats back to their
+    /// defaults.
+    pub fn reset(&mut self) {
+        self.record_score = self.record_score.max(self.current_score);
+        self.record_room_number = self.record_room_number.max(self.current_room_number);
+
+        self.current_score = 0;
+        self.current_room_number = 1;
     }
 }
 
@@ -116,6 +145,9 @@ impl Default for CurrentRecords {
         Self {
             current_score: 0,
             current_room_number: 1,
+
+            record_score: 0,
+            record_room_number: 1,
         }
     }
 }

@@ -221,11 +221,12 @@ pub fn reset_to_level_one_after_game_over<T>(
     room_generator: Res<T>,
     mut next_game_state: ResMut<NextState<GameState>>,
     mut explorer_health: ResMut<ExplorerHealth>,
+    mut scores: Query<&mut CurrentRecords>,
     mut commands: Commands,
 ) where
     T: Resource + RoomGenerating,
 {
-    if game_over_timers.is_empty() {
+    if game_over_timers.is_empty() || scores.is_empty() {
         return;
     }
 
@@ -245,6 +246,11 @@ pub fn reset_to_level_one_after_game_over<T>(
     newly_generated_caveroom.set(0, 0, RoomObject::Explorer);
     explorer_health.set_current_health(3);
     explorer_health.set_total_health(3);
+
+    let mut score_keeping = scores
+        .single_mut()
+        .expect("reset_to_level_one_after_game_over: Could not find the current record of scores.");
+    score_keeping.reset();
 
     let change_room_request = ChangeRoom::new(newly_generated_caveroom);
     change_room_broadcaster.write(change_room_request);

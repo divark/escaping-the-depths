@@ -98,9 +98,10 @@ Feature: All of the basic features are implemented and working as intended.
         Given a 4x4 cave room,
         And the explorer's initial health set to 0 out of 3,
         And the initial room count is 2,
+        And the initial current score is 500,
         When the explorer is on Tile 2, 3,
         And the game over timer has elapsed,
         Then the current score will be 0 points.
-        And the current room count will be 1.
+        And the current room count should be 1.
         And the record score will be 500 points.
-        And the record room count will be 2.
+        And the record room count should be 2.

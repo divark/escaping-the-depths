@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::time::Duration;
 
+use bevy::ecs::component::Mutable;
 use bevy::input::InputPlugin;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::WgpuSettings;
@@ -112,6 +113,18 @@ impl MockGame {
             .iter(self.app.world_mut())
             .next()
             .expect("get_one: Could not find one instance of the specified component.")
+    }
+
+    fn get_one_mut<T>(&mut self) -> Mut<'_, T>
+    where
+        T: Component<Mutability = Mutable>,
+    {
+        self.app
+            .world_mut()
+            .query::<&mut T>()
+            .iter_mut(self.app.world_mut())
+            .next()
+            .expect("get_one_mut: Could not find one mutable instance of the specified component")
     }
 
     fn get_at<T>(&mut self, logical_coordinates: &LogicalCoordinates) -> &T
@@ -345,5 +358,27 @@ impl MockGame {
                 break;
             }
         }
+    }
+
+    pub fn set_current_room_number(&mut self, current_room_num: usize) {
+        let mut current_records = self.get_one_mut::<CurrentRecords>();
+        current_records.set_current_room_number(current_room_num);
+    }
+
+    pub fn set_current_score(&mut self, current_score: usize) {
+        let mut current_records = self.get_one_mut::<CurrentRecords>();
+        current_records.set_current_score(current_score);
+    }
+
+    pub fn get_record_score(&mut self) -> usize {
+        let current_records = self.get_one::<CurrentRecords>();
+        let record_score = current_records.get_record_score();
+        record_score
+    }
+
+    pub fn get_record_room_number(&mut self) -> usize {
+        let current_records = self.get_one::<CurrentRecords>();
+        let record_room_number = current_records.get_record_room_number();
+        record_room_number
     }
 }
