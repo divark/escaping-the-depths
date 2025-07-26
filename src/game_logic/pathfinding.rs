@@ -183,28 +183,36 @@ fn get_bfs_path(
     path
 }
 
+fn visit_dfs_recursive(
+    current_node: &WorldNode,
+    path: &mut VecDeque<NodeData>,
+    visited_nodes: &mut HashSet<usize>,
+    world_graph: &Graph,
+) {
+    let current_node_id = current_node.get_id();
+    if visited_nodes.contains(&current_node_id) {
+        return;
+    }
+
+    let current_node_data = current_node.get_data();
+    path.push_back(current_node_data.clone());
+    visited_nodes.insert(current_node_id);
+
+    let current_node_edges = world_graph.get_edges(current_node);
+    for next_node in current_node_edges {
+        visit_dfs_recursive(next_node, path, visited_nodes, world_graph);
+        path.push_back(current_node_data.clone());
+    }
+}
+
 impl Pathfinding {
     pub fn explore_all(source: &LogicalCoordinates, world_graph: &Graph) -> Self {
-        let mut nodes_to_visit: Vec<&WorldNode> = Vec::new();
         let source_node = world_graph.get_node_at(source);
-        nodes_to_visit.push(&source_node);
 
         let mut path = VecDeque::new();
         let mut visited_nodes = HashSet::new();
-        while let Some(node_to_visit) = nodes_to_visit.pop() {
-            if visited_nodes.contains(&node_to_visit.get_id()) {
-                continue;
-            }
 
-            let node_data = node_to_visit.get_data();
-            path.push_back(node_data.clone());
-            visited_nodes.insert(node_to_visit.get_id());
-
-            let node_edges = world_graph.get_edges(node_to_visit);
-            for next_node in node_edges {
-                nodes_to_visit.push(next_node);
-            }
-        }
+        visit_dfs_recursive(source_node, &mut path, &mut visited_nodes, world_graph);
 
         Self { path }
     }
