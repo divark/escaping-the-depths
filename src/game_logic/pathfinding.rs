@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use bevy::prelude::*;
 
@@ -133,6 +133,13 @@ impl Graph {
             .expect("get_node_at: Could not find node")
     }
 
+    pub fn get_node_by_id(&self, desired_node_id: usize) -> &WorldNode {
+        self.nodes
+            .iter()
+            .find(|node| node.get_id() == desired_node_id)
+            .expect("get_node_by_id: Could not find node.")
+    }
+
     pub fn get_edges(&self, node: &WorldNode) -> Vec<&WorldNode> {
         let mut node_edges = Vec::new();
 
@@ -149,6 +156,31 @@ impl Graph {
 #[derive(Component)]
 pub struct Pathfinding {
     path: VecDeque<NodeData>,
+}
+
+fn get_bfs_path(
+    source_node: &WorldNode,
+    target_node: &WorldNode,
+    discovered_by: &HashMap<usize, usize>,
+    world_graph: &Graph,
+) -> VecDeque<NodeData> {
+    let mut path = VecDeque::new();
+    path.push_front(target_node.get_data().clone());
+
+    let mut current_node_id = target_node.get_id();
+    while let Some(parent_node_id) = discovered_by.get(&current_node_id) {
+        if current_node_id == source_node.get_id() {
+            break;
+        }
+
+        let parent_node = world_graph.get_node_by_id(*parent_node_id);
+        let parent_node_data = parent_node.get_data().clone();
+        path.push_front(parent_node_data);
+
+        current_node_id = parent_node.get_id();
+    }
+
+    path
 }
 
 impl Pathfinding {
@@ -182,30 +214,43 @@ impl Pathfinding {
         destination: &LogicalCoordinates,
         world_graph: &Graph,
     ) -> Self {
-        let mut nodes_to_visit: Vec<&WorldNode> = Vec::new();
+        let mut nodes_to_visit: VecDeque<&WorldNode> = VecDeque::new();
         let source_node = world_graph.get_node_at(source);
-        nodes_to_visit.push(&source_node);
+        nodes_to_visit.push_back(&source_node);
 
-        let mut path = VecDeque::new();
         let mut visited_nodes = HashSet::new();
-        while let Some(node_to_visit) = nodes_to_visit.pop() {
+        let mut discovered_by = HashMap::new();
+        let mut found_target_node = None;
+        while let Some(node_to_visit) = nodes_to_visit.pop_front() {
             if visited_nodes.contains(&node_to_visit.get_id()) {
                 continue;
             }
 
             let node_data = node_to_visit.get_data();
-            path.push_back(node_data.clone());
             visited_nodes.insert(node_to_visit.get_id());
 
             if node_data.get_location() == destination {
+                found_target_node = Some(node_to_visit);
                 break;
             }
 
             let node_edges = world_graph.get_edges(node_to_visit);
             for next_node in node_edges {
-                nodes_to_visit.push(next_node);
+                nodes_to_visit.push_back(next_node);
+
+                if !visited_nodes.contains(&next_node.get_id()) {
+                    discovered_by.insert(next_node.get_id(), node_to_visit.get_id());
+                }
             }
         }
+
+        let target_node = found_target_node.expect(&format!(
+            "shortest_path: Could not find destination for node {}, {}",
+            destination.get_x(),
+            destination.get_y(),
+        ));
+
+        let path = get_bfs_path(source_node, target_node, &discovered_by, world_graph);
 
         Self { path }
     }
@@ -330,7 +375,7 @@ pub fn make_explorer_go_to_exit_door(
     if *exit_door_state == ExitDoorState::Closed {
         return;
     }
-    
+
     if *explorer_state != ExplorerState::Wandering {
         return;
     }
