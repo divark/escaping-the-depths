@@ -2,3 +2,4 @@
 
 .zed
 .vscode
+*.DS_Store

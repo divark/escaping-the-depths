@@ -17,6 +17,7 @@ pub enum GameState {
 pub enum RoomObject {
     #[default]
     Empty,
+    Wall,
     Explorer,
     ExitDoor,
     HiddenFloorSwitch,

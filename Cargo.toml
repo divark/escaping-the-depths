@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = "^0.16"
+rand = "^0.9"
 
 [dev-dependencies]
 cucumber = "^0.21"
