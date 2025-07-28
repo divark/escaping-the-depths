@@ -320,7 +320,7 @@ impl PathTarget {
         }
 
         let tile_difference = 16.0;
-        target - (tile_difference - self.movement_timer.fraction())
+        target - (tile_difference * self.movement_timer.fraction())
     }
 
     pub fn advance(&mut self, time: &Res<Time>) -> Transform {
