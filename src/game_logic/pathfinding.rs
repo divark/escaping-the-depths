@@ -291,6 +291,8 @@ impl Pathfinding {
 pub struct PathTarget {
     movement_timer: Timer,
 
+    starting_position: Transform,
+
     logical_target: LogicalCoordinates,
     physical_target: Transform,
 
@@ -307,6 +309,8 @@ impl PathTarget {
         Self {
             movement_timer,
 
+            starting_position: current_position.clone(),
+
             logical_target,
             physical_target,
 
@@ -314,20 +318,29 @@ impl PathTarget {
         }
     }
 
-    fn compute_expected_position(&self, target: f32) -> f32 {
+    fn compute_expected_position(&self, source: f32, target: f32) -> f32 {
         if self.movement_timer.finished() {
             return target;
         }
 
-        let tile_difference = 16.0;
-        target - (tile_difference * self.movement_timer.fraction())
+        let difference = target - source;
+        let time_passed_percentage = self.movement_timer.fraction();
+        let new_position = source + (difference * time_passed_percentage);
+
+        new_position
     }
 
     pub fn advance(&mut self, time: &Res<Time>) -> Transform {
         self.movement_timer.tick(time.delta());
 
-        let advanced_x = self.compute_expected_position(self.physical_target.translation.x);
-        let advanced_y = self.compute_expected_position(self.physical_target.translation.y);
+        let advanced_x = self.compute_expected_position(
+            self.starting_position.translation.x,
+            self.physical_target.translation.x,
+        );
+        let advanced_y = self.compute_expected_position(
+            self.starting_position.translation.y,
+            self.physical_target.translation.y,
+        );
         let existing_z = self.current_position.translation.z;
 
         let current_position = Transform::from_xyz(advanced_x, advanced_y, existing_z);
