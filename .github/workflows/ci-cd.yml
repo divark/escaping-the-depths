@@ -67,9 +67,16 @@ jobs:
       - name: Build a release of the project
         run: cargo build --release
 
-      - name: Upload the project binary if this is not a release.
+      - name: Upload the project binary if this is not a release (Unix-based OSes).
         uses: actions/upload-artifact@v4
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && runner.os != 'Windows'
         with:
           path: target/release/escaping-the-depths
+          name: escaping-the-depths-${{ matrix.os }}
+
+      - name: Upload the project binary if this is not a release (Windows).
+        uses: actions/upload-artifact@v4
+        if: github.ref_type != 'tag' && runner.os == 'Windows'
+        with:
+          path: target/release/escaping-the-depths.exe
           name: escaping-the-depths-${{ matrix.os }}
