@@ -301,7 +301,7 @@ fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) 
         RoomObject::Empty => "environment/floor_plain.png",
         RoomObject::Wall => "environment/wall_center.png",
         RoomObject::Explorer => "characters/npc_merchant_2.png",
-        RoomObject::ExitDoor => "environment/door_closed.png",
+        RoomObject::ExitDoor => "environment/floor_plain.png",
         RoomObject::HiddenFloorSwitch => "environment/floor_mud_n_1.png",
         RoomObject::Treasure(_) => "environment/treasure.png",
         RoomObject::Trap => "environment/trap.png",
@@ -472,10 +472,10 @@ pub fn add_walls(generated_cave_room: &mut CaveRoom) {
 fn place_exit_door(generated_cave_room: &mut CaveRoom) {
     let mut random_number_generator = rand::rng();
     let row_width = generated_cave_room.get_width();
-    let row_idx = row_width - 1;
-    let col_idx = random_number_generator.random_range(1..row_width - 1);
+    let x = random_number_generator.random_range(1..row_width - 1);
+    let y = row_width - 1;
 
-    generated_cave_room.set(row_idx, col_idx, RoomObject::ExitDoor);
+    generated_cave_room.set(x, y, RoomObject::ExitDoor);
 }
 
 fn place_hidden_door_switch(
