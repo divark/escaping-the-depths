@@ -28,7 +28,9 @@ pub struct TestRoomGenerator {
 
 impl RoomGenerating for TestRoomGenerator {
     fn generate(&self) -> CaveRoom {
-        let room_generated = CaveRoom::new(self.width, self.height);
+        // Adding walls to each side means we have to increase the width and height by 2. 
+        let mut room_generated = CaveRoom::new(self.width + 2, self.height + 2);
+        add_walls(&mut room_generated);
 
         room_generated
     }
@@ -45,6 +47,7 @@ pub fn parse_object_type(object_name: String) -> RoomObject {
         "hidden floor switch" => RoomObject::HiddenFloorSwitch,
         "exit door" => RoomObject::ExitDoor,
         "armed trap" => RoomObject::Trap,
+        "explorer" => RoomObject::Explorer,
         _ => panic!(
             "parse_object_type: {} is not a known room object.",
             object_name
@@ -55,6 +58,7 @@ pub fn parse_object_type(object_name: String) -> RoomObject {
 #[derive(Debug, World)]
 #[world(init = Self::new)]
 pub struct MockGame {
+    cave_room: CaveRoom,
     app: App,
 }
 
@@ -84,7 +88,10 @@ impl MockGame {
         app.add_plugins(StatesPlugin);
         app.add_plugins(DefaultPickingPlugins);
 
-        Self { app }
+        Self {
+            app,
+            cave_room: CaveRoom::new(0, 0),
+        }
     }
 
     fn tick(&mut self) {
@@ -153,13 +160,14 @@ impl MockGame {
             .expect("get_with: Could not find component with dependency.")
     }
 
-    fn get_all<T>(&mut self) -> Vec<&T>
+    fn get_all_without<T, F>(&mut self) -> Vec<&T>
     where
         T: Component,
+        F: Component + PartialEq,
     {
         self.app
             .world_mut()
-            .query::<&T>()
+            .query_filtered::<&T, Without<F>>()
             .iter(self.app.world_mut())
             .collect()
     }
@@ -200,28 +208,19 @@ impl MockGame {
             game_over_time,
             test_room_generator,
         ));
+        self.tick();
 
         let room_generator = self.get_resource::<TestRoomGenerator>();
-        let room = room_generator.generate();
-        self.broadcast(ChangeRoom::new(room));
+        self.cave_room = room_generator.generate();
+    }
+
+    pub fn render_room(&mut self) {
+        self.broadcast(ChangeRoom::new(self.cave_room.clone()));
         self.tick();
     }
 
     pub fn place(&mut self, object_type: RoomObject, object_x: usize, object_y: usize) {
-        let depth_to_place = if object_type == RoomObject::Explorer {
-            2
-        } else {
-            1
-        };
-
-        self.broadcast(PlaceRoomObject::new(
-            object_type,
-            object_x,
-            object_y,
-            depth_to_place,
-        ));
-
-        self.tick();
+        self.cave_room.set(object_x, object_y, object_type);
     }
 
     pub fn click(&mut self, uv_x: f32, uv_y: f32) {
@@ -308,8 +307,8 @@ impl MockGame {
         }
     }
 
-    pub fn get_all_tiles(&mut self) -> HashSet<LogicalCoordinates> {
-        let all_tiles = self.get_all::<LogicalCoordinates>();
+    pub fn get_traversible_tiles(&mut self) -> HashSet<LogicalCoordinates> {
+        let all_tiles = self.get_all_without::<LogicalCoordinates, Wall>();
 
         let mut all_unique_tiles = HashSet::new();
         for tile in all_tiles {
@@ -319,16 +318,24 @@ impl MockGame {
         all_unique_tiles
     }
 
-    pub fn get_explorer_tiles_to_be_visited(&mut self) -> HashSet<LogicalCoordinates> {
+    pub fn get_explorer_tile_locations_to_be_visited(&mut self) -> HashSet<LogicalCoordinates> {
         let explorer_path = self.get_one::<Pathfinding>();
         let explorer_tiles_to_be_visited = explorer_path.get_locations();
 
-        let mut unique_explorer_tiles_to_be_visited = HashSet::new();
-        for tile in explorer_tiles_to_be_visited {
-            unique_explorer_tiles_to_be_visited.insert(tile);
-        }
+        explorer_tiles_to_be_visited
+            .iter()
+            .cloned()
+            .collect::<HashSet<LogicalCoordinates>>()
+    }
 
-        unique_explorer_tiles_to_be_visited
+    pub fn get_explorer_tile_types_to_be_visited(&mut self) -> HashSet<RoomObject> {
+        let explorer_path = self.get_one::<Pathfinding>();
+        let explorer_tile_types_to_be_visited = explorer_path.get_types();
+
+        explorer_tile_types_to_be_visited
+            .iter()
+            .cloned()
+            .collect::<HashSet<RoomObject>>()
     }
 
     pub fn wait_for_explorer_to_reach(&mut self, position: LogicalCoordinates) {

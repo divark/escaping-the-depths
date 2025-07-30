@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     CaveRoom, CurrentRecords, ExitDoorState, ExplorerHealth, GameState, LogicalCoordinates,
-    RoomGenerating, RoomObject, TrapState, game_logic::scores::TreasureScore,
+    RoomGenerating, RoomObject, TrapState, Wall, game_logic::scores::TreasureScore,
 };
 
 use bevy::prelude::*;
@@ -140,7 +140,7 @@ fn spawn_room_traversal_graph(cave_room: &CaveRoom, commands: &mut Commands) {
     let room_tile_locations = cave_room
         .get_tiles()
         .iter()
-        .map(|tile| *tile.get_logical_coordinates())
+        .map(|tile| (*tile.get_logical_coordinates(), *tile.get_type()))
         .collect();
 
     let traversal_graph = Graph::from_tiles(&room_tile_locations, cave_room.get_dimensions());
@@ -195,7 +195,7 @@ pub fn spawn_next_room<T>(
     current_records.increment_room_count();
 
     let mut newly_generated_caveroom = room_generator.generate();
-    newly_generated_caveroom.set(explorer_location.get_x(), 0, RoomObject::Explorer);
+    newly_generated_caveroom.set(explorer_location.get_x(), 1, RoomObject::Explorer);
 
     let change_room_request = ChangeRoom::new(newly_generated_caveroom);
     change_room_broadcaster.write(change_room_request);
@@ -246,7 +246,7 @@ pub fn reset_to_level_one_after_game_over<T>(
     }
 
     let mut newly_generated_caveroom = room_generator.generate();
-    newly_generated_caveroom.set(0, 0, RoomObject::Explorer);
+    newly_generated_caveroom.set(1, 1, RoomObject::Explorer);
     explorer_health.set_current_health(3);
     explorer_health.set_total_health(3);
 
@@ -375,6 +375,9 @@ pub fn place_tile(
             RoomObject::Explorer => {
                 commands.spawn(ExplorerBundle::new(rendered_tile));
             }
+            RoomObject::Wall => {
+                commands.spawn((rendered_tile, Wall));
+            }
             RoomObject::ExitDoor => {
                 commands.spawn((rendered_tile, ExitDoorState::Closed));
             }
@@ -455,7 +458,7 @@ fn add_walls_to_column(generated_cave_room: &mut CaveRoom, col_idx: usize, colum
     }
 }
 
-fn add_walls(generated_cave_room: &mut CaveRoom) {
+pub fn add_walls(generated_cave_room: &mut CaveRoom) {
     let room_width = generated_cave_room.get_width();
     let room_height = generated_cave_room.get_height();
 

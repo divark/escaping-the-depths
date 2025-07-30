@@ -13,7 +13,7 @@ pub enum GameState {
     GameOver,
 }
 
-#[derive(Clone, Copy, PartialEq, Default)]
+#[derive(Clone, Copy, PartialEq, Default, Hash, Eq, Debug)]
 pub enum RoomObject {
     #[default]
     Empty,
@@ -49,7 +49,7 @@ impl LogicalCoordinates {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Tile {
     logical_coordinates: LogicalCoordinates,
     tile_type: RoomObject,
@@ -87,6 +87,9 @@ pub enum TrapState {
     Armed,
     Unarmed,
 }
+
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct Wall;
 
 #[derive(Component, Debug)]
 pub struct CurrentRecords {
@@ -153,7 +156,7 @@ impl Default for CurrentRecords {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WorldTileDimensions {
     width: usize,
     height: usize,
@@ -207,7 +210,7 @@ impl ExplorerHealth {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CaveRoom {
     world_tile_dimensions: WorldTileDimensions,
 
@@ -234,6 +237,17 @@ impl CaveRoom {
 
     pub fn set(&mut self, x: usize, y: usize, tile_type: RoomObject) {
         let logical_coordinates = LogicalCoordinates::new(x, y);
+        if tile_type == RoomObject::Wall || tile_type == RoomObject::ExitDoor {
+            let found_tile = self
+                .room_tiles
+                .iter_mut()
+                .find(|tile| tile.get_logical_coordinates() == &logical_coordinates)
+                .expect("set: Could not find designated tile for wall.");
+            found_tile.set_type(tile_type);
+
+            return;
+        }
+
         let mut room_object = Tile::new(logical_coordinates);
         room_object.set_type(tile_type);
 

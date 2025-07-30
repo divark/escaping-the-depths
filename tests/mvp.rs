@@ -46,11 +46,6 @@ fn set_current_score(game: &mut MockGame, current_score: usize) {
     game.set_current_score(current_score);
 }
 
-#[when(regex = r"the explorer is on Tile ([0-9]+), ([0-9]+),")]
-fn move_explorer_to_tile(game: &mut MockGame, desired_x: usize, desired_y: usize) {
-    game.place(RoomObject::Explorer, desired_x, desired_y);
-}
-
 #[when(regex = r"a viewer clicks with UV coordinates ([0-9]+.[0-9]+), ([0-9]+.[0-9]+),")]
 fn simulate_click(game: &mut MockGame, uv_x: f32, uv_y: f32) {
     game.click(uv_x, uv_y);
@@ -75,6 +70,11 @@ fn wait_until_explorer_reached_tile(game: &mut MockGame, desired_x: usize, desir
 #[when("the game over timer has elapsed,")]
 fn wait_for_game_over_time_to_finish(game: &mut MockGame) {
     game.wait_for_game_over_timer_to_finish();
+}
+
+#[when("the cave room is rendered,")]
+fn spawn_cave_room_in_game(game: &mut MockGame) {
+    game.render_room();
 }
 
 #[then("the exit door will be opened.")]
@@ -141,9 +141,17 @@ fn verify_explorer_position(game: &mut MockGame, expected_tile_x: usize, expecte
 
 #[then("the explorer should be visiting all other tiles in the room.")]
 fn verify_explorer_visiting_all_other_tiles(game: &mut MockGame) {
-    let expected_tiles_to_visit = game.get_all_tiles();
-    let actual_tiles_to_visit = game.get_explorer_tiles_to_be_visited();
+    let expected_tiles_to_visit = game.get_traversible_tiles();
+    let actual_tiles_to_visit = game.get_explorer_tile_locations_to_be_visited();
     assert_eq!(expected_tiles_to_visit, actual_tiles_to_visit);
+}
+
+#[then("the explorer should not be visiting any wall tiles in the room.")]
+fn verify_explorer_not_visiting_wall_tiles(game: &mut MockGame) {
+    let explorer_not_visiting_wall_tiles = !game
+        .get_explorer_tile_types_to_be_visited()
+        .contains(&RoomObject::Wall);
+    assert!(explorer_not_visiting_wall_tiles);
 }
 
 #[then(regex = r"the current room count should be ([0-9]+).")]

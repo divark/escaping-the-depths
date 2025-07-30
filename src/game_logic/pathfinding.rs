@@ -2,22 +2,30 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use bevy::prelude::*;
 
-use crate::{ExitDoorState, LogicalCoordinates, WorldTileDimensions};
+use crate::{ExitDoorState, LogicalCoordinates, RoomObject, WorldTileDimensions};
 
 use super::{MovementTime, room_generating::ExplorerState};
 
 #[derive(Clone)]
 pub struct NodeData {
     location: LogicalCoordinates,
+    tile_type: RoomObject,
 }
 
 impl NodeData {
-    pub fn new(location: LogicalCoordinates) -> Self {
-        Self { location }
+    pub fn new(location: LogicalCoordinates, tile_type: RoomObject) -> Self {
+        Self {
+            location,
+            tile_type,
+        }
     }
 
     pub fn get_location(&self) -> &LogicalCoordinates {
         &self.location
+    }
+
+    pub fn get_type(&self) -> &RoomObject {
+        &self.tile_type
     }
 }
 
@@ -41,12 +49,23 @@ impl WorldNode {
 }
 
 pub struct AdjacencyList {
-    edges: Vec<Vec<usize>>,
+    edges: HashMap<usize, Vec<usize>>,
+}
+
+fn insert_edge(parent_node: usize, child_node: usize, edges: &mut HashMap<usize, Vec<usize>>) {
+    if !edges.contains_key(&parent_node) {
+        edges.insert(parent_node, Vec::new());
+    }
+
+    edges
+        .get_mut(&parent_node)
+        .expect("insert_edge: Could not find the edge for the given parent node")
+        .push(child_node);
 }
 
 impl AdjacencyList {
     pub fn from_tile_nodes(nodes: &Vec<WorldNode>, world_size: &WorldTileDimensions) -> Self {
-        let mut edges = vec![Vec::new(); nodes.len()];
+        let mut edges = HashMap::new();
 
         for node in nodes {
             let current_node_location = node.get_data().get_location();
@@ -61,12 +80,11 @@ impl AdjacencyList {
                 let left_node_found_in_nodes = nodes
                     .binary_search_by(|node| node.get_id().cmp(&left_node_id))
                     .is_ok();
-                if !left_node_found_in_nodes {
-                    continue;
+                if left_node_found_in_nodes {
+                    insert_edge(current_node_id, left_node_id, &mut edges);
+                    insert_edge(left_node_id, current_node_id, &mut edges);
                 }
 
-                edges[current_node_id].push(left_node_id);
-                edges[left_node_id].push(current_node_id);
             }
 
             if current_node_location.get_y() > 0 {
@@ -79,12 +97,10 @@ impl AdjacencyList {
                 let top_node_found_in_nodes = nodes
                     .binary_search_by(|node| node.get_id().cmp(&top_node_id))
                     .is_ok();
-                if !top_node_found_in_nodes {
-                    continue;
+                if top_node_found_in_nodes {
+                    insert_edge(current_node_id, top_node_id, &mut edges);
+                    insert_edge(top_node_id, current_node_id, &mut edges);
                 }
-
-                edges[current_node_id].push(top_node_id);
-                edges[top_node_id].push(current_node_id);
             }
         }
 
@@ -92,7 +108,7 @@ impl AdjacencyList {
     }
 
     pub fn get_edges(&self, node_id: usize) -> &Vec<usize> {
-        &self.edges[node_id]
+        &self.edges[&node_id]
     }
 }
 
@@ -104,11 +120,18 @@ pub struct Graph {
 }
 
 impl Graph {
-    pub fn from_tiles(tiles: &Vec<LogicalCoordinates>, world_size: &WorldTileDimensions) -> Self {
+    pub fn from_tiles(
+        tiles: &Vec<(LogicalCoordinates, RoomObject)>,
+        world_size: &WorldTileDimensions,
+    ) -> Self {
         let mut nodes = Vec::new();
 
-        for tile_location in tiles {
-            let node_data = NodeData::new(*tile_location);
+        for (tile_location, tile_type) in tiles {
+            if tile_type == &RoomObject::Wall {
+                continue;
+            }
+
+            let node_data = NodeData::new(*tile_location, *tile_type);
             let node_id = tile_location.to_1d(world_size);
             let tile_node = WorldNode::new(node_id, node_data);
             nodes.push(tile_node);
@@ -146,7 +169,8 @@ impl Graph {
         let found_node_edges = self.edges.get_edges(node.get_id());
 
         for node_id in found_node_edges {
-            node_edges.push(&self.nodes[*node_id]);
+            let found_node = self.get_node_by_id(*node_id);
+            node_edges.push(found_node);
         }
 
         node_edges
@@ -283,6 +307,13 @@ impl Pathfinding {
         self.path
             .iter()
             .map(|path_node| *path_node.get_location())
+            .collect()
+    }
+
+    pub fn get_types(&self) -> Vec<RoomObject> {
+        self.path
+            .iter()
+            .map(|path_node| *path_node.get_type())
             .collect()
     }
 }

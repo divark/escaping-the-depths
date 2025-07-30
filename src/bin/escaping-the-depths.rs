@@ -16,8 +16,8 @@ fn main() {
     let movement_time = MovementTime::new(Duration::from_secs(2));
     let game_over_time = GameOverTime::new(Duration::from_secs(10));
 
-    let min_width = 3;
-    let min_height = 3;
+    let min_width = 4;
+    let min_height = 4;
     let room_generator = RandomizedRoomGenerator::new(min_width, min_height);
 
     let mut initial_room = room_generator.generate();
