@@ -674,9 +674,9 @@ fn place_armed_traps(
 impl RoomGenerating for RandomizedRoomGenerator {
     fn generate(&self) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
-        // by + 1.
-        let desired_width = self.min_width + (self.current_room_num / self.min_width) + 1;
-        let desired_height = self.min_height + (self.current_room_num / self.min_height) + 1;
+        // by + 2.
+        let desired_width = self.min_width + (self.current_room_num / self.min_width) + 2;
+        let desired_height = self.min_height + (self.current_room_num / self.min_height) + 2;
 
         let mut generated_cave_room = CaveRoom::new(desired_width, desired_height);
         add_walls(&mut generated_cave_room);
