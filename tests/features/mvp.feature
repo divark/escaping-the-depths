@@ -9,10 +9,10 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: The exit door opens when a viewer clicks the hidden floor switch.
         Given a 3x3 cave room,
-        And a hidden floor switch placed at coordinates 2, 0,
+        And a hidden floor switch placed at coordinates 2, 1,
         And an exit door placed at coordinates 1, 2,
         When the cave room is rendered,
-        When a viewer clicks with UV coordinates 0.50625, 0.4667,
+        When a viewer clicks with UV coordinates 0.49375, 0.4667,
         Then the exit door will be opened.
 
     Scenario: The explorer heads for the exit when the exit door is opened.
@@ -69,17 +69,17 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: The current score increases when a viewer clicks on some treasure.
         Given a 3x3 cave room,
-        And some piece of treasure worth 500 points placed on coordinates 2, 0,
+        And some piece of treasure worth 500 points placed on coordinates 2, 1,
         When the cave room is rendered,
-        When a viewer clicks with UV coordinates 0.50625, 0.4667,
+        When a viewer clicks with UV coordinates 0.49375, 0.4667,
         Then the current score will be 500 points.
 
     Scenario: An armed trap is disarmed when a viewer clicks on it.
         Given a 3x3 cave room,
-        And an armed trap placed at coordinates 2, 0,
+        And an armed trap placed at coordinates 2, 1,
         When the cave room is rendered,
-        When a viewer clicks with UV coordinates 0.50625, 0.4667,
-        Then the trap at Tile 2, 0 will be disarmed.
+        When a viewer clicks with UV coordinates 0.49375, 0.4667,
+        Then the trap at Tile 2, 1 will be disarmed.
 
     Scenario: The health of the explorer will go down if the explorer steps on an armed trap.
         Given a 4x4 cave room,
