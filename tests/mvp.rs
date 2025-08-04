@@ -5,7 +5,9 @@ use cucumber::{World, given, then, when};
 mod mock_game;
 use mock_game::*;
 
-use escaping_the_depths::{game_logic::room_generating::ExplorerState, *};
+use escaping_the_depths::core_logic::scoring::*;
+use escaping_the_depths::core_logic::setting::*;
+use escaping_the_depths::core_logic::traveling::*;
 
 #[given(regex = r"a ([0-9]+)x([0-9]+) cave room,")]
 fn make_cave_room(game: &mut MockGame, width: usize, height: usize) {

@@ -1,13 +1,9 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use escaping_the_depths::{
-    RoomGenerating, RoomObject,
-    game_logic::{
-        CoreLogic, GameOverTime, MovementTime,
-        room_generating::{ChangeRoom, RandomizedRoomGenerator},
-    },
-};
+
+use escaping_the_depths::core_logic::setting::*;
+use escaping_the_depths::core_logic::*;
 
 fn main() {
     let mut streaming_application = App::new();

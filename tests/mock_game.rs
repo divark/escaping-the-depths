@@ -12,11 +12,11 @@ use cucumber::World;
 
 use bevy::prelude::*;
 
-use escaping_the_depths::game_logic::pathfinding::Pathfinding;
-use escaping_the_depths::game_logic::room_generating::*;
-use escaping_the_depths::game_logic::viewer_interaction::ViewerClick;
-use escaping_the_depths::game_logic::*;
-use escaping_the_depths::*;
+use escaping_the_depths::core_logic::interacting::*;
+use escaping_the_depths::core_logic::scoring::*;
+use escaping_the_depths::core_logic::setting::*;
+use escaping_the_depths::core_logic::traveling::*;
+use escaping_the_depths::core_logic::*;
 
 const TICKING_LIMIT: usize = 100;
 
@@ -28,7 +28,7 @@ pub struct TestRoomGenerator {
 
 impl RoomGenerating for TestRoomGenerator {
     fn generate(&self) -> CaveRoom {
-        // Adding walls to each side means we have to increase the width and height by 2. 
+        // Adding walls to each side means we have to increase the width and height by 2.
         let mut room_generated = CaveRoom::new(self.width + 2, self.height + 2);
         add_walls(&mut room_generated);
 

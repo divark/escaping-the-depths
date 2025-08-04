@@ -1,14 +1,165 @@
 use std::collections::HashSet;
 
-use crate::{
-    CaveRoom, CurrentRecords, ExitDoorState, ExplorerHealth, GameState, LogicalCoordinates,
-    RoomGenerating, RoomObject, TrapState, Wall, game_logic::scores::TreasureScore,
-};
-
 use bevy::prelude::*;
 use rand::Rng;
 
-use super::{GameOverTime, GameOverTimer, pathfinding::Graph};
+use super::{
+    GameOverTimer, GameState,
+    scoring::{CurrentRecords, ExplorerHealth, TrapState, TreasureScore},
+    traveling::{ExitDoorState, Graph},
+};
+
+#[derive(Clone, Copy, PartialEq, Default, Hash, Eq, Debug)]
+pub enum RoomObject {
+    #[default]
+    Empty,
+    Wall,
+    Explorer,
+    ExitDoor,
+    HiddenFloorSwitch,
+    Treasure(usize),
+    Trap,
+}
+
+pub trait RoomGenerating {
+    fn generate(&self) -> CaveRoom;
+}
+
+#[derive(Clone, Debug)]
+pub struct WorldTileDimensions {
+    width: usize,
+    height: usize,
+}
+
+impl WorldTileDimensions {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self { width, height }
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
+}
+
+#[derive(Event, Component, Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
+pub struct LogicalCoordinates {
+    x: usize,
+    y: usize,
+}
+
+impl LogicalCoordinates {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+
+    pub fn get_x(&self) -> usize {
+        self.x
+    }
+
+    pub fn get_y(&self) -> usize {
+        self.y
+    }
+
+    pub fn to_1d(&self, world_tile_dimensions: &WorldTileDimensions) -> usize {
+        (world_tile_dimensions.get_height() * self.get_y()) + self.get_x()
+    }
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct Tile {
+    logical_coordinates: LogicalCoordinates,
+    tile_type: RoomObject,
+}
+
+impl Tile {
+    pub fn new(logical_coordinates: LogicalCoordinates) -> Self {
+        Self {
+            logical_coordinates,
+            tile_type: RoomObject::default(),
+        }
+    }
+
+    pub fn get_type(&self) -> &RoomObject {
+        &self.tile_type
+    }
+
+    pub fn get_logical_coordinates(&self) -> &LogicalCoordinates {
+        &self.logical_coordinates
+    }
+
+    pub fn set_type(&mut self, new_type: RoomObject) {
+        self.tile_type = new_type;
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct CaveRoom {
+    world_tile_dimensions: WorldTileDimensions,
+
+    room_tiles: Vec<Tile>,
+    room_objects: Vec<Tile>,
+}
+
+impl CaveRoom {
+    pub fn new(width: usize, height: usize) -> Self {
+        let mut room_tiles = Vec::new();
+        for i in 0..width {
+            for j in 0..height {
+                room_tiles.push(Tile::new(LogicalCoordinates::new(i, j)));
+            }
+        }
+
+        let world_tile_dimensions = WorldTileDimensions::new(width, height);
+        Self {
+            world_tile_dimensions,
+            room_tiles,
+            room_objects: Vec::new(),
+        }
+    }
+
+    pub fn set(&mut self, x: usize, y: usize, tile_type: RoomObject) {
+        let logical_coordinates = LogicalCoordinates::new(x, y);
+        if tile_type == RoomObject::Wall || tile_type == RoomObject::ExitDoor {
+            let found_tile = self
+                .room_tiles
+                .iter_mut()
+                .find(|tile| tile.get_logical_coordinates() == &logical_coordinates)
+                .expect("set: Could not find designated tile for wall.");
+            found_tile.set_type(tile_type);
+
+            return;
+        }
+
+        let mut room_object = Tile::new(logical_coordinates);
+        room_object.set_type(tile_type);
+
+        self.room_objects.push(room_object);
+    }
+
+    pub fn get_tiles(&self) -> &Vec<Tile> {
+        &self.room_tiles
+    }
+
+    pub fn get_objects(&self) -> &Vec<Tile> {
+        &self.room_objects
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.world_tile_dimensions.get_width()
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.world_tile_dimensions.get_height()
+    }
+
+    pub fn get_dimensions(&self) -> &WorldTileDimensions {
+        &self.world_tile_dimensions
+    }
+}
 
 #[derive(Event)]
 pub struct ChangeRoom(CaveRoom);
@@ -54,6 +205,9 @@ impl PlaceRoomObject {
         }
     }
 }
+
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct Wall;
 
 #[derive(Bundle, Default)]
 pub struct SpriteBundle {
@@ -199,22 +353,6 @@ pub fn spawn_next_room<T>(
 
     let change_room_request = ChangeRoom::new(newly_generated_caveroom);
     change_room_broadcaster.write(change_room_request);
-}
-
-pub fn start_game_over_countdown_on_death(
-    explorer_health: Res<ExplorerHealth>,
-    game_over_time: Res<GameOverTime>,
-    mut next_game_state: ResMut<NextState<GameState>>,
-    mut commands: Commands,
-) {
-    if explorer_health.get_current_health() != 0 {
-        return;
-    }
-
-    let game_over_timer = GameOverTimer::new(&game_over_time);
-    commands.spawn(game_over_timer);
-
-    next_game_state.set(GameState::GameOver);
 }
 
 pub fn reset_to_level_one_after_game_over<T>(
@@ -393,32 +531,6 @@ pub fn place_tile(
             _ => {
                 commands.spawn(rendered_tile);
             }
-        }
-    }
-}
-
-pub fn unlock_exit_door_with_explorer(
-    movement_changes: Query<
-        &LogicalCoordinates,
-        (With<ExplorerState>, Changed<LogicalCoordinates>),
-    >,
-    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
-    mut exit_door: Query<&mut ExitDoorState>,
-) {
-    if movement_changes.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
-        return;
-    }
-
-    for movement_coordinates in movement_changes.iter() {
-        let hidden_floor_switch_coordinates = hidden_floor_switch.single().expect(
-            "unlock_hidden_door_with_explorer: Could not find the coordinates of the hidden floor switch.",
-        );
-        let mut exit_door_state = exit_door
-            .single_mut()
-            .expect("unlock_exit_door_with_explorer: Could not find the exit door.");
-
-        if *movement_coordinates == *hidden_floor_switch_coordinates {
-            *exit_door_state = ExitDoorState::Open;
         }
     }
 }

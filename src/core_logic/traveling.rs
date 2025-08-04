@@ -2,9 +2,18 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use bevy::prelude::*;
 
-use crate::{ExitDoorState, LogicalCoordinates, RoomObject, WorldTileDimensions};
+use super::{
+    MovementTime,
+    setting::{
+        ExplorerState, HiddenFloorSwitch, LogicalCoordinates, RoomObject, WorldTileDimensions,
+    },
+};
 
-use super::{MovementTime, room_generating::ExplorerState};
+#[derive(Clone, Copy, Debug, Component, PartialEq)]
+pub enum ExitDoorState {
+    Closed,
+    Open,
+}
 
 #[derive(Clone)]
 pub struct NodeData {
@@ -84,7 +93,6 @@ impl AdjacencyList {
                     insert_edge(current_node_id, left_node_id, &mut edges);
                     insert_edge(left_node_id, current_node_id, &mut edges);
                 }
-
             }
 
             if current_node_location.get_y() > 0 {
@@ -542,4 +550,53 @@ pub fn make_explorer_wander(
 
     let explorer_path = Pathfinding::explore_all(explorer_position, room_graph);
     commands.entity(explorer_entity).insert(explorer_path);
+}
+
+pub fn unlock_exit_door_with_explorer(
+    movement_changes: Query<
+        &LogicalCoordinates,
+        (With<ExplorerState>, Changed<LogicalCoordinates>),
+    >,
+    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
+    mut exit_door: Query<&mut ExitDoorState>,
+) {
+    if movement_changes.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
+        return;
+    }
+
+    for movement_coordinates in movement_changes.iter() {
+        let hidden_floor_switch_coordinates = hidden_floor_switch.single().expect(
+            "unlock_hidden_door_with_explorer: Could not find the coordinates of the hidden floor switch.",
+        );
+        let mut exit_door_state = exit_door
+            .single_mut()
+            .expect("unlock_exit_door_with_explorer: Could not find the exit door.");
+
+        if *movement_coordinates == *hidden_floor_switch_coordinates {
+            *exit_door_state = ExitDoorState::Open;
+        }
+    }
+}
+
+pub fn unlock_exit_door_with_viewer_click(
+    mut movement_changes: EventReader<LogicalCoordinates>,
+    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
+    mut exit_door: Query<&mut ExitDoorState>,
+) {
+    if movement_changes.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
+        return;
+    }
+
+    for movement_coordinates in movement_changes.read() {
+        let hidden_floor_switch_coordinates = hidden_floor_switch.single().expect(
+            "unlock_hidden_door_with_viewer_click: Could not find the coordinates of the hidden floor switch.",
+        );
+        let mut exit_door_state = exit_door
+            .single_mut()
+            .expect("unlock_exit_door_with_viewer_click: Could not find the exit door.");
+
+        if *movement_coordinates == *hidden_floor_switch_coordinates {
+            *exit_door_state = ExitDoorState::Open;
+        }
+    }
 }

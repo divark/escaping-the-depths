@@ -1,28 +1,33 @@
-pub mod pathfinding;
-pub mod room_generating;
-pub mod scores;
-pub mod traps;
-pub mod viewer_interaction;
+pub mod interacting;
+pub mod scoring;
+pub mod setting;
+pub mod traveling;
 
 use std::time::Duration;
 
 use bevy::prelude::*;
-use pathfinding::{
+use interacting::{ViewerClick, convert_viewer_click_to_tile_click};
+use scoring::{
+    ExplorerHealth, claim_treasure_with_explorer, claim_treasure_with_viewer_click,
+    disarm_trap_with_viewer_click, hurt_explorer_with_armed_trap, initialize_records,
+    start_game_over_countdown_on_death,
+};
+use setting::{
+    ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating,
+    despawn_current_room, place_tile, reset_to_level_one_after_game_over, spawn_new_room,
+    spawn_next_room,
+};
+use traveling::{
     make_explorer_go_to_exit_door, make_explorer_wander, move_explorer_to_next_tile,
-    set_explorer_target,
-};
-use room_generating::{
-    ChangeRoom, LoadRoom, PlaceRoomObject, despawn_current_room, place_tile,
-    reset_to_level_one_after_game_over, spawn_new_room, spawn_next_room,
-    start_game_over_countdown_on_death, unlock_exit_door_with_explorer,
-};
-use scores::{claim_treasure_with_explorer, claim_treasure_with_viewer_click, initialize_records};
-use traps::{disarm_trap_with_viewer_click, hurt_explorer_with_armed_trap};
-use viewer_interaction::{
-    ViewerClick, convert_viewer_click_to_tile_click, unlock_exit_door_with_viewer_click,
+    set_explorer_target, unlock_exit_door_with_explorer, unlock_exit_door_with_viewer_click,
 };
 
-use crate::{ExplorerHealth, GameState, LogicalCoordinates, RoomGenerating};
+#[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+pub enum GameState {
+    #[default]
+    Active,
+    GameOver,
+}
 
 #[derive(Component, Clone, Copy, PartialEq)]
 pub enum TimerType {
