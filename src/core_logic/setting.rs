@@ -9,6 +9,8 @@ use super::{
     traveling::{ExitDoorState, Graph},
 };
 
+pub const WALLS_OFFSET: usize = 2;
+
 #[derive(Clone, Copy, PartialEq, Default, Hash, Eq, Debug)]
 pub enum RoomObject {
     #[default]
@@ -634,8 +636,8 @@ fn place_treasure(
 ) {
     let placement_percentage_decimal = 0.15;
 
-    let num_tiles_to_consider =
-        (generated_cave_room.get_width() - 1) * (generated_cave_room.get_height() - 1);
+    let num_tiles_to_consider = (generated_cave_room.get_width() - WALLS_OFFSET)
+        * (generated_cave_room.get_height() - WALLS_OFFSET);
     let num_treasure_to_place =
         (num_tiles_to_consider as f32 * placement_percentage_decimal) as usize;
 
@@ -656,8 +658,8 @@ fn place_armed_traps(
 ) {
     let placement_percentage_decimal = 0.15;
 
-    let num_tiles_to_consider =
-        (generated_cave_room.get_width() - 1) * (generated_cave_room.get_height() - 1);
+    let num_tiles_to_consider = (generated_cave_room.get_width() - WALLS_OFFSET)
+        * (generated_cave_room.get_height() - WALLS_OFFSET);
     let num_traps_to_place = (num_tiles_to_consider as f32 * placement_percentage_decimal) as usize;
 
     for _i in 0..num_traps_to_place {
@@ -675,8 +677,10 @@ impl RoomGenerating for RandomizedRoomGenerator {
     fn generate(&self) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
         // by + 2.
-        let desired_width = self.min_width + (self.current_room_num / self.min_width) + 2;
-        let desired_height = self.min_height + (self.current_room_num / self.min_height) + 2;
+        let desired_width =
+            self.min_width + (self.current_room_num / self.min_width) + WALLS_OFFSET;
+        let desired_height =
+            self.min_height + (self.current_room_num / self.min_height) + WALLS_OFFSET;
 
         let mut generated_cave_room = CaveRoom::new(desired_width, desired_height);
         add_walls(&mut generated_cave_room);
