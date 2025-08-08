@@ -37,9 +37,9 @@ fn adjust_from_camera(screen_coordinates: Transform, camera: &Transform) -> Tran
     *camera * screen_coordinates
 }
 
-fn convert_to_tilepos(game_coordinates: Transform, tile_size: usize) -> LogicalCoordinates {
-    let x_pos = game_coordinates.translation.x / tile_size as f32;
-    let y_pos = game_coordinates.translation.y / tile_size as f32;
+fn convert_to_tilepos(game_coordinates: Transform, tile_size: f32) -> LogicalCoordinates {
+    let x_pos = game_coordinates.translation.x / tile_size;
+    let y_pos = game_coordinates.translation.y / tile_size;
     LogicalCoordinates::new(x_pos as usize, y_pos as usize)
 }
 
@@ -58,6 +58,7 @@ pub fn convert_viewer_click_to_tile_click(
     );
     let window_width = window.width();
     let window_height = window.height();
+    let tile_size = 16.0 * window.scale_factor();
 
     let camera_position = camera
         .single()
@@ -66,7 +67,7 @@ pub fn convert_viewer_click_to_tile_click(
     for viewer_click in viewer_clicks.read() {
         let game_coords = convert_to_coords(viewer_click, window_width, window_height);
         let adjusted_game_coords = adjust_from_camera(game_coords, camera_position);
-        let converted_tile_pos = convert_to_tilepos(adjusted_game_coords, 16);
+        let converted_tile_pos = convert_to_tilepos(adjusted_game_coords, tile_size);
 
         movement_broadcaster.write(converted_tile_pos);
     }

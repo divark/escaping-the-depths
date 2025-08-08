@@ -4,9 +4,12 @@ use std::time::Duration;
 
 use bevy::{prelude::*, window::WindowResolution};
 
-use crate::core_logic::{
-    CoreLogic, GameOverTime, MovementTime,
-    setting::{ChangeRoom, RandomizedRoomGenerator, RoomGenerating, RoomObject},
+use crate::{
+    core_logic::{
+        CoreLogic, GameOverTime, MovementTime,
+        setting::{ChangeRoom, RandomizedRoomGenerator, RoomGenerating, RoomObject},
+    },
+    stream_logic::ui::{spawn_statistics_ui, update_statistics_ui},
 };
 
 pub struct StreamLogic;
