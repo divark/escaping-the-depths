@@ -78,7 +78,7 @@ impl MockGame {
     pub fn new() -> Self {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
-        app.add_plugins(InputPlugin::default());
+        app.add_plugins(InputPlugin);
         app.add_plugins(WindowPlugin {
             primary_window: Some(Window {
                 resolution: WindowResolution::new(1280.0, 720.0),
@@ -96,7 +96,7 @@ impl MockGame {
             ..default()
         });
         app.add_plugins(ImagePlugin::default());
-        app.add_plugins(SpritePlugin::default());
+        app.add_plugins(SpritePlugin);
         app.add_plugins(StatesPlugin);
         app.add_plugins(DefaultPickingPlugins);
 
@@ -364,8 +364,7 @@ impl MockGame {
 
     pub fn get_current_room_number(&mut self) -> usize {
         let current_records = self.get_one::<CurrentRecords>();
-        let current_room_number = current_records.get_current_room_number();
-        current_room_number
+        current_records.get_current_room_number()
     }
 
     pub fn wait_for_game_over_timer_to_finish(&mut self) {
@@ -391,13 +390,17 @@ impl MockGame {
 
     pub fn get_record_score(&mut self) -> usize {
         let current_records = self.get_one::<CurrentRecords>();
-        let record_score = current_records.get_record_score();
-        record_score
+        current_records.get_record_score()
     }
 
     pub fn get_record_room_number(&mut self) -> usize {
         let current_records = self.get_one::<CurrentRecords>();
-        let record_room_number = current_records.get_record_room_number();
-        record_room_number
+        current_records.get_record_room_number()
+    }
+}
+
+impl Default for MockGame {
+    fn default() -> Self {
+        Self::new()
     }
 }

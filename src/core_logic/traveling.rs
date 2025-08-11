@@ -62,9 +62,7 @@ pub struct AdjacencyList {
 }
 
 fn insert_edge(parent_node: usize, child_node: usize, edges: &mut HashMap<usize, Vec<usize>>) {
-    if !edges.contains_key(&parent_node) {
-        edges.insert(parent_node, Vec::new());
-    }
+    edges.entry(parent_node).or_default();
 
     edges
         .get_mut(&parent_node)
@@ -144,9 +142,9 @@ impl Graph {
             let tile_node = WorldNode::new(node_id, node_data);
             nodes.push(tile_node);
         }
-        nodes.sort_by(|node1, node2| node1.get_id().cmp(&node2.get_id()));
+        nodes.sort_by_key(|node1| node1.get_id());
 
-        let edges = AdjacencyList::from_tile_nodes(&nodes, &world_size);
+        let edges = AdjacencyList::from_tile_nodes(&nodes, world_size);
 
         Self {
             world_size: world_size.clone(),
@@ -256,7 +254,7 @@ impl Pathfinding {
     ) -> Self {
         let mut nodes_to_visit: VecDeque<&WorldNode> = VecDeque::new();
         let source_node = world_graph.get_node_at(source);
-        nodes_to_visit.push_back(&source_node);
+        nodes_to_visit.push_back(source_node);
 
         let mut visited_nodes = HashSet::new();
         let mut discovered_by = HashMap::new();
@@ -284,11 +282,13 @@ impl Pathfinding {
             }
         }
 
-        let target_node = found_target_node.expect(&format!(
-            "shortest_path: Could not find destination for node {}, {}",
-            destination.get_x(),
-            destination.get_y(),
-        ));
+        let target_node = found_target_node.unwrap_or_else(|| {
+            panic!(
+                r#"shortest_path: Could not find destination for node {}, {}"#,
+                destination.get_x(),
+                destination.get_y()
+            )
+        });
 
         let path = get_bfs_path(source_node, target_node, &discovered_by, world_graph);
 
@@ -348,7 +348,7 @@ impl PathTarget {
         Self {
             movement_timer,
 
-            starting_position: current_position.clone(),
+            starting_position: current_position,
 
             logical_target,
             physical_target,
@@ -364,9 +364,7 @@ impl PathTarget {
 
         let difference = target - source;
         let time_passed_percentage = self.movement_timer.fraction();
-        let new_position = source + (difference * time_passed_percentage);
-
-        new_position
+        source + (difference * time_passed_percentage)
     }
 
     pub fn advance(&mut self, time: &Res<Time>) -> Transform {

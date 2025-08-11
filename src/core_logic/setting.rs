@@ -281,7 +281,7 @@ fn spawn_objects_in_room(
 }
 
 fn spawn_centered_camera(cave_room: &CaveRoom, commands: &mut Commands) {
-    let centered_on_map_camera = Camera2d::default();
+    let centered_on_map_camera = Camera2d;
     let cave_room_px_width = cave_room.get_width() * 16;
     let cave_room_px_height = cave_room.get_height() * 16;
     let camera_position = Transform::from_xyz(
@@ -477,9 +477,7 @@ fn convert_to_rendered_tile(
     tile_sprite_bundle.set_position(tile_position);
 
     let tile_logical_position = LogicalCoordinates::new(tile_to_place.x, tile_to_place.y);
-    let tile_bundle = TileBundle::new(tile_sprite_bundle, tile_logical_position);
-
-    tile_bundle
+    TileBundle::new(tile_sprite_bundle, tile_logical_position)
 }
 
 impl TileBundle {
