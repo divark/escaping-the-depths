@@ -4,7 +4,7 @@ this will serve as a references page if anyone wants to know what I'm using.
 
 ## Credits
 ### Overworld
-- [Map Tiles](https://0x72.itch.io/16x16-dungeon-tileset)
+- [Map Tiles](https://0x72.itch.io/dungeontileset-ii)
 
 ### UI
 - [Health](https://opengameart.org/content/heart-health-bar)

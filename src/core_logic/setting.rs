@@ -443,8 +443,8 @@ fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) 
         RoomObject::Explorer => "characters/npc_merchant_2.png",
         RoomObject::ExitDoor => "environment/floor_plain.png",
         RoomObject::HiddenFloorSwitch => "environment/floor_mud_n_1.png",
-        RoomObject::Treasure(_) => "environment/treasure.png",
-        RoomObject::Trap => "environment/trap.png",
+        RoomObject::Treasure(_) => "environment/coin_anim_f0.png",
+        RoomObject::Trap => "environment/floor_spikes_anim_f3.png",
     };
 
     let spritesheet_image = asset_server.load(sprite_file_path);

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::core_logic::scoring::CurrentRecords;
+use crate::core_logic::scoring::{CurrentRecords, ExplorerHealth};
 
 #[derive(Component)]
 pub struct CurrentScoresUI;
@@ -16,12 +16,12 @@ pub struct TextSection<C: Component> {
     label: C,
 }
 
+pub const CONTAINER_WIDTH_PERCENTAGE: f32 = ((1280.0 / 3.0) / 1280.0) * 100.0;
+
 impl<C: Component> TextSection<C> {
     pub fn new(font_size: usize, label: C) -> Self {
-        let container_width_percentage = ((1280.0 / 3.0) / 1280.0) * 100.0;
-
         let container = Node {
-            width: Val::Percent(container_width_percentage),
+            width: Val::Percent(CONTAINER_WIDTH_PERCENTAGE),
             height: Val::Percent(100.0),
             ..default()
         };
@@ -46,9 +46,15 @@ impl ScoresUI {
 
     // Places the Scores UI, represented as a row of current and top scores
     // at the top of the screen.
-    pub fn render(&self, whole_screen: Node, commands: &mut Commands) {
-        let height_percentage = (120.0 / 720.0) * 100.0;
+    pub fn render(&self, whole_screen_entity: Entity, commands: &mut Commands) {
+        let top_half_screen = Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(50.0),
+            flex_direction: FlexDirection::Column,
+            ..default()
+        };
 
+        let height_percentage = (120.0 / 720.0) * 100.0;
         let score_bar = Node {
             width: Val::Percent(100.0),
             height: Val::Percent(height_percentage),
@@ -59,16 +65,25 @@ impl ScoresUI {
         let current_scores_section = TextSection::new(self.font_size, CurrentScoresUI);
         let top_scores_section = TextSection::new(self.font_size, HighScoresUI);
 
-        commands.spawn(whole_screen).with_children(|screen| {
-            screen.spawn(score_bar).with_children(|score_bar| {
-                score_bar.spawn(current_scores_section);
-                score_bar.spawn(top_scores_section);
+        commands
+            .entity(whole_screen_entity)
+            .with_children(|screen| {
+                screen
+                    .spawn(top_half_screen)
+                    .with_children(|top_half_screen| {
+                        top_half_screen.spawn(score_bar).with_children(|score_bar| {
+                            score_bar.spawn(current_scores_section);
+                            score_bar.spawn(top_scores_section);
+                        });
+                    });
             });
-        });
     }
 }
 
-pub fn spawn_statistics_ui(mut commands: Commands) {
+#[derive(Component)]
+pub struct WholeScreen;
+
+pub fn prepare_screen_ui(mut commands: Commands) {
     let whole_screen = Node {
         width: Val::Percent(100.0),
         height: Val::Percent(100.0),
@@ -76,6 +91,17 @@ pub fn spawn_statistics_ui(mut commands: Commands) {
         ..default()
     };
 
+    commands.spawn((whole_screen, WholeScreen));
+}
+
+pub fn spawn_statistics_ui(mut commands: Commands, whole_screen: Query<Entity, With<WholeScreen>>) {
+    if whole_screen.is_empty() {
+        return;
+    }
+
+    let whole_screen = whole_screen
+        .single()
+        .expect("spawn_statistics_ui: Could not find Node for whole screen.");
     let font_size = 14;
 
     let records_ui_bar = ScoresUI::new(font_size);
@@ -116,4 +142,77 @@ pub fn update_statistics_ui(
         current_record_info.get_record_score(),
         current_record_info.get_record_room_number()
     );
+}
+
+#[derive(Component)]
+pub struct HealthUI;
+
+pub fn spawn_health_ui(
+    mut commands: Commands,
+    whole_screen: Query<Entity, With<WholeScreen>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
+    asset_server: Res<AssetServer>,
+) {
+    if whole_screen.is_empty() {
+        return;
+    }
+
+    let whole_screen_entity = whole_screen
+        .single()
+        .expect("spawn_health_ui: Could not find whole screen UI Node.");
+
+    let health_bar_image = asset_server.load("ui/health-bar-atlas.png");
+    let health_bar_atlas = TextureAtlasLayout::from_grid(UVec2::new(54, 17), 1, 4, None, None);
+    let health_bar_atlas_handle = texture_atlases.add(health_bar_atlas);
+
+    let bottom_half_screen = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(50.0),
+        flex_direction: FlexDirection::ColumnReverse,
+        ..default()
+    };
+
+    let health_bar_row = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(CONTAINER_WIDTH_PERCENTAGE),
+        flex_direction: FlexDirection::Row,
+        ..default()
+    };
+
+    let health_bar_ui = ImageNode::from_atlas_image(
+        health_bar_image,
+        TextureAtlas::from(health_bar_atlas_handle),
+    );
+    commands
+        .entity(whole_screen_entity)
+        .with_children(|whole_screen_node| {
+            whole_screen_node
+                .spawn(bottom_half_screen)
+                .with_children(|bottom_half_screen| {
+                    bottom_half_screen
+                        .spawn(health_bar_row)
+                        .with_children(|health_bar_row| {
+                            health_bar_row.spawn((health_bar_ui, HealthUI));
+                        });
+                });
+        });
+}
+
+pub fn update_health_ui(
+    mut health_ui: Query<&mut ImageNode, With<HealthUI>>,
+    current_health: Res<ExplorerHealth>,
+) {
+    let not_ready = health_ui.is_empty() || !current_health.is_changed();
+    if not_ready {
+        return;
+    }
+
+    let mut health_ui_pack = health_ui
+        .single_mut()
+        .expect("update_health_ui: Could not find Health UI.");
+
+    let health_atlas_idx = current_health.get_current_health();
+    if let Some(health_texture_atlas) = &mut health_ui_pack.texture_atlas {
+        health_texture_atlas.index = health_atlas_idx;
+    }
 }

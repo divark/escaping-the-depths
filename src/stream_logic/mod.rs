@@ -3,6 +3,7 @@ pub mod ui;
 use std::time::Duration;
 
 use bevy::{prelude::*, window::WindowResolution};
+use ui::{prepare_screen_ui, spawn_health_ui, update_health_ui};
 
 use crate::{
     core_logic::{
@@ -36,8 +37,13 @@ impl Plugin for StreamLogic {
 
         app.add_systems(Startup, spawn_first_level);
 
-        app.add_systems(Startup, spawn_statistics_ui);
+        app.add_systems(Startup, prepare_screen_ui);
+
+        app.add_systems(Startup, spawn_statistics_ui.after(prepare_screen_ui));
         app.add_systems(Update, update_statistics_ui);
+
+        app.add_systems(Startup, spawn_health_ui.after(prepare_screen_ui));
+        app.add_systems(Update, update_health_ui);
     }
 }
 
