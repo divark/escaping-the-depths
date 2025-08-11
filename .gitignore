@@ -1,5 +1,8 @@
 /target
 
+assets/*
+!assets/README.md
+
 .zed
 .vscode
 *.DS_Store

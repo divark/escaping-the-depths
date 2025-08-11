@@ -1,0 +1,10 @@
+# Why are there no assets here?
+In order to comply with the various licenses, I chose not to upload any assets. Instead,
+this will serve as a references page if anyone wants to know what I'm using.
+
+## Credits
+### Overworld
+- [Map Tiles](https://0x72.itch.io/16x16-dungeon-tileset)
+
+### UI
+- [Health](https://opengameart.org/content/heart-health-bar)
