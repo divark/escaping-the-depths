@@ -27,10 +27,22 @@ pub struct TestRoomGenerator {
 }
 
 impl RoomGenerating for TestRoomGenerator {
-    fn generate(&self) -> CaveRoom {
+    fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
         // Adding walls to each side means we have to increase the width and height by 2.
         let mut room_generated = CaveRoom::new(self.width + 2, self.height + 2);
         add_walls(&mut room_generated);
+
+        // An explorer would never spawn in the walls, so for testing purposes,
+        // we say that spawning in a wall tile (such as 0, 0) should be ignored.
+        let skip_spawning_explorer =
+            explorer_starting_location.get_x() == 0 || explorer_starting_location.get_y() == 0;
+        if !skip_spawning_explorer {
+            room_generated.set(
+                explorer_starting_location.get_x(),
+                explorer_starting_location.get_y(),
+                RoomObject::Explorer,
+            );
+        }
 
         room_generated
     }
@@ -211,7 +223,7 @@ impl MockGame {
         self.tick();
 
         let room_generator = self.get_resource::<TestRoomGenerator>();
-        self.cave_room = room_generator.generate();
+        self.cave_room = room_generator.generate_with_explorer(&LogicalCoordinates::default());
     }
 
     pub fn render_room(&mut self) {

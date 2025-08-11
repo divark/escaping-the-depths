@@ -24,7 +24,7 @@ pub enum RoomObject {
 }
 
 pub trait RoomGenerating {
-    fn generate(&self) -> CaveRoom;
+    fn generate_with_explorer(&self, explorer_starting_position: &LogicalCoordinates) -> CaveRoom;
 }
 
 #[derive(Clone, Debug)]
@@ -350,8 +350,9 @@ pub fn spawn_next_room<T>(
         .expect("spawn_next_room: Could not get current records.");
     current_records.increment_room_count();
 
-    let mut newly_generated_caveroom = room_generator.generate();
-    newly_generated_caveroom.set(explorer_location.get_x(), 1, RoomObject::Explorer);
+    let explorer_starting_location = LogicalCoordinates::new(explorer_location.get_x(), 1);
+    let newly_generated_caveroom =
+        room_generator.generate_with_explorer(&explorer_starting_location);
 
     let change_room_request = ChangeRoom::new(newly_generated_caveroom);
     change_room_broadcaster.write(change_room_request);
@@ -385,8 +386,9 @@ pub fn reset_to_level_one_after_game_over<T>(
         return;
     }
 
-    let mut newly_generated_caveroom = room_generator.generate();
-    newly_generated_caveroom.set(1, 1, RoomObject::Explorer);
+    let explorer_starting_location = LogicalCoordinates::new(1, 1);
+    let newly_generated_caveroom =
+        room_generator.generate_with_explorer(&explorer_starting_location);
     explorer_health.set_current_health(3);
     explorer_health.set_total_health(3);
 
@@ -674,7 +676,7 @@ fn place_armed_traps(
 }
 
 impl RoomGenerating for RandomizedRoomGenerator {
-    fn generate(&self) -> CaveRoom {
+    fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
         // by + 2.
         let desired_width =
@@ -686,6 +688,16 @@ impl RoomGenerating for RandomizedRoomGenerator {
         add_walls(&mut generated_cave_room);
 
         let mut claimed_tiles = HashSet::new();
+        // We should not add something on top of the explorer when they
+        // first enter the room, such as a trap, or treasure, or even
+        // the hidden door switch right away.
+        claimed_tiles.insert(*explorer_starting_location);
+        generated_cave_room.set(
+            explorer_starting_location.get_x(),
+            explorer_starting_location.get_y(),
+            RoomObject::Explorer,
+        );
+
         place_exit_door(&mut generated_cave_room);
         place_hidden_door_switch(&mut generated_cave_room, &mut claimed_tiles);
         place_treasure(&mut generated_cave_room, &mut claimed_tiles);

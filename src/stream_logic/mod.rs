@@ -8,7 +8,9 @@ use ui::{prepare_screen_ui, spawn_health_ui, update_health_ui};
 use crate::{
     core_logic::{
         CoreLogic, GameOverTime, MovementTime,
-        setting::{ChangeRoom, RandomizedRoomGenerator, RoomGenerating, RoomObject},
+        setting::{
+            ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating, RoomObject,
+        },
     },
     stream_logic::ui::{spawn_statistics_ui, update_statistics_ui},
 };
@@ -52,8 +54,8 @@ fn spawn_first_level(
     mut level_spawner_broadcaster: EventWriter<ChangeRoom>,
     room_generator: Res<RandomizedRoomGenerator>,
 ) {
-    let mut initial_room = room_generator.generate();
-    initial_room.set(1, 1, RoomObject::Explorer);
+    let explorer_staring_position = LogicalCoordinates::new(1, 1);
+    let mut initial_room = room_generator.generate_with_explorer(&explorer_staring_position);
 
     level_spawner_broadcaster.write(ChangeRoom::new(initial_room));
 }
