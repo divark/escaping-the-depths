@@ -12,6 +12,7 @@ pub struct HighScoresUI;
 pub struct TextSection<C: Component> {
     text: Text,
     font: TextFont,
+    text_layout: TextLayout,
     container: Node,
     label: C,
 }
@@ -21,14 +22,15 @@ pub const CONTAINER_WIDTH_PERCENTAGE: f32 = ((1280.0 / 3.0) / 1280.0) * 100.0;
 impl<C: Component> TextSection<C> {
     pub fn new(font_size: usize, label: C) -> Self {
         let container = Node {
-            width: Val::Percent(CONTAINER_WIDTH_PERCENTAGE),
             height: Val::Percent(100.0),
+            flex_grow: 1.0,
             ..default()
         };
 
         Self {
             text: Text::new(""),
             font: TextFont::from_font_size(font_size as f32),
+            text_layout: TextLayout::new_with_justify(JustifyText::Center),
             container,
             label,
         }
@@ -54,10 +56,8 @@ impl ScoresUI {
             ..default()
         };
 
-        let height_percentage = (120.0 / 720.0) * 100.0;
         let score_bar = Node {
             width: Val::Percent(100.0),
-            height: Val::Percent(height_percentage),
             flex_direction: FlexDirection::Row,
             ..default()
         };
@@ -102,7 +102,7 @@ pub fn spawn_statistics_ui(mut commands: Commands, whole_screen: Query<Entity, W
     let whole_screen = whole_screen
         .single()
         .expect("spawn_statistics_ui: Could not find Node for whole screen.");
-    let font_size = 14;
+    let font_size = 20;
 
     let records_ui_bar = ScoresUI::new(font_size);
     records_ui_bar.render(whole_screen, &mut commands);

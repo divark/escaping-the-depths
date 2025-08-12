@@ -44,6 +44,9 @@ impl Plugin for StreamLogic {
 
         app.add_systems(Startup, spawn_health_ui.after(prepare_screen_ui));
         app.add_systems(Update, update_health_ui);
+
+        //app.add_systems(Startup, spawn_game_over_screen.after(prepare_screen_ui));
+        //app.add_systems(Update, update_game_over_screen);
     }
 }
 
