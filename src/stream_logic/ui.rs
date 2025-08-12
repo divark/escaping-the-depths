@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::core_logic::scoring::{CurrentRecords, ExplorerHealth};
+use crate::core_logic::{
+    GameOverTimer, GameState,
+    scoring::{CurrentRecords, ExplorerHealth},
+};
 
 #[derive(Component)]
 pub struct CurrentScoresUI;
@@ -13,7 +16,6 @@ pub struct TextSection<C: Component> {
     text: Text,
     font: TextFont,
     text_layout: TextLayout,
-    container: Node,
     label: C,
 }
 
@@ -21,17 +23,10 @@ pub const CONTAINER_WIDTH_PERCENTAGE: f32 = ((1280.0 / 3.0) / 1280.0) * 100.0;
 
 impl<C: Component> TextSection<C> {
     pub fn new(font_size: usize, label: C) -> Self {
-        let container = Node {
-            height: Val::Percent(100.0),
-            flex_grow: 1.0,
-            ..default()
-        };
-
         Self {
             text: Text::new(""),
             font: TextFont::from_font_size(font_size as f32),
             text_layout: TextLayout::new_with_justify(JustifyText::Center),
-            container,
             label,
         }
     }
@@ -62,6 +57,13 @@ impl ScoresUI {
             ..default()
         };
 
+        let score_container = Node {
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            flex_grow: 1.0,
+            ..default()
+        };
+
         let current_scores_section = TextSection::new(self.font_size, CurrentScoresUI);
         let top_scores_section = TextSection::new(self.font_size, HighScoresUI);
 
@@ -72,8 +74,16 @@ impl ScoresUI {
                     .spawn(top_half_screen)
                     .with_children(|top_half_screen| {
                         top_half_screen.spawn(score_bar).with_children(|score_bar| {
-                            score_bar.spawn(current_scores_section);
-                            score_bar.spawn(top_scores_section);
+                            score_bar.spawn(score_container.clone()).with_children(
+                                |score_container| {
+                                    score_container.spawn(current_scores_section);
+                                },
+                            );
+                            score_bar.spawn(score_container.clone()).with_children(
+                                |score_container| {
+                                    score_container.spawn(top_scores_section);
+                                },
+                            );
                         });
                     });
             });
@@ -215,4 +225,60 @@ pub fn update_health_ui(
     if let Some(health_texture_atlas) = &mut health_ui_pack.texture_atlas {
         health_texture_atlas.index = health_atlas_idx;
     }
+}
+
+#[derive(Component)]
+pub struct GameOverScreen;
+
+fn spawn_game_over_ui(font_size: usize, commands: &mut Commands) {
+    let text = TextSection::new(font_size, GameOverScreen);
+    let visibility = Visibility::Hidden;
+
+    let game_over_screen = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        ..default()
+    };
+
+    commands
+        .spawn((game_over_screen, visibility))
+        .with_children(|game_over_screen| {
+            game_over_screen.spawn(text);
+        });
+}
+
+pub fn spawn_game_over_screen(mut commands: Commands) {
+    let font_size = 32;
+    spawn_game_over_ui(font_size, &mut commands);
+}
+
+pub fn update_game_over_screen(
+    mut game_over_screen: Query<(&mut Visibility, &mut Text), (With<GameOverScreen>,)>,
+    game_state: Res<State<GameState>>,
+    game_over_timer: Query<&GameOverTimer, Changed<GameOverTimer>>,
+) {
+    if game_over_screen.is_empty() {
+        return;
+    }
+
+    let (mut game_over_screen_visibility, mut game_over_screen_text) =
+        game_over_screen.single_mut().unwrap();
+
+    if game_state.get() == &GameState::Active {
+        *game_over_screen_visibility = Visibility::Hidden;
+        return;
+    }
+
+    *game_over_screen_visibility = Visibility::Visible;
+
+    let game_over_timer = game_over_timer
+        .single()
+        .expect("update_game_over_screen: Could not find game over timer");
+
+    game_over_screen_text.0 = format!(
+        "Game Over.\nContinue? {}",
+        game_over_timer.get_timer().remaining().as_secs()
+    );
 }
