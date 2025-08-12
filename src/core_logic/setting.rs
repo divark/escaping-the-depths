@@ -440,11 +440,11 @@ pub fn despawn_current_room(
 fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) -> Sprite {
     let tile_type = tile_to_place.object_type;
     let sprite_file_path = match tile_type {
-        RoomObject::Empty => "environment/floor_plain.png",
-        RoomObject::Wall => "environment/wall_center.png",
+        RoomObject::Empty => "environment/floor_1.png",
+        RoomObject::Wall => "environment/wall_mid.png",
         RoomObject::Explorer => "characters/npc_merchant_2.png",
-        RoomObject::ExitDoor => "environment/floor_plain.png",
-        RoomObject::HiddenFloorSwitch => "environment/floor_mud_n_1.png",
+        RoomObject::ExitDoor => "environment/wall_hole_2.png",
+        RoomObject::HiddenFloorSwitch => "environment/floor_4.png",
         RoomObject::Treasure(_) => "environment/coin_anim_f0.png",
         RoomObject::Trap => "environment/floor_spikes_anim_f3.png",
     };

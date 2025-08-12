@@ -4,6 +4,7 @@ this will serve as a references page if anyone wants to know what I'm using.
 
 ## Credits
 ### Overworld
+- [Main Character](https://0x72.itch.io/16x16-dungeon-tileset)
 - [Map Tiles](https://0x72.itch.io/dungeontileset-ii)
 
 ### UI
