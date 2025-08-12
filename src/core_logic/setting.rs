@@ -596,12 +596,7 @@ fn place_hidden_door_switch(
     generated_cave_room: &mut CaveRoom,
     claimed_tiles: &mut HashSet<LogicalCoordinates>,
 ) {
-    let mut random_number_generator = rand::rng();
-
-    let row_idx = random_number_generator.random_range(1..generated_cave_room.get_height() - 1);
-    let col_idx = random_number_generator.random_range(1..generated_cave_room.get_width() - 1);
-    let hidden_floor_switch_position = LogicalCoordinates::new(row_idx, col_idx);
-
+    let hidden_floor_switch_position = get_unique_room_location(generated_cave_room, claimed_tiles);
     generated_cave_room.set(
         hidden_floor_switch_position.get_x(),
         hidden_floor_switch_position.get_y(),
