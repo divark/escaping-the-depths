@@ -1,7 +1,9 @@
+pub mod animation;
 pub mod ui;
 
 use std::time::Duration;
 
+use animation::{animate_disarming_trap, animate_door_opening};
 use bevy::{prelude::*, window::WindowResolution};
 use ui::{
     prepare_screen_ui, spawn_game_over_screen, spawn_health_ui, update_game_over_screen,
@@ -50,6 +52,9 @@ impl Plugin for StreamLogic {
 
         app.add_systems(Startup, spawn_game_over_screen.after(spawn_health_ui));
         app.add_systems(Update, update_game_over_screen);
+
+        app.add_systems(Update, animate_door_opening);
+        app.add_systems(Update, animate_disarming_trap);
     }
 }
 

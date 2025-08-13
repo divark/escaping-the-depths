@@ -437,21 +437,44 @@ pub fn despawn_current_room(
     spawn_room_broadcaster.write(load_room_event);
 }
 
-fn get_tile_sprite(tile_to_place: &PlaceRoomObject, asset_server: &AssetServer) -> Sprite {
+fn get_tile_sprite(
+    tile_to_place: &PlaceRoomObject,
+    asset_server: &AssetServer,
+    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
+) -> Sprite {
     let tile_type = tile_to_place.object_type;
+    let mut num_sprites = 1;
     let sprite_file_path = match tile_type {
         RoomObject::Empty => "environment/floor_1.png",
         RoomObject::Wall => "environment/wall_mid.png",
         RoomObject::Explorer => "characters/npc_merchant_2.png",
-        RoomObject::ExitDoor => "environment/wall_hole_2.png",
+        RoomObject::ExitDoor => {
+            num_sprites = 2;
+            "environment/wall_hole_to_floor.png"
+        }
         RoomObject::HiddenFloorSwitch => "environment/floor_4.png",
         RoomObject::Treasure(_) => "environment/coin_anim_f0.png",
-        RoomObject::Trap => "environment/floor_spikes_anim_f3.png",
+        RoomObject::Trap => {
+            num_sprites = 2;
+            "environment/floor_spikes_atlas.png"
+        }
     };
 
     let spritesheet_image = asset_server.load(sprite_file_path);
 
-    Sprite::from_image(spritesheet_image)
+    if num_sprites == 1 {
+        return Sprite::from_image(spritesheet_image);
+    }
+
+    let tile_sprite_atlas_layout =
+        TextureAtlasLayout::from_grid(UVec2::splat(16), num_sprites, 1, None, None);
+    let loaded_atlas_layout = texture_atlas_layouts.add(tile_sprite_atlas_layout);
+    let tile_spritesheet_atlas = TextureAtlas {
+        layout: loaded_atlas_layout,
+        index: 0,
+    };
+
+    Sprite::from_atlas_image(spritesheet_image, tile_spritesheet_atlas)
 }
 
 fn get_tile_position(tile_to_place: &PlaceRoomObject) -> Transform {
@@ -467,10 +490,11 @@ fn get_tile_position(tile_to_place: &PlaceRoomObject) -> Transform {
 fn convert_to_rendered_tile(
     tile_to_place: &PlaceRoomObject,
     asset_server: &AssetServer,
+    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 ) -> TileBundle {
     let mut tile_sprite_bundle = SpriteBundle::default();
 
-    let tile_sprite = get_tile_sprite(tile_to_place, asset_server);
+    let tile_sprite = get_tile_sprite(tile_to_place, asset_server, texture_atlas_layouts);
     tile_sprite_bundle.set_sprite(tile_sprite);
 
     let tile_position = get_tile_position(tile_to_place);
@@ -507,10 +531,12 @@ impl ExplorerBundle {
 pub fn place_tile(
     mut place_tile_requests: EventReader<PlaceRoomObject>,
     asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands: Commands,
 ) {
     for tile_to_place in place_tile_requests.read() {
-        let rendered_tile = convert_to_rendered_tile(tile_to_place, &asset_server);
+        let rendered_tile =
+            convert_to_rendered_tile(tile_to_place, &asset_server, &mut texture_atlas_layouts);
         match tile_to_place.object_type {
             RoomObject::Explorer => {
                 commands.spawn(ExplorerBundle::new(rendered_tile));
