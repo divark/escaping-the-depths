@@ -31,7 +31,7 @@ impl Plugin for StreamLogic {
         }));
 
         let movement_time = MovementTime::new(Duration::from_secs(1));
-        let game_over_time = GameOverTime::new(Duration::from_secs(10));
+        let game_over_time = GameOverTime::new(Duration::from_secs(30));
 
         let min_width = 4;
         let min_height = 4;
