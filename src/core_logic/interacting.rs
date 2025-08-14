@@ -56,8 +56,8 @@ pub fn convert_viewer_click_to_tile_click(
     let window = window_info.single().expect(
         "convert_viewer_click_to_tile_click: Could not get information on the game Window.",
     );
-    let window_width = window.width();
-    let window_height = window.height();
+    let window_width = window.physical_width() as f32;
+    let window_height = window.physical_height() as f32;
     let tile_size = 16.0 * window.scale_factor();
 
     let camera_position = camera

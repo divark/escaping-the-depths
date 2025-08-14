@@ -13,6 +13,7 @@ use ui::{
 use crate::{
     core_logic::{
         CoreLogic, GameOverTime, MovementTime,
+        interacting::ViewerClick,
         setting::{ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating},
     },
     stream_logic::ui::{spawn_statistics_ui, update_statistics_ui},
@@ -55,6 +56,9 @@ impl Plugin for StreamLogic {
 
         app.add_systems(Update, animate_door_opening);
         app.add_systems(Update, animate_disarming_trap);
+
+        // TODO: Remove this after playtesting.
+        app.add_systems(Update, map_mouse_click_to_uv);
     }
 }
 
@@ -67,4 +71,31 @@ fn spawn_first_level(
     let initial_room = room_generator.generate_with_explorer(&explorer_staring_position);
 
     level_spawner_broadcaster.write(ChangeRoom::new(initial_room));
+}
+
+/// FOR PLAYTESTING PURPOSES: Maps a mouse click to UV coordinates
+fn map_mouse_click_to_uv(
+    mouse_state: Res<ButtonInput<MouseButton>>,
+    window_info: Query<&Window>,
+    mut viewer_click_broadcaster: EventWriter<ViewerClick>,
+) {
+    if window_info.is_empty() {
+        return;
+    }
+
+    if !mouse_state.pressed(MouseButton::Left) {
+        return;
+    }
+
+    let window = window_info.single().unwrap();
+    let window_width = window.physical_width() as f32;
+    let window_height = window.physical_height() as f32;
+
+    if let Some(physical_cursor_coordinates) = window.physical_cursor_position() {
+        let uv_x = physical_cursor_coordinates.x / window_width;
+        let uv_y = 1.0 - (physical_cursor_coordinates.y / window_height);
+
+        let viewer_click_event = ViewerClick::new(uv_x, uv_y);
+        viewer_click_broadcaster.write(viewer_click_event);
+    }
 }
