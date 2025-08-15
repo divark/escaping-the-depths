@@ -8,11 +8,11 @@ Feature: All of the basic features are implemented and working as intended.
         Then the exit door will be opened.
 
     Scenario: The exit door opens when a viewer clicks the hidden floor switch.
-        Given a 3x3 cave room,
-        And a hidden floor switch placed at coordinates 2, 1,
-        And an exit door placed at coordinates 1, 2,
+        Given a 4x4 cave room,
+        And a hidden floor switch placed at coordinates 1, 2,
+        And an exit door placed at coordinates 4, 5,
         When the cave room is rendered,
-        When a viewer clicks with UV coordinates 0.49375, 0.4667,
+        When a viewer clicks with UV coordinates 0.474334717, 0.479106963,
         Then the exit door will be opened.
 
     Scenario: The explorer heads for the exit when the exit door is opened.
