@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::core_logic::TILE_SIZE;
+
 use super::setting::LogicalCoordinates;
 
 #[derive(Event)]
@@ -61,7 +63,7 @@ pub fn convert_viewer_click_to_tile_click(
     );
     let window_width = window.physical_width() as f32;
     let window_height = window.physical_height() as f32;
-    let tile_size = 16.0;
+    let tile_size = TILE_SIZE as f32;
 
     let camera_position = camera
         .single()

@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use bevy::prelude::*;
 use rand::Rng;
 
+use crate::core_logic::TILE_SIZE;
+
 use super::{
     GameOverTimer, GameState,
     scoring::{CurrentRecords, ExplorerHealth, TrapState, TreasureScore},
@@ -282,8 +284,8 @@ fn spawn_objects_in_room(
 
 fn spawn_centered_camera(cave_room: &CaveRoom, commands: &mut Commands) {
     let centered_on_map_camera = Camera2d;
-    let cave_room_px_width = cave_room.get_width() * 16;
-    let cave_room_px_height = cave_room.get_height() * 16;
+    let cave_room_px_width = cave_room.get_width() * TILE_SIZE;
+    let cave_room_px_height = cave_room.get_height() * TILE_SIZE;
     let camera_position = Transform::from_xyz(
         cave_room_px_width as f32 / 2.0,
         cave_room_px_height as f32 / 2.0,
@@ -467,7 +469,7 @@ fn get_tile_sprite(
     }
 
     let tile_sprite_atlas_layout =
-        TextureAtlasLayout::from_grid(UVec2::splat(16), num_sprites, 1, None, None);
+        TextureAtlasLayout::from_grid(UVec2::splat(TILE_SIZE as u32), num_sprites, 1, None, None);
     let loaded_atlas_layout = texture_atlas_layouts.add(tile_sprite_atlas_layout);
     let tile_spritesheet_atlas = TextureAtlas {
         layout: loaded_atlas_layout,
@@ -478,10 +480,8 @@ fn get_tile_sprite(
 }
 
 fn get_tile_position(tile_to_place: &PlaceRoomObject) -> Transform {
-    let tile_size = 16;
-
-    let tile_x = tile_to_place.x * tile_size;
-    let tile_y = tile_to_place.y * tile_size;
+    let tile_x = tile_to_place.x * TILE_SIZE;
+    let tile_y = tile_to_place.y * TILE_SIZE;
 
     let tile_z = tile_to_place.z;
     Transform::from_xyz(tile_x as f32, tile_y as f32, tile_z as f32)

@@ -22,6 +22,8 @@ use traveling::{
     set_explorer_target, unlock_exit_door_with_explorer, unlock_exit_door_with_viewer_click,
 };
 
+pub const TILE_SIZE: usize = 16;
+
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub enum GameState {
     #[default]
