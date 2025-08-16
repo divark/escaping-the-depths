@@ -112,7 +112,7 @@ pub fn spawn_statistics_ui(mut commands: Commands, whole_screen: Query<Entity, W
     let whole_screen = whole_screen
         .single()
         .expect("spawn_statistics_ui: Could not find Node for whole screen.");
-    let font_size = 20;
+    let font_size = 36;
 
     let records_ui_bar = ScoresUI::new(font_size);
     records_ui_bar.render(whole_screen, &mut commands);
