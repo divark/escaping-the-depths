@@ -250,7 +250,7 @@ fn spawn_game_over_ui(font_size: usize, commands: &mut Commands) {
 }
 
 pub fn spawn_game_over_screen(mut commands: Commands) {
-    let font_size = 32;
+    let font_size = 48;
     spawn_game_over_ui(font_size, &mut commands);
 }
 
