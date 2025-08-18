@@ -219,6 +219,7 @@ impl MockGame {
             movement_time,
             game_over_time,
             test_room_generator,
+            1,
         ));
         self.tick();
 
@@ -396,6 +397,11 @@ impl MockGame {
     pub fn get_record_room_number(&mut self) -> usize {
         let current_records = self.get_one::<CurrentRecords>();
         current_records.get_record_room_number()
+    }
+
+    pub fn set_tile_scale(&mut self, desired_tile_scale: usize) {
+        let mut current_tile_scale = self.get_resource_mut::<TileScale>();
+        current_tile_scale.set(desired_tile_scale);
     }
 }
 

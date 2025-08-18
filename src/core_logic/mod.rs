@@ -13,7 +13,7 @@ use scoring::{
     start_game_over_countdown_on_death,
 };
 use setting::{
-    ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating,
+    ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating, TileScale,
     despawn_current_room, place_tile, reset_to_level_one_after_game_over, spawn_new_room,
     spawn_next_room,
 };
@@ -83,6 +83,7 @@ pub struct CoreLogic<T: RoomGenerating + Resource + Clone> {
     movement_time: MovementTime,
     game_over_time: GameOverTime,
     room_generator: T,
+    tile_scale: usize,
 }
 
 impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
@@ -90,11 +91,13 @@ impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
         movement_time: MovementTime,
         game_over_time: GameOverTime,
         room_generator: T,
+        tile_scale: usize,
     ) -> Self {
         Self {
             movement_time,
             game_over_time,
             room_generator,
+            tile_scale,
         }
     }
 }
@@ -108,6 +111,7 @@ impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
         app.add_event::<ViewerClick>();
 
         app.init_state::<GameState>();
+        app.insert_resource(TileScale::new(self.tile_scale));
         app.insert_resource(ExplorerHealth::new(3, 3));
         app.insert_resource(self.movement_time.clone());
         app.insert_resource(self.game_over_time.clone());

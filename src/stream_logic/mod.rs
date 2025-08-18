@@ -47,7 +47,8 @@ impl Plugin for StreamLogic {
         let min_height = 4;
         let room_generator = RandomizedRoomGenerator::new(min_width, min_height);
 
-        let core_logic = CoreLogic::new(movement_time, game_over_time, room_generator);
+        let tile_scale = 2;
+        let core_logic = CoreLogic::new(movement_time, game_over_time, room_generator, tile_scale);
         app.add_plugins(core_logic);
 
         app.add_systems(Startup, spawn_first_level);

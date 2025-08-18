@@ -119,3 +119,12 @@ Feature: All of the basic features are implemented and working as intended.
         And the current room count should be 1.
         And the record score will be 500 points.
         And the record room count should be 2.
+
+    Scenario: Tile scaling is honored for viewer clicks.
+        Given a 3x3 cave room,
+        And a hidden floor switch placed at coordinates 1, 3,
+        And an exit door placed at coordinates 3, 4,
+        And a tile scale of 2,
+        When the cave room is rendered,
+        When a viewer clicks with UV coordinates 0.4904, 0.5853,
+        Then the exit door will be opened.

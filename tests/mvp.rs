@@ -48,6 +48,11 @@ fn set_current_score(game: &mut MockGame, current_score: usize) {
     game.set_current_score(current_score);
 }
 
+#[given(regex = r"a tile scale of ([0-9]+),")]
+fn set_tile_scale(game: &mut MockGame, tile_scale: usize) {
+    game.set_tile_scale(tile_scale);
+}
+
 #[when(regex = r"a viewer clicks with UV coordinates ([0-9]+.[0-9]+), ([0-9]+.[0-9]+),")]
 fn simulate_click(game: &mut MockGame, uv_x: f32, uv_y: f32) {
     game.click(uv_x, uv_y);

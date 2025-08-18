@@ -13,6 +13,31 @@ use super::{
 
 pub const WALLS_OFFSET: usize = 2;
 
+#[derive(Resource, Clone)]
+pub struct TileScale {
+    scale: usize,
+}
+
+impl Default for TileScale {
+    fn default() -> Self {
+        Self { scale: 1 }
+    }
+}
+
+impl TileScale {
+    pub fn new(scale: usize) -> Self {
+        Self { scale }
+    }
+
+    pub fn set(&mut self, desired_scale: usize) {
+        self.scale = desired_scale;
+    }
+
+    pub fn get(&self) -> usize {
+        self.scale
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Default, Hash, Eq, Debug)]
 pub enum RoomObject {
     #[default]
@@ -449,6 +474,7 @@ fn get_tile_sprite(
     tile_to_place: &PlaceRoomObject,
     asset_server: &AssetServer,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
+    tile_scale: &TileScale,
 ) -> Sprite {
     let tile_type = tile_to_place.object_type;
     let mut num_sprites = 1;
@@ -469,9 +495,14 @@ fn get_tile_sprite(
     };
 
     let spritesheet_image = asset_server.load(sprite_file_path);
+    let adjusted_tile_size = (TILE_SIZE * tile_scale.get()) as f32;
 
     if num_sprites == 1 {
-        return Sprite::from_image(spritesheet_image);
+        return Sprite {
+            custom_size: Some(Vec2::new(adjusted_tile_size, adjusted_tile_size)),
+            image_mode: SpriteImageMode::Scale(ScalingMode::FitCenter),
+            ..Sprite::from_image(spritesheet_image)
+        };
     }
 
     let tile_sprite_atlas_layout =
@@ -482,12 +513,16 @@ fn get_tile_sprite(
         index: 0,
     };
 
-    Sprite::from_atlas_image(spritesheet_image, tile_spritesheet_atlas)
+    Sprite {
+        custom_size: Some(Vec2::new(adjusted_tile_size, adjusted_tile_size)),
+        image_mode: SpriteImageMode::Scale(ScalingMode::FitCenter),
+        ..Sprite::from_atlas_image(spritesheet_image, tile_spritesheet_atlas)
+    }
 }
 
-fn get_tile_position(tile_to_place: &PlaceRoomObject) -> Transform {
-    let tile_x = tile_to_place.x * TILE_SIZE;
-    let tile_y = tile_to_place.y * TILE_SIZE;
+fn get_tile_position(tile_to_place: &PlaceRoomObject, tile_scale: &TileScale) -> Transform {
+    let tile_x = tile_to_place.x * (TILE_SIZE * tile_scale.get());
+    let tile_y = tile_to_place.y * (TILE_SIZE * tile_scale.get());
 
     let tile_z = tile_to_place.z;
     Transform::from_xyz(tile_x as f32, tile_y as f32, tile_z as f32)
@@ -497,13 +532,19 @@ fn convert_to_rendered_tile(
     tile_to_place: &PlaceRoomObject,
     asset_server: &AssetServer,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
+    tile_scale: &TileScale,
 ) -> TileBundle {
     let mut tile_sprite_bundle = SpriteBundle::default();
 
-    let tile_sprite = get_tile_sprite(tile_to_place, asset_server, texture_atlas_layouts);
+    let tile_sprite = get_tile_sprite(
+        tile_to_place,
+        asset_server,
+        texture_atlas_layouts,
+        tile_scale,
+    );
     tile_sprite_bundle.set_sprite(tile_sprite);
 
-    let tile_position = get_tile_position(tile_to_place);
+    let tile_position = get_tile_position(tile_to_place, tile_scale);
     tile_sprite_bundle.set_position(tile_position);
 
     let tile_logical_position = LogicalCoordinates::new(tile_to_place.x, tile_to_place.y);
@@ -538,11 +579,16 @@ pub fn place_tile(
     mut place_tile_requests: EventReader<PlaceRoomObject>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    tile_scale: Res<TileScale>,
     mut commands: Commands,
 ) {
     for tile_to_place in place_tile_requests.read() {
-        let rendered_tile =
-            convert_to_rendered_tile(tile_to_place, &asset_server, &mut texture_atlas_layouts);
+        let rendered_tile = convert_to_rendered_tile(
+            tile_to_place,
+            &asset_server,
+            &mut texture_atlas_layouts,
+            &tile_scale,
+        );
         match tile_to_place.object_type {
             RoomObject::Explorer => {
                 commands.spawn(ExplorerBundle::new(rendered_tile));
