@@ -6,6 +6,8 @@ this will serve as a references page if anyone wants to know what I'm using.
 ### Overworld
 - [Main Character](https://0x72.itch.io/16x16-dungeon-tileset)
 - [Map Tiles](https://0x72.itch.io/dungeontileset-ii)
+- [Coin sound sound effect](https://opengameart.org/content/512-sound-effects-8-bit-style)
+- [Door opening and trap triggering sound effect](https://opengameart.org/content/sfx-the-ultimate-2017-8-bit-mini-pack)
 
 ### UI
 - [Health](https://opengameart.org/content/heart-health-bar)

@@ -130,12 +130,23 @@ pub fn initialize_records(mut commands: Commands) {
     commands.spawn(current_records);
 }
 
+#[derive(Clone, Copy, Debug, Component, PartialEq)]
+pub enum TreasureState {
+    Unclaimed,
+    Claimed,
+}
+
 pub fn claim_treasure_with_explorer(
     explorer_movement: Query<
         &LogicalCoordinates,
         (With<ExplorerState>, Changed<LogicalCoordinates>),
     >,
-    treasures: Query<(Entity, &LogicalCoordinates, &TreasureScore)>,
+    mut treasures: Query<(
+        Entity,
+        &LogicalCoordinates,
+        &TreasureScore,
+        &mut TreasureState,
+    )>,
     mut records: Query<&mut CurrentRecords>,
     mut commands: Commands,
 ) {
@@ -148,20 +159,34 @@ pub fn claim_treasure_with_explorer(
         .expect("claim_treasure_with_explorer: Could not find current records.");
 
     for explorer_location in explorer_movement.iter() {
-        for (treasure_entity, treasure_location, treasure_score) in treasures {
+        for (treasure_entity, treasure_location, treasure_score, mut treasure_state) in
+            treasures.iter_mut()
+        {
             if treasure_location != explorer_location {
                 continue;
             }
 
+            if *treasure_state != TreasureState::Unclaimed {
+                continue;
+            }
+
             current_records.add_score(treasure_score.value());
-            commands.entity(treasure_entity).despawn();
+
+            *treasure_state = TreasureState::Claimed;
+            let invisibility = Visibility::Hidden;
+            commands.entity(treasure_entity).insert(invisibility);
         }
     }
 }
 
 pub fn claim_treasure_with_viewer_click(
     mut explorer_movement: EventReader<LogicalCoordinates>,
-    treasures: Query<(Entity, &LogicalCoordinates, &TreasureScore)>,
+    mut treasures: Query<(
+        Entity,
+        &LogicalCoordinates,
+        &TreasureScore,
+        &mut TreasureState,
+    )>,
     mut records: Query<&mut CurrentRecords>,
     mut commands: Commands,
 ) {
@@ -174,13 +199,22 @@ pub fn claim_treasure_with_viewer_click(
         .expect("claim_treasure_with_viewer_click: Could not find current records.");
 
     for explorer_location in explorer_movement.read() {
-        for (treasure_entity, treasure_location, treasure_score) in treasures {
+        for (treasure_entity, treasure_location, treasure_score, mut treasure_state) in
+            treasures.iter_mut()
+        {
             if treasure_location != explorer_location {
                 continue;
             }
 
+            if *treasure_state != TreasureState::Unclaimed {
+                continue;
+            }
+
             current_records.add_score(treasure_score.value());
-            commands.entity(treasure_entity).despawn();
+
+            *treasure_state = TreasureState::Claimed;
+            let invisibility = Visibility::Hidden;
+            commands.entity(treasure_entity).insert(invisibility);
         }
     }
 }

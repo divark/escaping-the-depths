@@ -1,10 +1,14 @@
 pub mod animation;
+pub mod sfx;
 pub mod ui;
 
 use std::time::Duration;
 
 use animation::{animate_disarming_trap, animate_door_opening};
 use bevy::{prelude::*, window::WindowResolution};
+use sfx::{
+    trigger_door_opening_noise, trigger_trap_going_off_noise, trigger_treasure_claimed_noise,
+};
 use ui::{
     prepare_screen_ui, spawn_game_over_screen, spawn_health_ui, update_game_over_screen,
     update_health_ui,
@@ -56,6 +60,10 @@ impl Plugin for StreamLogic {
 
         app.add_systems(Update, animate_door_opening);
         app.add_systems(Update, animate_disarming_trap);
+
+        app.add_systems(Update, trigger_door_opening_noise);
+        app.add_systems(Update, trigger_trap_going_off_noise);
+        app.add_systems(Update, trigger_treasure_claimed_noise);
 
         // TODO: Remove this after playtesting.
         app.add_systems(Update, map_mouse_click_to_uv);

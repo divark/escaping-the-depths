@@ -7,7 +7,7 @@ use crate::core_logic::TILE_SIZE;
 
 use super::{
     GameOverTimer, GameState,
-    scoring::{CurrentRecords, ExplorerHealth, TrapState, TreasureScore},
+    scoring::{CurrentRecords, ExplorerHealth, TrapState, TreasureScore, TreasureState},
     traveling::{ExitDoorState, Graph},
 };
 
@@ -273,11 +273,17 @@ fn spawn_objects_in_room(
         let tile_type = room_object.get_type();
         let tile_coords = room_object.get_logical_coordinates();
 
+        let tile_depth = if *tile_type == RoomObject::Explorer {
+            2
+        } else {
+            1
+        };
+
         place_tile_broadcaster.write(PlaceRoomObject::new(
             *tile_type,
             tile_coords.get_x(),
             tile_coords.get_y(),
-            1,
+            tile_depth,
         ));
     }
 }
@@ -551,7 +557,11 @@ pub fn place_tile(
                 commands.spawn((rendered_tile, HiddenFloorSwitch));
             }
             RoomObject::Treasure(treasure_value) => {
-                commands.spawn((rendered_tile, TreasureScore::new(treasure_value)));
+                commands.spawn((
+                    rendered_tile,
+                    TreasureScore::new(treasure_value),
+                    TreasureState::Unclaimed,
+                ));
             }
             RoomObject::Trap => {
                 commands.spawn((rendered_tile, TrapState::Armed));
