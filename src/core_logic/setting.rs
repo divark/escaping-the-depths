@@ -487,7 +487,7 @@ fn get_tile_sprite(
             "environment/wall_hole_to_floor.png"
         }
         RoomObject::HiddenFloorSwitch => "environment/floor_4.png",
-        RoomObject::Treasure(_) => "environment/coin_anim_f0.png",
+        RoomObject::Treasure(_) => "environment/chest_full_open_anim_f1.png",
         RoomObject::Trap => {
             num_sprites = 2;
             "environment/floor_spikes_atlas.png"
