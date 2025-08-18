@@ -27,13 +27,18 @@ pub struct StreamLogic;
 
 impl Plugin for StreamLogic {
     fn build(&self, app: &mut App) {
-        app.add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: WindowResolution::new(1280.0, 720.0).with_scale_factor_override(1.0),
-                ..default()
-            }),
-            ..default()
-        }));
+        app.add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: WindowResolution::new(1280.0, 720.0)
+                            .with_scale_factor_override(1.0),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        );
 
         let movement_time = MovementTime::new(Duration::from_secs(1));
         let game_over_time = GameOverTime::new(Duration::from_secs(20));
