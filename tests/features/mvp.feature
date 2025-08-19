@@ -126,5 +126,5 @@ Feature: All of the basic features are implemented and working as intended.
         And an exit door placed at coordinates 3, 4,
         And a tile scale of 2,
         When the cave room is rendered,
-        When a viewer clicks with UV coordinates 0.4904, 0.5853,
+        When a viewer clicks with UV coordinates 0.4623, 0.5275,
         Then the exit door will be opened.
