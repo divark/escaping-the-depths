@@ -313,10 +313,10 @@ fn spawn_objects_in_room(
     }
 }
 
-fn spawn_centered_camera(cave_room: &CaveRoom, commands: &mut Commands) {
+fn spawn_centered_camera(cave_room: &CaveRoom, tile_scale: &TileScale, commands: &mut Commands) {
     let centered_on_map_camera = Camera2d;
-    let cave_room_px_width = cave_room.get_width() * TILE_SIZE;
-    let cave_room_px_height = cave_room.get_height() * TILE_SIZE;
+    let cave_room_px_width = cave_room.get_width() * TILE_SIZE * tile_scale.get();
+    let cave_room_px_height = cave_room.get_height() * TILE_SIZE * tile_scale.get();
     let camera_position = Transform::from_xyz(
         cave_room_px_width as f32 / 2.0,
         cave_room_px_height as f32 / 2.0,
@@ -339,6 +339,7 @@ fn spawn_room_traversal_graph(cave_room: &CaveRoom, commands: &mut Commands) {
 pub fn spawn_new_room(
     mut spawn_room_requests: EventReader<LoadRoom>,
     mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
+    tile_scale: Res<TileScale>,
     mut commands: Commands,
 ) {
     if spawn_room_requests.is_empty() {
@@ -349,7 +350,7 @@ pub fn spawn_new_room(
     spawn_room(cave_room, &mut place_tile_broadcaster);
     spawn_objects_in_room(cave_room, &mut place_tile_broadcaster);
     spawn_room_traversal_graph(cave_room, &mut commands);
-    spawn_centered_camera(cave_room, &mut commands);
+    spawn_centered_camera(cave_room, &tile_scale, &mut commands);
 }
 
 pub fn spawn_next_room<T>(
