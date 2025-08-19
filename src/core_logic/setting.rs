@@ -391,18 +391,14 @@ pub fn spawn_next_room<T>(
     change_room_broadcaster.write(change_room_request);
 }
 
-pub fn reset_to_level_one_after_game_over<T>(
-    mut change_room_broadcaster: EventWriter<ChangeRoom>,
+pub fn reset_to_level_one_after_game_over(
     mut game_over_timers: Query<(Entity, &mut GameOverTimer)>,
     time: Res<Time>,
-    room_generator: Res<T>,
     mut next_game_state: ResMut<NextState<GameState>>,
     mut explorer_health: ResMut<ExplorerHealth>,
     mut scores: Query<&mut CurrentRecords>,
     mut commands: Commands,
-) where
-    T: Resource + RoomGenerating,
-{
+) {
     if game_over_timers.is_empty() || scores.is_empty() {
         return;
     }
@@ -419,9 +415,8 @@ pub fn reset_to_level_one_after_game_over<T>(
         return;
     }
 
-    let explorer_starting_location = LogicalCoordinates::new(1, 1);
-    let newly_generated_caveroom =
-        room_generator.generate_with_explorer(&explorer_starting_location);
+    commands.entity(game_over_timer_entity).despawn();
+
     explorer_health.set_current_health(3);
     explorer_health.set_total_health(3);
 
@@ -430,12 +425,21 @@ pub fn reset_to_level_one_after_game_over<T>(
         .expect("reset_to_level_one_after_game_over: Could not find the current record of scores.");
     score_keeping.reset();
 
+    next_game_state.set(GameState::Active);
+}
+
+pub fn respawn_level_one<T>(
+    room_generator: Res<T>,
+    mut change_room_broadcaster: EventWriter<ChangeRoom>,
+) where
+    T: Resource + RoomGenerating,
+{
+    let explorer_starting_location = LogicalCoordinates::new(1, 1);
+    let newly_generated_caveroom =
+        room_generator.generate_with_explorer(&explorer_starting_location);
+
     let change_room_request = ChangeRoom::new(newly_generated_caveroom);
     change_room_broadcaster.write(change_room_request);
-
-    commands.entity(game_over_timer_entity).despawn();
-
-    next_game_state.set(GameState::Active);
 }
 
 pub fn despawn_current_room(

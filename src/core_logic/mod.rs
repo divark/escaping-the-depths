@@ -14,8 +14,8 @@ use scoring::{
 };
 use setting::{
     ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating, TileScale,
-    despawn_current_room, place_tile, reset_to_level_one_after_game_over, spawn_new_room,
-    spawn_next_room,
+    despawn_current_room, place_tile, reset_to_level_one_after_game_over, respawn_level_one,
+    spawn_new_room, spawn_next_room,
 };
 use traveling::{
     make_explorer_go_to_exit_door, make_explorer_wander, move_explorer_to_next_tile,
@@ -148,7 +148,12 @@ impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
 
         app.add_systems(
             Update,
-            reset_to_level_one_after_game_over::<T>.run_if(in_state(GameState::GameOver)),
+            reset_to_level_one_after_game_over.run_if(in_state(GameState::GameOver)),
+        );
+
+        app.add_systems(
+            OnExit(GameState::GameOver),
+            respawn_level_one::<T>.after(reset_to_level_one_after_game_over),
         );
     }
 }

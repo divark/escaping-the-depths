@@ -18,7 +18,11 @@ use crate::{
     core_logic::{
         CoreLogic, GameOverTime, MovementTime,
         interacting::ViewerClick,
-        setting::{ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating},
+        scoring::CurrentRecords,
+        setting::{
+            ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating,
+            respawn_level_one, spawn_next_room,
+        },
     },
     stream_logic::ui::{spawn_statistics_ui, update_statistics_ui},
 };
@@ -73,6 +77,13 @@ impl Plugin for StreamLogic {
 
         // TODO: Remove this after playtesting.
         app.add_systems(Update, map_mouse_click_to_uv);
+
+        app.add_systems(
+            Update,
+            update_room_count_for_room_generator
+                .before(respawn_level_one::<RandomizedRoomGenerator>)
+                .before(spawn_next_room::<RandomizedRoomGenerator>),
+        );
     }
 }
 
@@ -112,4 +123,16 @@ fn map_mouse_click_to_uv(
         let viewer_click_event = ViewerClick::new(uv_x, uv_y);
         viewer_click_broadcaster.write(viewer_click_event);
     }
+}
+
+fn update_room_count_for_room_generator(
+    current_records: Query<&CurrentRecords, Changed<CurrentRecords>>,
+    mut room_generator: ResMut<RandomizedRoomGenerator>,
+) {
+    if current_records.is_empty() {
+        return;
+    }
+
+    let current_room_number = current_records.single().unwrap().get_current_room_number();
+    room_generator.set_room_number(current_room_number);
 }
