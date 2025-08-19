@@ -1,4 +1,5 @@
 pub mod animation;
+pub mod background_music;
 pub mod sfx;
 pub mod ui;
 
