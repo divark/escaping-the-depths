@@ -13,9 +13,12 @@ pub struct AudioTesting {
 
 #[given(regex = r"a song directory '([a-zA-Z0-9-_]+)',")]
 fn given_song_directory(audio_testing: &mut AudioTesting, song_directory: String) {
+    let mut project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let mut audio_root_folder = PathBuf::from("tests/assets/");
     audio_root_folder.push(song_directory);
-    audio_testing.audio_folder = audio_root_folder;
+
+    project_root.push(audio_root_folder);
+    audio_testing.audio_folder = project_root;
 }
 
 #[when("the background player loads the songs from the directory,")]

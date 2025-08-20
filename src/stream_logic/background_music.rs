@@ -92,8 +92,7 @@ fn split_off_assets_from_path(mut path_to_process: PathBuf) -> PathBuf {
 
 impl BackgroundPlayer {
     pub fn new(song_root_folder: &Path) -> Self {
-        let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let mut song_folder = project_root;
+        let mut song_folder = PathBuf::from(song_root_folder);
         song_folder.push(song_root_folder);
 
         let songs_found = explore_all_files(&song_folder);
