@@ -3,9 +3,10 @@ pub mod background_music;
 pub mod sfx;
 pub mod ui;
 
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use animation::{animate_disarming_trap, animate_door_opening};
+use background_music::{BackgroundPlayer, play_background_music};
 use bevy::{prelude::*, window::WindowResolution};
 use sfx::{
     trigger_door_opening_noise, trigger_trap_going_off_noise, trigger_treasure_claimed_noise,
@@ -85,6 +86,10 @@ impl Plugin for StreamLogic {
                 .before(respawn_level_one::<RandomizedRoomGenerator>)
                 .before(spawn_next_room::<RandomizedRoomGenerator>),
         );
+
+        let background_music_path = PathBuf::from("assets/background_music/");
+        app.insert_resource(BackgroundPlayer::new(&background_music_path));
+        app.add_systems(Update, play_background_music);
     }
 }
 

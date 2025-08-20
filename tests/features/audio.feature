@@ -11,4 +11,4 @@ Feature: Audio can be played for certain aspects of the game.
         Given a song directory 'sample-songs',
         When the background player loads the songs from the directory,
         And song 2 is picked from the background player,
-        Then the picked song should be 'sample-songs/song18.mp3'.
+        Then the picked song should be 'sample-songs/song21.mp3'.
