@@ -87,7 +87,8 @@ impl Plugin for StreamLogic {
                 .before(spawn_next_room::<RandomizedRoomGenerator>),
         );
 
-        let background_music_path = PathBuf::from("assets/background_music/");
+        let mut background_music_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        background_music_path.push(PathBuf::from("assets/background_music/"));
         app.insert_resource(BackgroundPlayer::new(&background_music_path));
         app.add_systems(
             Update,
