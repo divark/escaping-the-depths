@@ -45,9 +45,10 @@ fn explore_all_files(starting_directory: &Path) -> Vec<PathBuf> {
             continue;
         }
 
-        let new_files_to_explore = file_to_explore
-            .read_dir()
-            .expect("explore_all_files: Could not find files in directory");
+        let new_files_to_explore = file_to_explore.read_dir().expect(&format!(
+            "explore_all_files: Could not find files in directory {}",
+            file_to_explore.display()
+        ));
         for new_file_to_explore in new_files_to_explore {
             files_to_explore.push(new_file_to_explore.unwrap().path());
         }
