@@ -14,6 +14,7 @@ this will serve as a references page if anyone wants to know what I'm using.
 - [Crystal Cave](https://opengameart.org/content/crystal-cave-song18)
 - [Mysterious Ambience](https://opengameart.org/content/mysterious-ambience-song21)
 - [Underwater Theme](https://opengameart.org/content/underwater-theme)
+- [Game Over Theme from Devlin Bataric](https://opengameart.org/content/69-game-over-jingles-pack)
 
 ### UI
 - [Health](https://opengameart.org/content/heart-health-bar)

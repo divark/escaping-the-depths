@@ -6,7 +6,7 @@ pub mod ui;
 use std::{path::PathBuf, time::Duration};
 
 use animation::{animate_disarming_trap, animate_door_opening};
-use background_music::{BackgroundPlayer, play_background_music};
+use background_music::{BackgroundPlayer, play_background_music, play_game_over_song};
 use bevy::{prelude::*, window::WindowResolution};
 use sfx::{
     trigger_door_opening_noise, trigger_trap_going_off_noise, trigger_treasure_claimed_noise,
@@ -18,7 +18,7 @@ use ui::{
 
 use crate::{
     core_logic::{
-        CoreLogic, GameOverTime, MovementTime,
+        CoreLogic, GameOverTime, GameState, MovementTime,
         interacting::ViewerClick,
         scoring::CurrentRecords,
         setting::{
@@ -89,7 +89,15 @@ impl Plugin for StreamLogic {
 
         let background_music_path = PathBuf::from("assets/background_music/");
         app.insert_resource(BackgroundPlayer::new(&background_music_path));
-        app.add_systems(Update, play_background_music);
+        app.add_systems(
+            Update,
+            play_background_music.run_if(in_state(GameState::Active)),
+        );
+
+        app.add_systems(
+            OnEnter(GameState::GameOver),
+            play_game_over_song.run_if(in_state(GameState::GameOver)),
+        );
     }
 }
 

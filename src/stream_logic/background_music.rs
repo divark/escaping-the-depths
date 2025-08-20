@@ -150,3 +150,20 @@ pub fn play_background_music(
 
     commands.spawn(song_bundle);
 }
+
+pub fn play_game_over_song(
+    music_playing: Query<Entity, With<BackgroundMusic>>,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    for music_entity in music_playing {
+        commands.entity(music_entity).despawn();
+    }
+
+    let game_over_song_to_play = PathBuf::from(
+        "game_over_song/Devlin Bataric - Game Over Jingles Pack - 21 Game Over - The L.wav",
+    );
+    let game_over_song_bundle = BackgroundMusicBundle::new(game_over_song_to_play, &asset_server);
+
+    commands.spawn(game_over_song_bundle);
+}
