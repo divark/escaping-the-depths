@@ -96,7 +96,7 @@ impl Plugin for StreamLogic {
             path
         };
         #[cfg(not(debug_assertions))]
-        let mut background_music_path = music_path;
+        let background_music_path = music_path;
         app.insert_resource(BackgroundPlayer::new(&background_music_path));
         app.add_systems(
             Update,
