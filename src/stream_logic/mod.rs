@@ -23,7 +23,7 @@ use crate::{
         scoring::CurrentRecords,
         setting::{
             ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating,
-            respawn_level_one, spawn_next_room,
+            reset_to_level_one_after_game_over, respawn_level_one, spawn_next_room,
         },
     },
     stream_logic::ui::{spawn_statistics_ui, update_statistics_ui},
@@ -83,6 +83,7 @@ impl Plugin for StreamLogic {
         app.add_systems(
             Update,
             update_room_count_for_room_generator
+                .after(reset_to_level_one_after_game_over)
                 .before(respawn_level_one::<RandomizedRoomGenerator>)
                 .before(spawn_next_room::<RandomizedRoomGenerator>),
         );
