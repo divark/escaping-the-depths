@@ -54,7 +54,7 @@ pub trait RoomGenerating {
     fn generate_with_explorer(&self, explorer_starting_position: &LogicalCoordinates) -> CaveRoom;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct WorldTileDimensions {
     width: usize,
     height: usize,
@@ -755,6 +755,47 @@ fn place_armed_traps(
     }
 }
 
+/// Returns the number - 1, or the lower bound if it cannot be subtracted.
+fn calculate_lower_bound(number: usize, lower_bound: usize) -> usize {
+    if number > lower_bound {
+        number - 1
+    } else {
+        lower_bound
+    }
+}
+
+/// Returns the number + 1, or the upper bound - 1 if it cannot be added.
+fn calculate_upper_bound(number: usize, upper_bound: usize) -> usize {
+    if number < upper_bound - 1 {
+        number + 1
+    } else {
+        upper_bound - 1
+    }
+}
+
+pub fn exclude_tiles_at_and_around(
+    player_location: &LogicalCoordinates,
+    room_dimensions: &WorldTileDimensions,
+) -> HashSet<LogicalCoordinates> {
+    let mut excluded_tiles = HashSet::new();
+
+    let lower_bound_x = calculate_lower_bound(player_location.get_x(), 0);
+    let upper_bound_x = calculate_upper_bound(player_location.get_x(), room_dimensions.get_width());
+
+    let lower_bound_y = calculate_lower_bound(player_location.get_y(), 0);
+    let upper_bound_y =
+        calculate_upper_bound(player_location.get_y(), room_dimensions.get_height());
+
+    for x in lower_bound_x..=upper_bound_x {
+        for y in lower_bound_y..=upper_bound_y {
+            let excluded_location = LogicalCoordinates::new(x, y);
+            excluded_tiles.insert(excluded_location);
+        }
+    }
+
+    excluded_tiles
+}
+
 impl RoomGenerating for RandomizedRoomGenerator {
     fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
@@ -763,15 +804,17 @@ impl RoomGenerating for RandomizedRoomGenerator {
             self.min_width + (self.current_room_num / self.min_width) + WALLS_OFFSET;
         let desired_height =
             self.min_height + (self.current_room_num / self.min_height) + WALLS_OFFSET;
+        let desired_room_dimensions = WorldTileDimensions::new(desired_width, desired_height);
 
         let mut generated_cave_room = CaveRoom::new(desired_width, desired_height);
         add_walls(&mut generated_cave_room);
 
-        let mut claimed_tiles = HashSet::new();
-        // We should not add something on top of the explorer when they
+        // We should start by not add something at or around the explorer when they
         // first enter the room, such as a trap, or treasure, or even
-        // the hidden door switch right away.
-        claimed_tiles.insert(*explorer_starting_location);
+        // the hidden door switch right away. It's unfair otherwise, as reported from
+        // play testing.
+        let mut claimed_tiles =
+            exclude_tiles_at_and_around(explorer_starting_location, &desired_room_dimensions);
         generated_cave_room.set(
             explorer_starting_location.get_x(),
             explorer_starting_location.get_y(),

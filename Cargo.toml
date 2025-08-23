@@ -18,3 +18,7 @@ harness = false
 [[test]]
 name = "audio"
 harness = false
+
+[[test]]
+name = "qol"
+harness = false
