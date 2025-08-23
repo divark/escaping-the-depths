@@ -214,7 +214,12 @@ pub fn claim_treasure_with_viewer_click(
 
             *treasure_state = TreasureState::Claimed;
             let invisibility = Visibility::Hidden;
-            commands.entity(treasure_entity).insert(invisibility);
+            // During playtesting, it was found that a player could either claim treasure
+            // or trigger a trap after it was already despawned, but the game did not know
+            // about it, causing it to crash.
+            //
+            // This is a workaround in the event that the entity does not exist anymore.
+            commands.entity(treasure_entity).try_insert(invisibility);
         }
     }
 }

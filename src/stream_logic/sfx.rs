@@ -21,7 +21,12 @@ pub fn trigger_door_opening_noise(
 
     let door_opening_sound_file = asset_server.load("environment/Explosion3__007.wav");
     let door_opening_sfx = AudioPlayer::new(door_opening_sound_file);
-    commands.entity(door_entity).insert(door_opening_sfx);
+    // During playtesting, it was found that a player could either claim treasure
+    // or trigger a trap after it was already despawned, but the game did not know
+    // about it, causing it to crash.
+    //
+    // This is a workaround in the event that the entity does not exist anymore.
+    commands.entity(door_entity).try_insert(door_opening_sfx);
 }
 
 pub fn trigger_trap_going_off_noise(
@@ -36,7 +41,12 @@ pub fn trigger_trap_going_off_noise(
 
         let trap_triggering_sound_file = asset_server.load("environment/Hi-hat__003.wav");
         let trap_triggering_sfx = AudioPlayer::new(trap_triggering_sound_file);
-        commands.entity(trap_entity).insert(trap_triggering_sfx);
+        // During playtesting, it was found that a player could either claim treasure
+        // or trigger a trap after it was already despawned, but the game did not know
+        // about it, causing it to crash.
+        //
+        // This is a workaround in the event that the entity does not exist anymore.
+        commands.entity(trap_entity).try_insert(trap_triggering_sfx);
     }
 }
 
