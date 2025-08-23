@@ -36,15 +36,7 @@ pub fn trigger_trap_going_off_noise(
 
         let trap_triggering_sound_file = asset_server.load("environment/Hi-hat__003.wav");
         let trap_triggering_sfx = AudioPlayer::new(trap_triggering_sound_file);
-
-        // During playtesting, it was found that a player could either claim treasure
-        // or trigger a trap after it was already despawned, but the game did not know
-        // about it, causing it to crash.
-        //
-        // This is a workaround in the event that the entity does not exist anymore.
-        if let Ok(mut found_trap_entity) = commands.get_entity(trap_entity) {
-            found_trap_entity.insert(trap_triggering_sfx);
-        }
+        commands.entity(trap_entity).insert(trap_triggering_sfx);
     }
 }
 
@@ -60,13 +52,8 @@ pub fn trigger_treasure_claimed_noise(
 
         let treasure_claimed_sound_file = asset_server.load("environment/sfx_coin_double7.wav");
         let treasure_claimed_sfx = AudioPlayer::new(treasure_claimed_sound_file);
-        // During playtesting, it was found that a player could either claim treasure
-        // or trigger a trap after it was already despawned, but the game did not know
-        // about it, causing it to crash.
-        //
-        // This is a workaround in the event that the entity does not exist anymore.
-        if let Ok(mut found_treasure_entity) = commands.get_entity(treasure_entity) {
-            found_treasure_entity.insert(treasure_claimed_sfx);
-        }
+        commands
+            .entity(treasure_entity)
+            .insert(treasure_claimed_sfx);
     }
 }
