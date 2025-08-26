@@ -357,6 +357,7 @@ pub fn spawn_next_room<T>(
     mut change_room_broadcaster: EventWriter<ChangeRoom>,
     explorer: Query<(&LogicalCoordinates, &ExplorerState), Changed<LogicalCoordinates>>,
     exit_door: Query<(&LogicalCoordinates, &ExitDoorState)>,
+    armed_traps: Query<&TrapState>,
     mut current_records: Query<&mut CurrentRecords>,
     room_generator: Res<T>,
 ) where
@@ -383,6 +384,12 @@ pub fn spawn_next_room<T>(
         .single_mut()
         .expect("spawn_next_room: Could not get current records.");
     current_records.increment_room_count();
+
+    let num_traps_still_armed = armed_traps
+        .iter()
+        .filter(|&trap_state| trap_state == &TrapState::Armed)
+        .count();
+    current_records.add_score(num_traps_still_armed * 200);
 
     let explorer_starting_location = LogicalCoordinates::new(explorer_location.get_x(), 1);
     let newly_generated_caveroom =

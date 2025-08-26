@@ -128,3 +128,31 @@ Feature: All of the basic features are implemented and working as intended.
         When the cave room is rendered,
         When a viewer clicks with UV coordinates 0.4623, 0.5275,
         Then the exit door will be opened.
+
+    Scenario: Left over armed traps will add bonus points.
+        Given a 4x4 cave room,
+        And an explorer placed at coordinates 4, 1,
+        And a hidden floor switch placed at coordinates 3, 1,
+        And an exit door placed at coordinates 3, 5,
+    	And an armed trap placed at coordinates 1, 1,
+    	And an armed trap placed at coordinates 1, 2,
+    	And an armed trap placed at coordinates 1, 3,
+    	And an armed trap placed at coordinates 1, 4,
+    	When the cave room is rendered,
+        And the explorer has reached Tile 3, 1,
+        And the explorer has left the room,
+    	Then the current score will be 800 points.
+
+    Scenario: Some disarmed traps will not count towards the bonus points.
+        Given a 4x4 cave room,
+        And an explorer placed at coordinates 4, 1,
+        And a hidden floor switch placed at coordinates 2, 2,
+        And an exit door placed at coordinates 3, 5,
+    	And an armed trap placed at coordinates 1, 1,
+    	And an armed trap placed at coordinates 1, 2,
+    	And an armed trap placed at coordinates 1, 3,
+    	And an armed trap placed at coordinates 1, 4,
+    	When the cave room is rendered,
+        And the explorer has reached Tile 2, 2,
+        And the explorer has left the room,
+    	Then the current score will be 400 points.
