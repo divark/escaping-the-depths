@@ -15,6 +15,7 @@ this will serve as a references page if anyone wants to know what I'm using.
 - [Mysterious Ambience](https://opengameart.org/content/mysterious-ambience-song21)
 - [Underwater Theme](https://opengameart.org/content/underwater-theme)
 - [Game Over Theme from Devlin Bataric](https://opengameart.org/content/69-game-over-jingles-pack)
+- [Free Chiptune Music Pack 1 by Chillmindscapes](https://chillmindscapes.itch.io/free-chiptune-music-pack-1)
 
 ### UI
 - [Health](https://opengameart.org/content/heart-health-bar)
