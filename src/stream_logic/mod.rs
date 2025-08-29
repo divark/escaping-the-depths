@@ -26,7 +26,10 @@ use crate::{
             reset_to_level_one_after_game_over, respawn_level_one, spawn_next_room,
         },
     },
-    stream_logic::ui::{spawn_statistics_ui, update_statistics_ui},
+    stream_logic::ui::{
+        TemporaryUITime, hide_bonus_scores_after_time, show_bonus_scores_on_exit,
+        spawn_bonus_scores_ui, spawn_statistics_ui, update_statistics_ui,
+    },
 };
 
 pub struct StreamLogic;
@@ -48,6 +51,7 @@ impl Plugin for StreamLogic {
 
         let movement_time = MovementTime::new(Duration::from_secs(1));
         let game_over_time = GameOverTime::new(Duration::from_secs(20));
+        let temporary_ui_time = TemporaryUITime::new(Duration::from_secs(3));
 
         let min_width = 4;
         let min_height = 4;
@@ -107,6 +111,13 @@ impl Plugin for StreamLogic {
         app.add_systems(
             OnEnter(GameState::GameOver),
             play_game_over_song.run_if(in_state(GameState::GameOver)),
+        );
+
+        app.insert_resource(temporary_ui_time);
+        app.add_systems(Startup, spawn_bonus_scores_ui.after(spawn_statistics_ui));
+        app.add_systems(
+            Update,
+            (show_bonus_scores_on_exit, hide_bonus_scores_after_time),
         );
     }
 }
