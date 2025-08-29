@@ -1,8 +1,11 @@
-use bevy::prelude::*;
+use bevy::{audio::PlaybackMode, prelude::*};
 
-use crate::core_logic::{
-    scoring::{TrapState, TreasureState},
-    traveling::ExitDoorState,
+use crate::{
+    core_logic::{
+        scoring::{TrapState, TreasureState},
+        traveling::ExitDoorState,
+    },
+    stream_logic::ui::BonusScoreState,
 };
 
 pub fn trigger_door_opening_noise(
@@ -66,4 +69,36 @@ pub fn trigger_treasure_claimed_noise(
             .entity(treasure_entity)
             .insert(treasure_claimed_sfx);
     }
+}
+
+pub fn trigger_bonus_score_noise(
+    bonus_score_ui: Query<
+        (Entity, &BonusScoreState),
+        (Added<BonusScoreState>, Without<AudioPlayer>),
+    >,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+    if bonus_score_ui.is_empty() {
+        return;
+    }
+
+    let (bonus_score_ui_entity, bonus_score_state) = bonus_score_ui.single().unwrap();
+
+    let no_armed_traps_triggered = bonus_score_state == &BonusScoreState::NoTrapsTriggered;
+    let bonus_score_sound_file = if no_armed_traps_triggered {
+        asset_server.load("ui/VictoryBig_fixed.wav")
+    } else {
+        asset_server.load("ui/VictorySmall_fixed.wav")
+    };
+
+    let bonus_score_playback_settings = PlaybackSettings {
+        mode: PlaybackMode::Remove,
+        ..default()
+    };
+
+    let bonus_score_sfx = AudioPlayer::new(bonus_score_sound_file);
+    commands
+        .entity(bonus_score_ui_entity)
+        .try_insert((bonus_score_sfx, bonus_score_playback_settings));
 }

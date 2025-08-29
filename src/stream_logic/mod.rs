@@ -26,9 +26,12 @@ use crate::{
             reset_to_level_one_after_game_over, respawn_level_one, spawn_next_room,
         },
     },
-    stream_logic::ui::{
-        TemporaryUITime, hide_bonus_scores_after_time, show_bonus_scores_on_exit,
-        spawn_bonus_scores_ui, spawn_statistics_ui, update_statistics_ui,
+    stream_logic::{
+        sfx::trigger_bonus_score_noise,
+        ui::{
+            TemporaryUITime, hide_bonus_scores_after_time, show_bonus_scores_on_exit,
+            spawn_bonus_scores_ui, spawn_statistics_ui, update_statistics_ui,
+        },
     },
 };
 
@@ -119,6 +122,7 @@ impl Plugin for StreamLogic {
             Update,
             (show_bonus_scores_on_exit, hide_bonus_scores_after_time),
         );
+        app.add_systems(Update, trigger_bonus_score_noise);
     }
 }
 

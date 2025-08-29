@@ -326,6 +326,12 @@ impl TemporaryUITimer {
     }
 }
 
+#[derive(Component, PartialEq)]
+pub enum BonusScoreState {
+    NoTrapsTriggered,
+    SomeTrapsTriggered,
+}
+
 pub fn spawn_bonus_scores_ui(
     top_half_screen: Query<Entity, With<TopHalfScreen>>,
     mut commands: Commands,
@@ -353,7 +359,7 @@ pub fn spawn_bonus_scores_ui(
 }
 
 pub fn show_bonus_scores_on_exit(
-    armed_traps: Query<&TrapState>,
+    traps: Query<&TrapState>,
     explorer_location: Query<
         &LogicalCoordinates,
         (With<ExplorerState>, Changed<LogicalCoordinates>),
@@ -366,7 +372,7 @@ pub fn show_bonus_scores_on_exit(
     temp_ui_visibility_time: Res<TemporaryUITime>,
     mut commands: Commands,
 ) {
-    if armed_traps.is_empty()
+    if traps.is_empty()
         || explorer_location.is_empty()
         || exit_door.is_empty()
         || bonus_score_ui.is_empty()
@@ -384,7 +390,8 @@ pub fn show_bonus_scores_on_exit(
     let (bonus_score_ui_entity, mut bonus_score_ui_text, mut bonus_score_ui_visibility) =
         bonus_score_ui.single_mut().unwrap();
 
-    let num_armed_traps = armed_traps
+    let total_num_traps = traps.iter().len();
+    let num_armed_traps = traps
         .iter()
         .filter(|&armed_trap_state| armed_trap_state == &TrapState::Armed)
         .count();
@@ -393,6 +400,12 @@ pub fn show_bonus_scores_on_exit(
     if num_armed_traps == 0 {
         return;
     }
+
+    let bonus_score_state = if num_armed_traps == total_num_traps {
+        BonusScoreState::NoTrapsTriggered
+    } else {
+        BonusScoreState::SomeTrapsTriggered
+    };
 
     let bonus_points = num_armed_traps * 200;
     bonus_score_ui_text.0 = format!(
@@ -405,7 +418,7 @@ pub fn show_bonus_scores_on_exit(
     let temporary_ui_timer = TemporaryUITimer::new(&temp_ui_visibility_time);
     commands
         .entity(bonus_score_ui_entity)
-        .insert(temporary_ui_timer);
+        .insert((temporary_ui_timer, bonus_score_state));
 }
 
 pub fn hide_bonus_scores_after_time(
@@ -433,5 +446,6 @@ pub fn hide_bonus_scores_after_time(
     *bonus_score_ui_visibility = Visibility::Hidden;
     commands
         .entity(bonus_score_ui_entity)
-        .remove::<TemporaryUITimer>();
+        .remove::<TemporaryUITimer>()
+        .remove::<BonusScoreState>();
 }
