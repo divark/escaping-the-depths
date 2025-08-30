@@ -1,6 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use bevy::{audio::PlaybackMode, prelude::*};
+use bevy::{
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+};
 use rand::Rng;
 
 #[derive(Resource, Default, Debug)]
@@ -23,6 +26,7 @@ impl BackgroundMusicBundle {
         let song_to_play = AudioPlayer::new(asset_server.load(song_to_play_path));
         let song_settings = PlaybackSettings {
             mode: PlaybackMode::Despawn,
+            volume: Volume::Linear(0.45),
             ..default()
         };
 
