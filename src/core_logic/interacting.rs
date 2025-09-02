@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-use crate::core_logic::TILE_SIZE;
-
-use super::setting::{LogicalCoordinates, TileScale};
+use super::setting::{LogicalCoordinates, TileSize};
 
 #[derive(Event)]
 pub struct ViewerClick {
@@ -52,7 +50,7 @@ pub fn convert_viewer_click_to_tile_click(
     mut viewer_clicks: EventReader<ViewerClick>,
     mut movement_broadcaster: EventWriter<LogicalCoordinates>,
     window_info: Query<&Window>,
-    tile_scaling: Res<TileScale>,
+    tile_scaling: Res<TileSize>,
     camera: Query<&Transform, With<Camera2d>>,
 ) {
     if window_info.is_empty() || camera.is_empty() {
@@ -64,7 +62,7 @@ pub fn convert_viewer_click_to_tile_click(
     );
     let window_width = window.physical_width() as f32;
     let window_height = window.physical_height() as f32;
-    let tile_size = (TILE_SIZE * tile_scaling.get()) as f32;
+    let tile_size = tile_scaling.calculate_size() as f32;
 
     let camera_position = camera
         .single()

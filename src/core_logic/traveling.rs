@@ -147,7 +147,7 @@ impl Graph {
         let edges = AdjacencyList::from_tile_nodes(&nodes, world_size);
 
         Self {
-            world_size: world_size.clone(),
+            world_size: *world_size,
             nodes,
             edges,
         }

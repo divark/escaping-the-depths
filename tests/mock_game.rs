@@ -24,12 +24,16 @@ const TICKING_LIMIT: usize = 100;
 pub struct TestRoomGenerator {
     width: usize,
     height: usize,
+
+    tile_sizing: TileSize,
 }
 
 impl RoomGenerating for TestRoomGenerator {
     fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
-        // Adding walls to each side means we have to increase the width and height by 2.
-        let mut room_generated = CaveRoom::new(self.width + 2, self.height + 2);
+        let width = constrain_width(self.width + WALLS_OFFSET, &self.tile_sizing);
+        let height = constrain_height(self.height + WALLS_OFFSET, &self.tile_sizing);
+
+        let mut room_generated = CaveRoom::new(width, height);
         add_walls(&mut room_generated);
 
         // An explorer would never spawn in the walls, so for testing purposes,
@@ -49,8 +53,12 @@ impl RoomGenerating for TestRoomGenerator {
 }
 
 impl TestRoomGenerator {
-    pub fn new(width: usize, height: usize) -> Self {
-        Self { width, height }
+    pub fn new(width: usize, height: usize, tile_scaling: TileSize) -> Self {
+        Self {
+            width,
+            height,
+            tile_sizing: tile_scaling,
+        }
     }
 }
 
@@ -122,7 +130,7 @@ impl MockGame {
         self.tick();
     }
 
-    fn get_one<T>(&mut self) -> &T
+    pub fn get_one<T>(&mut self) -> &T
     where
         T: Component,
     {
@@ -212,14 +220,15 @@ impl MockGame {
     }
 
     pub fn spawn_room(&mut self, width: usize, height: usize) {
-        let test_room_generator = TestRoomGenerator::new(width, height);
+        let tile_sizing = TileSize::new(16, 1);
+        let test_room_generator = TestRoomGenerator::new(width, height, tile_sizing.clone());
         let movement_time = MovementTime::new(Duration::from_secs(0));
         let game_over_time = GameOverTime::new(Duration::from_secs(0));
         self.app.add_plugins(CoreLogic::new(
             movement_time,
             game_over_time,
             test_room_generator,
-            1,
+            tile_sizing,
         ));
         self.tick();
 
@@ -400,8 +409,8 @@ impl MockGame {
     }
 
     pub fn set_tile_scale(&mut self, desired_tile_scale: usize) {
-        let mut current_tile_scale = self.get_resource_mut::<TileScale>();
-        current_tile_scale.set(desired_tile_scale);
+        let mut current_tile_scale = self.get_resource_mut::<TileSize>();
+        current_tile_scale.set_scale(desired_tile_scale);
     }
 }
 

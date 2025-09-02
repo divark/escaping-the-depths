@@ -22,7 +22,7 @@ use crate::{
         interacting::ViewerClick,
         scoring::CurrentRecords,
         setting::{
-            ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating,
+            ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating, TileSize,
             reset_to_level_one_after_game_over, respawn_level_one, spawn_next_room,
         },
     },
@@ -58,10 +58,14 @@ impl Plugin for StreamLogic {
 
         let min_width = 4;
         let min_height = 4;
-        let room_generator = RandomizedRoomGenerator::new(min_width, min_height);
 
+        let tile_size = 16;
         let tile_scale = 2;
-        let core_logic = CoreLogic::new(movement_time, game_over_time, room_generator, tile_scale);
+        let tile_sizing = TileSize::new(tile_size, tile_scale);
+        let room_generator =
+            RandomizedRoomGenerator::new(min_width, min_height, tile_sizing.clone());
+
+        let core_logic = CoreLogic::new(movement_time, game_over_time, room_generator, tile_sizing);
         app.add_plugins(core_logic);
 
         app.add_systems(Startup, spawn_first_level);

@@ -13,7 +13,7 @@ use scoring::{
     start_game_over_countdown_on_death,
 };
 use setting::{
-    ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating, TileScale,
+    ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating, TileSize,
     despawn_current_room, place_tile, reset_to_level_one_after_game_over, respawn_level_one,
     spawn_new_room, spawn_next_room,
 };
@@ -21,8 +21,6 @@ use traveling::{
     make_explorer_go_to_exit_door, make_explorer_wander, move_explorer_to_next_tile,
     set_explorer_target, unlock_exit_door_with_explorer, unlock_exit_door_with_viewer_click,
 };
-
-pub const TILE_SIZE: usize = 16;
 
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -83,7 +81,7 @@ pub struct CoreLogic<T: RoomGenerating + Resource + Clone> {
     movement_time: MovementTime,
     game_over_time: GameOverTime,
     room_generator: T,
-    tile_scale: usize,
+    tile_size: TileSize,
 }
 
 impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
@@ -91,13 +89,13 @@ impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
         movement_time: MovementTime,
         game_over_time: GameOverTime,
         room_generator: T,
-        tile_scale: usize,
+        tile_size: TileSize,
     ) -> Self {
         Self {
             movement_time,
             game_over_time,
             room_generator,
-            tile_scale,
+            tile_size,
         }
     }
 }
@@ -111,7 +109,7 @@ impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
         app.add_event::<ViewerClick>();
 
         app.init_state::<GameState>();
-        app.insert_resource(TileScale::new(self.tile_scale));
+        app.insert_resource(self.tile_size.clone());
         app.insert_resource(ExplorerHealth::new(3, 3));
         app.insert_resource(self.movement_time.clone());
         app.insert_resource(self.game_over_time.clone());

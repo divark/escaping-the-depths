@@ -179,6 +179,17 @@ fn verify_record_room_number(game: &mut MockGame, expected_record_room_number: u
     assert_eq!(expected_record_room_number, actual_record_room_number);
 }
 
+#[then(regex = r"the size of the cave room should be ([0-9]+) by ([0-9]+).")]
+fn verify_cave_room_size(
+    game: &mut MockGame,
+    expected_room_width: usize,
+    expected_room_height: usize,
+) {
+    let expected_room_size = WorldTileDimensions::new(expected_room_width, expected_room_height);
+    let actual_room_size = *game.get_one::<WorldTileDimensions>();
+    assert_eq!(expected_room_size, actual_room_size);
+}
+
 fn main() {
     let mut feature_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     feature_path.push("tests/features/mvp.feature");

@@ -3,8 +3,6 @@ use std::collections::HashSet;
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::core_logic::TILE_SIZE;
-
 use super::{
     GameOverTimer, GameState,
     scoring::{CurrentRecords, ExplorerHealth, TrapState, TreasureScore, TreasureState},
@@ -14,27 +12,36 @@ use super::{
 pub const WALLS_OFFSET: usize = 2;
 
 #[derive(Resource, Clone)]
-pub struct TileScale {
+pub struct TileSize {
+    size: usize,
     scale: usize,
 }
 
-impl Default for TileScale {
+impl Default for TileSize {
     fn default() -> Self {
-        Self { scale: 1 }
+        Self { size: 16, scale: 1 }
     }
 }
 
-impl TileScale {
-    pub fn new(scale: usize) -> Self {
-        Self { scale }
+impl TileSize {
+    pub fn new(size: usize, scale: usize) -> Self {
+        Self { size, scale }
     }
 
-    pub fn set(&mut self, desired_scale: usize) {
+    pub fn set_scale(&mut self, desired_scale: usize) {
         self.scale = desired_scale;
     }
 
-    pub fn get(&self) -> usize {
+    pub fn get_scale(&self) -> usize {
         self.scale
+    }
+
+    pub fn get_size(&self) -> usize {
+        self.size
+    }
+
+    pub fn calculate_size(&self) -> usize {
+        self.size * self.scale
     }
 }
 
@@ -54,7 +61,7 @@ pub trait RoomGenerating {
     fn generate_with_explorer(&self, explorer_starting_position: &LogicalCoordinates) -> CaveRoom;
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(PartialEq, Component, Clone, Copy, Debug, Default)]
 pub struct WorldTileDimensions {
     width: usize,
     height: usize,
@@ -136,9 +143,9 @@ pub struct CaveRoom {
 impl CaveRoom {
     pub fn new(width: usize, height: usize) -> Self {
         let mut room_tiles = Vec::new();
-        for i in 0..width {
-            for j in 0..height {
-                room_tiles.push(Tile::new(LogicalCoordinates::new(i, j)));
+        for col_idx in 0..width {
+            for row_idx in 0..height {
+                room_tiles.push(Tile::new(LogicalCoordinates::new(row_idx, col_idx)));
             }
         }
 
@@ -153,11 +160,17 @@ impl CaveRoom {
     pub fn set(&mut self, x: usize, y: usize, tile_type: RoomObject) {
         let logical_coordinates = LogicalCoordinates::new(x, y);
         if tile_type == RoomObject::Wall || tile_type == RoomObject::ExitDoor {
+            let error_msg = &format!(
+                "set: Could not find designated tile {} {} for wall.",
+                logical_coordinates.get_x(),
+                logical_coordinates.get_y()
+            );
+
             let found_tile = self
                 .room_tiles
                 .iter_mut()
                 .find(|tile| tile.get_logical_coordinates() == &logical_coordinates)
-                .expect("set: Could not find designated tile for wall.");
+                .expect(error_msg);
             found_tile.set_type(tile_type);
 
             return;
@@ -274,7 +287,11 @@ pub struct ExitDoor;
 #[derive(Component)]
 pub struct HiddenFloorSwitch;
 
-fn spawn_room(cave_room: &CaveRoom, place_tile_broadcaster: &mut EventWriter<PlaceRoomObject>) {
+fn spawn_room(
+    cave_room: &CaveRoom,
+    place_tile_broadcaster: &mut EventWriter<PlaceRoomObject>,
+    commands: &mut Commands,
+) {
     let cave_room_tiles = cave_room.get_tiles();
     for tile in cave_room_tiles {
         let tile_type = tile.get_type();
@@ -287,6 +304,8 @@ fn spawn_room(cave_room: &CaveRoom, place_tile_broadcaster: &mut EventWriter<Pla
             0,
         ));
     }
+
+    commands.spawn(*cave_room.get_dimensions());
 }
 
 fn spawn_objects_in_room(
@@ -313,10 +332,10 @@ fn spawn_objects_in_room(
     }
 }
 
-fn spawn_centered_camera(cave_room: &CaveRoom, tile_scale: &TileScale, commands: &mut Commands) {
+fn spawn_centered_camera(cave_room: &CaveRoom, tile_scale: &TileSize, commands: &mut Commands) {
     let centered_on_map_camera = Camera2d;
-    let cave_room_px_width = cave_room.get_width() * TILE_SIZE * tile_scale.get();
-    let cave_room_px_height = cave_room.get_height() * TILE_SIZE * tile_scale.get();
+    let cave_room_px_width = cave_room.get_width() * tile_scale.calculate_size();
+    let cave_room_px_height = cave_room.get_height() * tile_scale.calculate_size();
     let camera_position = Transform::from_xyz(
         cave_room_px_width as f32 / 2.0,
         cave_room_px_height as f32 / 2.0,
@@ -339,7 +358,7 @@ fn spawn_room_traversal_graph(cave_room: &CaveRoom, commands: &mut Commands) {
 pub fn spawn_new_room(
     mut spawn_room_requests: EventReader<LoadRoom>,
     mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
-    tile_scale: Res<TileScale>,
+    tile_scale: Res<TileSize>,
     mut commands: Commands,
 ) {
     if spawn_room_requests.is_empty() {
@@ -347,7 +366,7 @@ pub fn spawn_new_room(
     }
 
     let cave_room = spawn_room_requests.read().next().unwrap().get_room();
-    spawn_room(cave_room, &mut place_tile_broadcaster);
+    spawn_room(cave_room, &mut place_tile_broadcaster, &mut commands);
     spawn_objects_in_room(cave_room, &mut place_tile_broadcaster);
     spawn_room_traversal_graph(cave_room, &mut commands);
     spawn_centered_camera(cave_room, &tile_scale, &mut commands);
@@ -456,6 +475,7 @@ pub fn despawn_current_room(
     mut commands: Commands,
     all_room_tiles: Query<Entity, With<LogicalCoordinates>>,
     room_graph: Query<Entity, With<Graph>>,
+    room_size: Query<Entity, With<WorldTileDimensions>>,
     camera_in_room: Query<Entity, With<Camera2d>>,
 ) {
     if change_room_requests.is_empty() {
@@ -468,6 +488,10 @@ pub fn despawn_current_room(
 
     for room_graph_entity in room_graph.iter() {
         commands.entity(room_graph_entity).despawn();
+    }
+
+    for room_size_entity in room_size.iter() {
+        commands.entity(room_size_entity).despawn();
     }
 
     for camera_entity in camera_in_room.iter() {
@@ -486,7 +510,7 @@ fn get_tile_sprite(
     tile_to_place: &PlaceRoomObject,
     asset_server: &AssetServer,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-    tile_scale: &TileScale,
+    tile_scale: &TileSize,
 ) -> Sprite {
     let tile_type = tile_to_place.object_type;
     let mut num_sprites = 1;
@@ -507,7 +531,7 @@ fn get_tile_sprite(
     };
 
     let spritesheet_image = asset_server.load(sprite_file_path);
-    let adjusted_tile_size = (TILE_SIZE * tile_scale.get()) as f32;
+    let adjusted_tile_size = tile_scale.calculate_size() as f32;
 
     if num_sprites == 1 {
         return Sprite {
@@ -517,8 +541,13 @@ fn get_tile_sprite(
         };
     }
 
-    let tile_sprite_atlas_layout =
-        TextureAtlasLayout::from_grid(UVec2::splat(TILE_SIZE as u32), num_sprites, 1, None, None);
+    let tile_sprite_atlas_layout = TextureAtlasLayout::from_grid(
+        UVec2::splat(tile_scale.get_size() as u32),
+        num_sprites,
+        1,
+        None,
+        None,
+    );
     let loaded_atlas_layout = texture_atlas_layouts.add(tile_sprite_atlas_layout);
     let tile_spritesheet_atlas = TextureAtlas {
         layout: loaded_atlas_layout,
@@ -532,9 +561,9 @@ fn get_tile_sprite(
     }
 }
 
-fn get_tile_position(tile_to_place: &PlaceRoomObject, tile_scale: &TileScale) -> Transform {
-    let tile_x = tile_to_place.x * (TILE_SIZE * tile_scale.get());
-    let tile_y = tile_to_place.y * (TILE_SIZE * tile_scale.get());
+fn get_tile_position(tile_to_place: &PlaceRoomObject, tile_scale: &TileSize) -> Transform {
+    let tile_x = tile_to_place.x * tile_scale.calculate_size();
+    let tile_y = tile_to_place.y * tile_scale.calculate_size();
 
     let tile_z = tile_to_place.z;
     Transform::from_xyz(tile_x as f32, tile_y as f32, tile_z as f32)
@@ -544,7 +573,7 @@ fn convert_to_rendered_tile(
     tile_to_place: &PlaceRoomObject,
     asset_server: &AssetServer,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-    tile_scale: &TileScale,
+    tile_scale: &TileSize,
 ) -> TileBundle {
     let mut tile_sprite_bundle = SpriteBundle::default();
 
@@ -591,7 +620,7 @@ pub fn place_tile(
     mut place_tile_requests: EventReader<PlaceRoomObject>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    tile_scale: Res<TileScale>,
+    tile_scale: Res<TileSize>,
     mut commands: Commands,
 ) {
     for tile_to_place in place_tile_requests.read() {
@@ -637,15 +666,17 @@ pub struct RandomizedRoomGenerator {
     min_height: usize,
 
     current_room_num: usize,
+    tile_sizing: TileSize,
 }
 
 impl RandomizedRoomGenerator {
-    pub fn new(min_width: usize, min_height: usize) -> Self {
+    pub fn new(min_width: usize, min_height: usize, tile_sizing: TileSize) -> Self {
         Self {
             min_width,
             min_height,
 
             current_room_num: 1,
+            tile_sizing,
         }
     }
 
@@ -803,6 +834,30 @@ pub fn exclude_tiles_at_and_around(
     excluded_tiles
 }
 
+/*
+ * We don't want the size of the room to exceed the fixed window size
+ * of 1280x720 because we do not move the camera with the explorer.
+ *
+ * The camera will not move with the explorer since we want to register
+ * clicks from the stream even if there's high latency. Moving the camera
+ * around would result in unintended actions otherwise.
+ */
+pub fn constrain_width(width: usize, tile_sizing: &TileSize) -> usize {
+    let max_width = 1280 / tile_sizing.calculate_size();
+
+    width.min(max_width)
+}
+
+pub fn constrain_height(height: usize, tile_sizing: &TileSize) -> usize {
+    // Why 480? Because we don't want the map to clip into the health bar at the
+    // bottom of the screen.
+    //
+    // Consult the ScoreUI-Sizing.drawio file for more information.
+    let max_height = 480 / tile_sizing.calculate_size();
+
+    height.min(max_height)
+}
+
 impl RoomGenerating for RandomizedRoomGenerator {
     fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
@@ -811,9 +866,12 @@ impl RoomGenerating for RandomizedRoomGenerator {
             self.min_width + (self.current_room_num / self.min_width) + WALLS_OFFSET;
         let desired_height =
             self.min_height + (self.current_room_num / self.min_height) + WALLS_OFFSET;
-        let desired_room_dimensions = WorldTileDimensions::new(desired_width, desired_height);
 
-        let mut generated_cave_room = CaveRoom::new(desired_width, desired_height);
+        let width = constrain_width(desired_width, &self.tile_sizing);
+        let height = constrain_height(desired_height, &self.tile_sizing);
+        let desired_room_dimensions = WorldTileDimensions::new(width, height);
+
+        let mut generated_cave_room = CaveRoom::new(width, height);
         add_walls(&mut generated_cave_room);
 
         // We should start by not add something at or around the explorer when they
