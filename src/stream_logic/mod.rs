@@ -133,7 +133,7 @@ impl Plugin for StreamLogic {
 /// Spawns the initial room when the application starts.
 fn spawn_first_level(
     mut level_spawner_broadcaster: EventWriter<ChangeRoom>,
-    room_generator: Res<RandomizedRoomGenerator>,
+    mut room_generator: ResMut<RandomizedRoomGenerator>,
 ) {
     let explorer_staring_position = LogicalCoordinates::new(1, 1);
     let initial_room = room_generator.generate_with_explorer(&explorer_staring_position);

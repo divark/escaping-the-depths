@@ -22,6 +22,7 @@ const TICKING_LIMIT: usize = 100;
 
 #[derive(Clone, Resource)]
 pub struct TestRoomGenerator {
+    times_generated: usize,
     width: usize,
     height: usize,
 
@@ -29,9 +30,16 @@ pub struct TestRoomGenerator {
 }
 
 impl RoomGenerating for TestRoomGenerator {
-    fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
-        let width = constrain_width(self.width + WALLS_OFFSET, &self.tile_sizing);
-        let height = constrain_height(self.height + WALLS_OFFSET, &self.tile_sizing);
+    fn generate_with_explorer(
+        &mut self,
+        explorer_starting_location: &LogicalCoordinates,
+    ) -> CaveRoom {
+        let height = constrain_height(
+            self.height + self.times_generated + WALLS_OFFSET,
+            &self.tile_sizing,
+        );
+        let width = height;
+        self.times_generated += 1;
 
         let mut room_generated = CaveRoom::new(width, height);
         add_walls(&mut room_generated);
@@ -55,6 +63,7 @@ impl RoomGenerating for TestRoomGenerator {
 impl TestRoomGenerator {
     pub fn new(width: usize, height: usize, tile_scaling: TileSize) -> Self {
         Self {
+            times_generated: 0,
             width,
             height,
             tile_sizing: tile_scaling,
@@ -232,7 +241,7 @@ impl MockGame {
         ));
         self.tick();
 
-        let room_generator = self.get_resource::<TestRoomGenerator>();
+        let mut room_generator = self.get_resource_mut::<TestRoomGenerator>();
         self.cave_room = room_generator.generate_with_explorer(&LogicalCoordinates::default());
     }
 

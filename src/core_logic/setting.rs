@@ -58,7 +58,10 @@ pub enum RoomObject {
 }
 
 pub trait RoomGenerating {
-    fn generate_with_explorer(&self, explorer_starting_position: &LogicalCoordinates) -> CaveRoom;
+    fn generate_with_explorer(
+        &mut self,
+        explorer_starting_position: &LogicalCoordinates,
+    ) -> CaveRoom;
 }
 
 #[derive(PartialEq, Component, Clone, Copy, Debug, Default)]
@@ -378,7 +381,7 @@ pub fn spawn_next_room<T>(
     exit_door: Query<(&LogicalCoordinates, &ExitDoorState)>,
     armed_traps: Query<&TrapState>,
     mut current_records: Query<&mut CurrentRecords>,
-    room_generator: Res<T>,
+    mut room_generator: ResMut<T>,
 ) where
     T: Resource + RoomGenerating,
 {
@@ -456,7 +459,7 @@ pub fn reset_to_level_one_after_game_over(
 }
 
 pub fn respawn_level_one<T>(
-    room_generator: Res<T>,
+    mut room_generator: ResMut<T>,
     mut change_room_broadcaster: EventWriter<ChangeRoom>,
 ) where
     T: Resource + RoomGenerating,
@@ -844,8 +847,7 @@ pub fn exclude_tiles_at_and_around(
  */
 pub fn constrain_width(width: usize, tile_sizing: &TileSize) -> usize {
     let max_width = 1280 / tile_sizing.calculate_size();
-
-    width.min(max_width)
+    if width > max_width { 4 } else { width }
 }
 
 pub fn constrain_height(height: usize, tile_sizing: &TileSize) -> usize {
@@ -854,12 +856,14 @@ pub fn constrain_height(height: usize, tile_sizing: &TileSize) -> usize {
     //
     // Consult the ScoreUI-Sizing.drawio file for more information.
     let max_height = 480 / tile_sizing.calculate_size();
-
-    height.min(max_height)
+    if height > max_height { 4 } else { height }
 }
 
 impl RoomGenerating for RandomizedRoomGenerator {
-    fn generate_with_explorer(&self, explorer_starting_location: &LogicalCoordinates) -> CaveRoom {
+    fn generate_with_explorer(
+        &mut self,
+        explorer_starting_location: &LogicalCoordinates,
+    ) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
         // by + 2.
         let desired_width =
@@ -871,7 +875,7 @@ impl RoomGenerating for RandomizedRoomGenerator {
         // width should be equal. In the future with different shapes,
         // this will have to change.
         let height = constrain_height(desired_height, &self.tile_sizing);
-        let width = desired_width.min(height);
+        let width = height;
         let desired_room_dimensions = WorldTileDimensions::new(width, height);
 
         let mut generated_cave_room = CaveRoom::new(width, height);
@@ -881,11 +885,16 @@ impl RoomGenerating for RandomizedRoomGenerator {
         // first enter the room, such as a trap, or treasure, or even
         // the hidden door switch right away. It's unfair otherwise, as reported from
         // play testing.
-        let mut claimed_tiles =
-            exclude_tiles_at_and_around(explorer_starting_location, &desired_room_dimensions);
+        let capped_x = explorer_starting_location.get_x().min(width - 1);
+        let capped_y = explorer_starting_location.get_y();
+        let capped_explorer_starting_location = LogicalCoordinates::new(capped_x, capped_y);
+        let mut claimed_tiles = exclude_tiles_at_and_around(
+            &capped_explorer_starting_location,
+            &desired_room_dimensions,
+        );
         generated_cave_room.set(
-            explorer_starting_location.get_x(),
-            explorer_starting_location.get_y(),
+            capped_explorer_starting_location.get_x(),
+            capped_explorer_starting_location.get_y(),
             RoomObject::Explorer,
         );
 

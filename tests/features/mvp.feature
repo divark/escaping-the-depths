@@ -157,9 +157,19 @@ Feature: All of the basic features are implemented and working as intended.
         And the explorer has left the room,
     	Then the current score will be 400 points.
 
-    Scenario: A new cave room should not exceed the size of the window.
+    Scenario: A new cave room should reset when exceeding the size of the window.
         Given a 100x100 cave room,
         When the cave room is rendered,
         # All tests assume a window size of 1280 x 720. For more information,
         # Check out `mock_game.rs`
-        Then the size of the cave room should be 80 by 30.
+        Then the size of the cave room should be 4 by 4.
+
+    Scenario: The next cave room should reset when exceeding the size of the window.
+        Given a 28x28 cave room,
+        And an explorer placed at coordinates 4, 1,
+        And a hidden floor switch placed at coordinates 2, 2,
+        And an exit door placed at coordinates 3, 29,
+        When the cave room is rendered,
+        And the explorer has reached Tile 2, 2,
+        And the explorer has left the room,
+        Then the size of the cave room should be 4 by 4.
