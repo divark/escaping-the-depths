@@ -168,8 +168,9 @@ Feature: All of the basic features are implemented and working as intended.
         Given a 28x28 cave room,
         And an explorer placed at coordinates 4, 1,
         And a hidden floor switch placed at coordinates 2, 2,
-        And an exit door placed at coordinates 3, 29,
+        And an exit door placed at coordinates 28, 29,
         When the cave room is rendered,
         And the explorer has reached Tile 2, 2,
         And the explorer has left the room,
         Then the size of the cave room should be 4 by 4.
+        And the explorer should be on Tile 3, 1.

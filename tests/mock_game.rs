@@ -50,7 +50,7 @@ impl RoomGenerating for TestRoomGenerator {
             explorer_starting_location.get_x() == 0 || explorer_starting_location.get_y() == 0;
         if !skip_spawning_explorer {
             room_generated.set(
-                explorer_starting_location.get_x(),
+                explorer_starting_location.get_x().min(width - 1),
                 explorer_starting_location.get_y(),
                 RoomObject::Explorer,
             );
