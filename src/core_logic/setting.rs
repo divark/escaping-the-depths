@@ -867,8 +867,11 @@ impl RoomGenerating for RandomizedRoomGenerator {
         let desired_height =
             self.min_height + (self.current_room_num / self.min_height) + WALLS_OFFSET;
 
-        let width = constrain_width(desired_width, &self.tile_sizing);
+        // TODO: Right now, we're rendering square rooms, so the height and
+        // width should be equal. In the future with different shapes,
+        // this will have to change.
         let height = constrain_height(desired_height, &self.tile_sizing);
+        let width = desired_width.min(height);
         let desired_room_dimensions = WorldTileDimensions::new(width, height);
 
         let mut generated_cave_room = CaveRoom::new(width, height);
