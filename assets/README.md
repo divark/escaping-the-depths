@@ -20,3 +20,4 @@ this will serve as a references page if anyone wants to know what I'm using.
 ### UI
 - [Health](https://opengameart.org/content/heart-health-bar)
 - [Bonus Score](https://opengameart.org/content/8-bit-sound-fx)
+- [Cursors by Kenney.nl](https://opengameart.org/content/cursor-pixel-pack)
