@@ -5,6 +5,7 @@ Feature: All of the basic features are implemented and working as intended.
         And an exit door placed at coordinates 3, 2,
         And an explorer placed at coordinates 1, 3,
         When the cave room is rendered,
+        And the explorer has reached Tile 1, 3,
         Then the exit door will be opened.
 
     Scenario: The exit door opens when a viewer clicks the hidden floor switch.
@@ -21,6 +22,7 @@ Feature: All of the basic features are implemented and working as intended.
         And an exit door placed at coordinates 4, 2,
         And an explorer placed at coordinates 1, 3,
         When the cave room is rendered,
+        And the explorer has reached Tile 1, 3,
         Then the exit door will be opened.
         And the explorer's goal is to reach Tile 4, 2.
 
@@ -65,6 +67,7 @@ Feature: All of the basic features are implemented and working as intended.
         And some piece of treasure worth 500 points placed on coordinates 2, 2,
         And an explorer placed at coordinates 2, 2,
         When the cave room is rendered,
+        And the explorer has reached Tile 2, 2,
         Then the current score will be 500 points.
 
     Scenario: The current score increases when a viewer clicks on some treasure.
@@ -86,6 +89,7 @@ Feature: All of the basic features are implemented and working as intended.
         And an armed trap placed at coordinates 2, 3,
         And an explorer placed at coordinates 2, 3,
         When the cave room is rendered,
+        And the explorer has reached Tile 2, 3,
         Then the explorer's health should be 2 out of 3.
         And the trap at Tile 2, 3 will be disarmed.
 
@@ -95,6 +99,7 @@ Feature: All of the basic features are implemented and working as intended.
         And the explorer's initial health set to 1 out of 3,
         And an explorer placed at coordinates 2, 3,
         When the cave room is rendered,
+        And the explorer has reached Tile 2, 3,
         Then the explorer's health should be 0 out of 3.
         And the explorer will be passed out.
 
@@ -174,7 +179,7 @@ Feature: All of the basic features are implemented and working as intended.
         And a hidden floor switch placed at coordinates 1, 3,
         And an explorer placed at coordinates 3, 3,
         When the cave room is rendered,
-        And the explorer has reached Tile 3, 4,
+        And the explorer has reached Tile 1, 3,
         And the explorer has left the room,
         Then the size of the cave room should be 4 by 4.
-        And the explorer should be on Tile 1, 1.
+        And the explorer should be on Tile 3, 1.

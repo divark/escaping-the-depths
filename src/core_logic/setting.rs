@@ -914,12 +914,12 @@ impl RoomGenerating for RandomizedRoomGenerator {
         // TODO: Right now, we're rendering square rooms, so the height and
         // width should be equal. In the future with different shapes,
         // this will have to change.
-        let mut height = desired_height % self.max_size.get_height();
+        let mut height = desired_height % (self.max_size.get_height() + WALLS_OFFSET);
         if height == 0 {
             height = min_height + WALLS_OFFSET;
         }
 
-        let mut width = desired_width % self.max_size.get_width();
+        let mut width = desired_width % (self.max_size.get_width() + WALLS_OFFSET);
         if width == 0 {
             width = min_width + WALLS_OFFSET;
         }

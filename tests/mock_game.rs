@@ -18,8 +18,6 @@ use escaping_the_depths::core_logic::setting::*;
 use escaping_the_depths::core_logic::traveling::*;
 use escaping_the_depths::core_logic::*;
 
-const TICKING_LIMIT: usize = 100;
-
 #[derive(Clone, Resource)]
 pub struct TestRoomGenerator {
     room_generator: RandomizedRoomGenerator,
@@ -393,7 +391,7 @@ impl MockGame {
     }
 
     pub fn wait_for_explorer_to_reach(&mut self, position: LogicalCoordinates) {
-        for _i in 0..TICKING_LIMIT {
+        loop {
             let explorer_position = self.get_with::<LogicalCoordinates, ExplorerState>();
             if *explorer_position == position {
                 self.tick();
