@@ -860,8 +860,8 @@ pub fn exclude_tiles_at_and_around(
  * around would result in unintended actions otherwise.
  */
 pub fn calculate_max_size(tile_sizing: &TileSize) -> WorldTileDimensions {
-    let max_width = 1280 / tile_sizing.calculate_size();
-    let max_height = 480 / tile_sizing.calculate_size();
+    let max_width = (1280 / tile_sizing.calculate_size()) - WALLS_OFFSET;
+    let max_height = (480 / tile_sizing.calculate_size()) - WALLS_OFFSET;
 
     WorldTileDimensions::new(max_width, max_height)
 }
