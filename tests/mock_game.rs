@@ -22,24 +22,33 @@ const TICKING_LIMIT: usize = 100;
 
 #[derive(Clone, Resource)]
 pub struct TestRoomGenerator {
-    times_generated: usize,
-    width: usize,
-    height: usize,
+    room_size: WorldTileDimensions,
 
-    tile_sizing: TileSize,
+    min_size: WorldTileDimensions,
+    max_size: WorldTileDimensions,
+
+    times_generated: usize,
 }
 
 impl RoomGenerating for TestRoomGenerator {
-    fn generate_with_explorer(
+    fn generate(
         &mut self,
-        explorer_starting_location: &LogicalCoordinates,
+        room_number: usize,
+        desired_explorer_location: &LogicalCoordinates,
     ) -> CaveRoom {
-        let height = constrain_height(
-            self.height + self.times_generated + WALLS_OFFSET,
-            &self.tile_sizing,
-        );
-        let width = height;
-        self.times_generated += 1;
+        let height = if self.room_size.get_height() < self.max_size.get_height() {
+            self.room_size.get_height() + self.times_generated + WALLS_OFFSET
+        } else {
+            self.min_size.get_height() + (self.room_size.get_height() % self.max_size.get_height())
+        };
+
+        let width = if self.room_size.get_width() < self.max_size.get_width() {
+            self.room_size.get_width() + self.times_generated + WALLS_OFFSET
+        } else {
+            self.min_size.get_width() + (self.room_size.get_width() % self.max_size.get_width())
+        };
+
+        self.times_generated += 1 % self.max_size.get_height();
 
         let mut room_generated = CaveRoom::new(width, height);
         add_walls(&mut room_generated);
@@ -47,11 +56,11 @@ impl RoomGenerating for TestRoomGenerator {
         // An explorer would never spawn in the walls, so for testing purposes,
         // we say that spawning in a wall tile (such as 0, 0) should be ignored.
         let skip_spawning_explorer =
-            explorer_starting_location.get_x() == 0 || explorer_starting_location.get_y() == 0;
+            desired_explorer_location.get_x() == 0 || desired_explorer_location.get_y() == 0;
         if !skip_spawning_explorer {
             room_generated.set(
-                explorer_starting_location.get_x().min(width - 1),
-                explorer_starting_location.get_y(),
+                desired_explorer_location.get_x().min(width - 1),
+                desired_explorer_location.get_y(),
                 RoomObject::Explorer,
             );
         }
@@ -61,13 +70,24 @@ impl RoomGenerating for TestRoomGenerator {
 }
 
 impl TestRoomGenerator {
-    pub fn new(width: usize, height: usize, tile_scaling: TileSize) -> Self {
+    pub fn new(room_size: WorldTileDimensions) -> Self {
         Self {
+            room_size,
+            min_size: room_size,
+            max_size: WorldTileDimensions::new(
+                room_size.get_width() + WALLS_OFFSET,
+                room_size.get_height() + WALLS_OFFSET,
+            ),
             times_generated: 0,
-            width,
-            height,
-            tile_sizing: tile_scaling,
         }
+    }
+
+    pub fn set_min_size(&mut self, min_size: WorldTileDimensions) {
+        self.min_size = min_size;
+    }
+
+    pub fn set_max_size(&mut self, max_size: WorldTileDimensions) {
+        self.max_size = max_size;
     }
 }
 
@@ -87,7 +107,6 @@ pub fn parse_object_type(object_name: String) -> RoomObject {
 #[derive(Debug, World)]
 #[world(init = Self::new)]
 pub struct MockGame {
-    cave_room: CaveRoom,
     app: App,
 }
 
@@ -117,10 +136,7 @@ impl MockGame {
         app.add_plugins(StatesPlugin);
         app.add_plugins(DefaultPickingPlugins);
 
-        Self {
-            app,
-            cave_room: CaveRoom::new(0, 0),
-        }
+        Self { app }
     }
 
     fn tick(&mut self) {
@@ -211,7 +227,7 @@ impl MockGame {
             .expect("get_resource: Could not find the desired resource.")
     }
 
-    fn get_resource_mut<T>(&mut self) -> Mut<'_, T>
+    pub fn get_resource_mut<T>(&mut self) -> Mut<'_, T>
     where
         T: Resource,
     {
@@ -230,7 +246,7 @@ impl MockGame {
 
     pub fn spawn_room(&mut self, width: usize, height: usize) {
         let tile_sizing = TileSize::new(16, 1);
-        let test_room_generator = TestRoomGenerator::new(width, height, tile_sizing.clone());
+        let test_room_generator = TestRoomGenerator::new(WorldTileDimensions::new(width, height));
         let movement_time = MovementTime::new(Duration::from_secs(0));
         let game_over_time = GameOverTime::new(Duration::from_secs(0));
         self.app.add_plugins(CoreLogic::new(
@@ -239,19 +255,23 @@ impl MockGame {
             test_room_generator,
             tile_sizing,
         ));
-        self.tick();
 
         let mut room_generator = self.get_resource_mut::<TestRoomGenerator>();
-        self.cave_room = room_generator.generate_with_explorer(&LogicalCoordinates::default());
+
+        let cave_room = room_generator.generate(1, &LogicalCoordinates::default());
+        self.tick();
     }
 
     pub fn render_room(&mut self) {
-        self.broadcast(ChangeRoom::new(self.cave_room.clone()));
+        let mut room_generator = self.get_resource_mut::<TestRoomGenerator>();
+
+        let cave_room = room_generator.generate(1, &LogicalCoordinates::default());
+        self.broadcast(ChangeRoom::new(cave_room));
         self.tick();
     }
 
     pub fn place(&mut self, object_type: RoomObject, object_x: usize, object_y: usize) {
-        self.cave_room.set(object_x, object_y, object_type);
+        self.broadcast(PlaceRoomObject::new(object_type, object_x, object_y, 1));
     }
 
     pub fn click(&mut self, uv_x: f32, uv_y: f32) {

@@ -20,10 +20,9 @@ use crate::{
     core_logic::{
         CoreLogic, GameOverTime, GameState, MovementTime,
         interacting::ViewerClick,
-        scoring::CurrentRecords,
         setting::{
             ChangeRoom, LogicalCoordinates, RandomizedRoomGenerator, RoomGenerating, TileSize,
-            reset_to_level_one_after_game_over, respawn_level_one, spawn_next_room,
+            WorldTileDimensions, calculate_max_size,
         },
     },
     stream_logic::{
@@ -56,14 +55,14 @@ impl Plugin for StreamLogic {
         let game_over_time = GameOverTime::new(Duration::from_secs(20));
         let temporary_ui_time = TemporaryUITime::new(Duration::from_secs(3));
 
-        let min_width = 4;
-        let min_height = 4;
-
         let tile_size = 16;
         let tile_scale = 2;
         let tile_sizing = TileSize::new(tile_size, tile_scale);
-        let room_generator =
-            RandomizedRoomGenerator::new(min_width, min_height, tile_sizing.clone());
+
+        let min_size = WorldTileDimensions::new(4, 4);
+        let max_size = calculate_max_size(&tile_sizing);
+
+        let room_generator = RandomizedRoomGenerator::new(min_size, max_size);
 
         let core_logic = CoreLogic::new(movement_time, game_over_time, room_generator, tile_sizing);
         app.add_plugins(core_logic);
@@ -90,14 +89,6 @@ impl Plugin for StreamLogic {
 
         // TODO: Remove this after playtesting.
         app.add_systems(Update, map_mouse_click_to_uv);
-
-        app.add_systems(
-            Update,
-            update_room_count_for_room_generator
-                .after(reset_to_level_one_after_game_over)
-                .before(respawn_level_one::<RandomizedRoomGenerator>)
-                .before(spawn_next_room::<RandomizedRoomGenerator>),
-        );
 
         let music_path = PathBuf::from("assets/background_music/");
         #[cfg(debug_assertions)]
@@ -136,7 +127,7 @@ fn spawn_first_level(
     mut room_generator: ResMut<RandomizedRoomGenerator>,
 ) {
     let explorer_staring_position = LogicalCoordinates::new(1, 1);
-    let initial_room = room_generator.generate_with_explorer(&explorer_staring_position);
+    let initial_room = room_generator.generate(1, &explorer_staring_position);
 
     level_spawner_broadcaster.write(ChangeRoom::new(initial_room));
 }
@@ -166,16 +157,4 @@ fn map_mouse_click_to_uv(
         let viewer_click_event = ViewerClick::new(uv_x, uv_y);
         viewer_click_broadcaster.write(viewer_click_event);
     }
-}
-
-fn update_room_count_for_room_generator(
-    current_records: Query<&CurrentRecords, Changed<CurrentRecords>>,
-    mut room_generator: ResMut<RandomizedRoomGenerator>,
-) {
-    if current_records.is_empty() {
-        return;
-    }
-
-    let current_room_number = current_records.single().unwrap().get_current_room_number();
-    room_generator.set_room_number(current_room_number);
 }

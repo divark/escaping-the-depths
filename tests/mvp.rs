@@ -14,6 +14,18 @@ fn make_cave_room(game: &mut MockGame, width: usize, height: usize) {
     game.spawn_room(width, height);
 }
 
+#[given(regex = r"a minimum room size of ([0-9]+)x([0-9]+),")]
+fn set_min_room_size(game: &mut MockGame, min_width: usize, min_height: usize) {
+    let mut room_generator = game.get_resource_mut::<TestRoomGenerator>();
+    room_generator.set_min_size(WorldTileDimensions::new(min_width, min_height));
+}
+
+#[given(regex = r"a max room size of ([0-9]+)x([0-9]+),")]
+fn set_max_room_size(game: &mut MockGame, max_width: usize, max_height: usize) {
+    let mut room_generator = game.get_resource_mut::<TestRoomGenerator>();
+    room_generator.set_max_size(WorldTileDimensions::new(max_width, max_height));
+}
+
 #[given(regex = r"[an?|the] (.+) placed at coordinates ([0-9]+), ([0-9]+),")]
 fn place_object(game: &mut MockGame, object_name: String, object_x: usize, object_y: usize) {
     let object_type = parse_object_type(object_name);
