@@ -159,6 +159,7 @@ Feature: All of the basic features are implemented and working as intended.
 
     Scenario: A new cave room should reset when exceeding the size of the window.
         Given a 100x100 cave room,
+        And a minimum room size of 4x4,
         And a max room size of 29x29,
         When the cave room is rendered,
         # All tests assume a window size of 1280 x 720. For more information,
@@ -166,14 +167,14 @@ Feature: All of the basic features are implemented and working as intended.
         Then the size of the cave room should be 4 by 4.
 
     Scenario: The next cave room should reset when exceeding the size of the window.
-        Given a 28x28 cave room,
+        Given a 4x4 cave room,
         And a minimum room size of 4x4,
-        And a max room size of 29x29,
-        And an explorer placed at coordinates 4, 1,
-        And a hidden floor switch placed at coordinates 2, 2,
-        And an exit door placed at coordinates 28, 29,
+        And a max room size of 6x6,
+        And an exit door placed at coordinates 3, 2,
+        And a hidden floor switch placed at coordinates 1, 3,
+        And an explorer placed at coordinates 3, 3,
         When the cave room is rendered,
-        And the explorer has reached Tile 2, 2,
+        And the explorer has reached Tile 3, 4,
         And the explorer has left the room,
         Then the size of the cave room should be 4 by 4.
-        And the explorer should be on Tile 3, 1.
+        And the explorer should be on Tile 1, 1.

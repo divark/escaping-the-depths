@@ -197,7 +197,10 @@ fn verify_cave_room_size(
     expected_room_width: usize,
     expected_room_height: usize,
 ) {
-    let expected_room_size = WorldTileDimensions::new(expected_room_width, expected_room_height);
+    let expected_room_size = WorldTileDimensions::new(
+        expected_room_width + WALLS_OFFSET,
+        expected_room_height + WALLS_OFFSET,
+    );
     let actual_room_size = *game.get_one::<WorldTileDimensions>();
     assert_eq!(expected_room_size, actual_room_size);
 }

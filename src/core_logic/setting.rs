@@ -58,6 +58,7 @@ pub enum RoomObject {
 }
 
 pub trait RoomGenerating {
+    fn generate_empty_room(&mut self, room_number: usize) -> CaveRoom;
     fn generate(
         &mut self,
         room_number: usize,
@@ -233,7 +234,7 @@ impl LoadRoom {
     }
 }
 
-#[derive(Event)]
+#[derive(Event, Clone, Debug)]
 pub struct PlaceRoomObject {
     object_type: RoomObject,
     x: usize,
@@ -249,6 +250,18 @@ impl PlaceRoomObject {
             y,
             z,
         }
+    }
+
+    pub fn get_x(&self) -> usize {
+        self.x
+    }
+
+    pub fn get_y(&self) -> usize {
+        self.y
+    }
+
+    pub fn get_type(&self) -> &RoomObject {
+        &self.object_type
     }
 }
 
@@ -675,6 +688,18 @@ impl RandomizedRoomGenerator {
     pub fn new(min_size: WorldTileDimensions, max_size: WorldTileDimensions) -> Self {
         Self { min_size, max_size }
     }
+
+    pub fn set_min_size(&mut self, new_min_size: WorldTileDimensions) {
+        self.min_size = new_min_size;
+    }
+
+    pub fn set_max_size(&mut self, new_max_size: WorldTileDimensions) {
+        self.max_size = new_max_size;
+    }
+
+    pub fn get_max_room_size(&self) -> &WorldTileDimensions {
+        &self.max_size
+    }
 }
 
 fn add_walls_to_row(generated_cave_room: &mut CaveRoom, row_idx: usize, row_length: usize) {
@@ -841,12 +866,44 @@ pub fn calculate_max_size(tile_sizing: &TileSize) -> WorldTileDimensions {
     WorldTileDimensions::new(max_width, max_height)
 }
 
+/// Places an explorer in some cave room based on their desired location. If the location
+/// is not within the room's bounds, it is adjusted based on the max room size.
+///
+/// Returns the set of tiles around the explorer.
+pub fn place_explorer(
+    cave_room: &mut CaveRoom,
+    max_room_size: &WorldTileDimensions,
+    desired_explorer_location: &LogicalCoordinates,
+) -> HashSet<LogicalCoordinates> {
+    let cave_room_dimensions = cave_room.get_dimensions();
+    let max_room_width = max_room_size.get_width();
+
+    let mut capped_x = desired_explorer_location.get_x() % max_room_size.get_width();
+    // 1 <= capped_x < max_room_width - 1, where 1 represents a wall on some side.
+    if capped_x == 0 {
+        capped_x += 1;
+    } else if capped_x == max_room_width - 1 {
+        capped_x -= 1;
+    }
+
+    let capped_explorer_starting_location = LogicalCoordinates::new(capped_x, 1);
+    // We should start by not add something at or around the explorer when they
+    // first enter the room, such as a trap, or treasure, or even
+    // the hidden door switch right away. It's unfair otherwise, as reported from
+    // play testing.
+    let claimed_tiles =
+        exclude_tiles_at_and_around(&capped_explorer_starting_location, cave_room_dimensions);
+    cave_room.set(
+        capped_explorer_starting_location.get_x(),
+        capped_explorer_starting_location.get_y(),
+        RoomObject::Explorer,
+    );
+
+    claimed_tiles
+}
+
 impl RoomGenerating for RandomizedRoomGenerator {
-    fn generate(
-        &mut self,
-        room_number: usize,
-        desired_explorer_location: &LogicalCoordinates,
-    ) -> CaveRoom {
+    fn generate_empty_room(&mut self, room_number: usize) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
         // by + 2.
         let min_width = self.min_size.get_width();
@@ -857,39 +914,39 @@ impl RoomGenerating for RandomizedRoomGenerator {
         // TODO: Right now, we're rendering square rooms, so the height and
         // width should be equal. In the future with different shapes,
         // this will have to change.
-        let height = desired_height % self.max_size.get_height();
-        let width = desired_width % self.max_size.get_width();
-        let desired_room_dimensions = WorldTileDimensions::new(width, height);
+        let mut height = desired_height % self.max_size.get_height();
+        if height == 0 {
+            height = min_height + WALLS_OFFSET;
+        }
+
+        let mut width = desired_width % self.max_size.get_width();
+        if width == 0 {
+            width = min_width + WALLS_OFFSET;
+        }
 
         let mut generated_cave_room = CaveRoom::new(width, height);
         add_walls(&mut generated_cave_room);
 
-        let explorer_x = desired_explorer_location.get_x();
-        let capped_x = if explorer_x < self.max_size.get_height() {
-            explorer_x
-        } else {
-            1 + (explorer_x % self.max_size.get_height())
-        };
+        generated_cave_room
+    }
 
-        let capped_explorer_starting_location = LogicalCoordinates::new(capped_x, 1);
-        // We should start by not add something at or around the explorer when they
-        // first enter the room, such as a trap, or treasure, or even
-        // the hidden door switch right away. It's unfair otherwise, as reported from
-        // play testing.
-        let mut claimed_tiles = exclude_tiles_at_and_around(
-            &capped_explorer_starting_location,
-            &desired_room_dimensions,
-        );
-        generated_cave_room.set(
-            capped_explorer_starting_location.get_x(),
-            capped_explorer_starting_location.get_y(),
-            RoomObject::Explorer,
-        );
+    fn generate(
+        &mut self,
+        room_number: usize,
+        desired_explorer_location: &LogicalCoordinates,
+    ) -> CaveRoom {
+        let mut generated_cave_room = self.generate_empty_room(room_number);
 
+        let mut claimed_tiles = place_explorer(
+            &mut generated_cave_room,
+            &self.max_size,
+            desired_explorer_location,
+        );
         place_exit_door(&mut generated_cave_room);
         place_hidden_door_switch(&mut generated_cave_room, &mut claimed_tiles);
         place_treasure(&mut generated_cave_room, &mut claimed_tiles);
         place_armed_traps(&mut generated_cave_room, &mut claimed_tiles);
+
         generated_cave_room
     }
 }
