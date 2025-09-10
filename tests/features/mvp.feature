@@ -183,3 +183,17 @@ Feature: All of the basic features are implemented and working as intended.
         And the explorer has left the room,
         Then the size of the cave room should be 4 by 4.
         And the explorer should be on Tile 3, 1.
+
+    Scenario: The next multiple of some cave room should not result in an error.
+        Given a 4x4 cave room,
+        And a minimum room size of 4x4,
+        And a max room size of 4x4,
+        And the initial room count is 3,
+        And an exit door placed at coordinates 3, 2,
+        And a hidden floor switch placed at coordinates 1, 3,
+        And an explorer placed at coordinates 3, 3,
+        When the cave room is rendered,
+        And the explorer has reached Tile 1, 3,
+        And the explorer has left the room,
+        Then the size of the cave room should be 4 by 4.
+        And the explorer should be on Tile 3, 1.
