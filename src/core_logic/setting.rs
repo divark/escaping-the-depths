@@ -867,24 +867,16 @@ pub fn calculate_max_size(tile_sizing: &TileSize) -> WorldTileDimensions {
 }
 
 /// Places an explorer in some cave room based on their desired location. If the location
-/// is not within the room's bounds, it is adjusted based on the max room size.
+/// is not within the room's bounds, it is adjusted based on the room's size.
 ///
 /// Returns the set of tiles around the explorer.
 pub fn place_explorer(
     cave_room: &mut CaveRoom,
-    max_room_size: &WorldTileDimensions,
     desired_explorer_location: &LogicalCoordinates,
 ) -> HashSet<LogicalCoordinates> {
     let cave_room_dimensions = cave_room.get_dimensions();
-    let max_room_width = max_room_size.get_width();
-
-    let mut capped_x = desired_explorer_location.get_x() % max_room_size.get_width();
-    // 1 <= capped_x < max_room_width - 1, where 1 represents a wall on some side.
-    if capped_x == 0 {
-        capped_x += 1;
-    } else if capped_x == max_room_width - 1 {
-        capped_x -= 1;
-    }
+    let capped_x =
+        (desired_explorer_location.get_x() % (cave_room_dimensions.get_width() - 1)).max(1);
 
     let capped_explorer_starting_location = LogicalCoordinates::new(capped_x, 1);
     // We should start by not add something at or around the explorer when they
@@ -902,27 +894,27 @@ pub fn place_explorer(
     claimed_tiles
 }
 
+fn calculate_room_offset(room_number: usize, min: usize, max: usize) -> usize {
+    let divisor = if max != min { max - min } else { 1 };
+
+    (room_number / min) % divisor
+}
+
 impl RoomGenerating for RandomizedRoomGenerator {
     fn generate_empty_room(&mut self, room_number: usize) -> CaveRoom {
         // We need to account for walls, hence why all widths and heights need to be adjusted
         // by + 2.
-        let min_width = self.min_size.get_width();
-        let min_height = self.min_size.get_height();
-        let desired_width = min_width + (room_number / min_width) + WALLS_OFFSET;
-        let desired_height = min_height + (room_number / min_height) + WALLS_OFFSET;
+        let room_height_offset = calculate_room_offset(
+            room_number,
+            self.min_size.get_height(),
+            self.max_size.get_height(),
+        );
 
         // TODO: Right now, we're rendering square rooms, so the height and
         // width should be equal. In the future with different shapes,
         // this will have to change.
-        let mut height = desired_height % (self.max_size.get_height() + WALLS_OFFSET);
-        if height == 0 {
-            height = min_height + WALLS_OFFSET;
-        }
-
-        let mut width = desired_width % (self.max_size.get_width() + WALLS_OFFSET);
-        if width == 0 {
-            width = min_width + WALLS_OFFSET;
-        }
+        let height = self.min_size.get_height() + room_height_offset + WALLS_OFFSET;
+        let width = height;
 
         let mut generated_cave_room = CaveRoom::new(width, height);
         add_walls(&mut generated_cave_room);
@@ -937,11 +929,7 @@ impl RoomGenerating for RandomizedRoomGenerator {
     ) -> CaveRoom {
         let mut generated_cave_room = self.generate_empty_room(room_number);
 
-        let mut claimed_tiles = place_explorer(
-            &mut generated_cave_room,
-            &self.max_size,
-            desired_explorer_location,
-        );
+        let mut claimed_tiles = place_explorer(&mut generated_cave_room, desired_explorer_location);
         place_exit_door(&mut generated_cave_room);
         place_hidden_door_switch(&mut generated_cave_room, &mut claimed_tiles);
         place_treasure(&mut generated_cave_room, &mut claimed_tiles);

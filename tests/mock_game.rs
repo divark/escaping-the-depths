@@ -35,13 +35,7 @@ impl RoomGenerating for TestRoomGenerator {
         desired_explorer_location: &LogicalCoordinates,
     ) -> CaveRoom {
         let mut room_generated = self.room_generator.generate_empty_room(room_number);
-
-        let max_room_size = self.room_generator.get_max_room_size();
-        place_explorer(
-            &mut room_generated,
-            max_room_size,
-            desired_explorer_location,
-        );
+        place_explorer(&mut room_generated, desired_explorer_location);
 
         while let Some(cave_room_object) = self.cave_room_objects.pop() {
             room_generated.set(
