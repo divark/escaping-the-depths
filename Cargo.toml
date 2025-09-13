@@ -7,6 +7,9 @@ edition = "2024"
 bevy = { version = "^0.16", features = ["wayland", "wav", "mp3"] }
 rand = "^0.9"
 
+tokio-tungstenite = { version = "^0.27", features = ["native-tls"] }
+tokio = { version = "^1", features = ["full"] }
+
 [dev-dependencies]
 cucumber = "^0.21"
 futures = "^0.3"

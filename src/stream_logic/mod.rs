@@ -51,10 +51,13 @@ impl Plugin for StreamLogic {
                 .set(ImagePlugin::default_nearest()),
         );
 
+        // This section serves as preferences on how fast aspects like
+        // moving entities and when to restart the game should happen.
         let movement_time = MovementTime::new(Duration::from_secs(1));
         let game_over_time = GameOverTime::new(Duration::from_secs(20));
-        let temporary_ui_time = TemporaryUITime::new(Duration::from_secs(3));
 
+        // This section deals with how rooms are created in the game as the
+        // explorer navigates the depths.
         let tile_size = 16;
         let tile_scale = 2;
         let tile_sizing = TileSize::new(tile_size, tile_scale);
@@ -69,27 +72,33 @@ impl Plugin for StreamLogic {
 
         app.add_systems(Startup, spawn_first_level);
 
-        app.add_systems(Startup, prepare_screen_ui);
+        // Everything in this section sets up and interacts with the Graphical User Interface
+        // for the game.
+        let temporary_ui_time = TemporaryUITime::new(Duration::from_secs(3));
+        app.insert_resource(temporary_ui_time);
+        let ui_setup_systems = (
+            prepare_screen_ui,
+            spawn_statistics_ui.after(prepare_screen_ui),
+            spawn_health_ui.after(spawn_statistics_ui),
+            spawn_game_over_screen.after(spawn_health_ui),
+            spawn_bonus_scores_ui.after(spawn_statistics_ui),
+        );
+        app.add_systems(Startup, ui_setup_systems);
 
-        app.add_systems(Startup, spawn_statistics_ui.after(prepare_screen_ui));
-        app.add_systems(Update, update_statistics_ui);
+        let ui_reaction_systems = (
+            update_statistics_ui,
+            update_health_ui,
+            update_game_over_screen,
+            show_bonus_scores_on_exit,
+            hide_bonus_scores_after_time,
+        );
+        app.add_systems(Update, ui_reaction_systems);
 
-        app.add_systems(Startup, spawn_health_ui.after(spawn_statistics_ui));
-        app.add_systems(Update, update_health_ui);
+        // This section makes aspects of the environment such as props come alive.
+        let animation_systems = (animate_door_opening, animate_disarming_trap);
+        app.add_systems(Update, animation_systems);
 
-        app.add_systems(Startup, spawn_game_over_screen.after(spawn_health_ui));
-        app.add_systems(Update, update_game_over_screen);
-
-        app.add_systems(Update, animate_door_opening);
-        app.add_systems(Update, animate_disarming_trap);
-
-        app.add_systems(Update, trigger_door_opening_noise);
-        app.add_systems(Update, trigger_trap_going_off_noise);
-        app.add_systems(Update, trigger_treasure_claimed_noise);
-
-        // TODO: Remove this after playtesting.
-        app.add_systems(Update, map_mouse_click_to_uv);
-
+        // This section deals with all of the sounds and music heard during the game.
         let music_path = PathBuf::from("assets/background_music/");
         #[cfg(debug_assertions)]
         let background_music_path = {
@@ -101,23 +110,26 @@ impl Plugin for StreamLogic {
         #[cfg(not(debug_assertions))]
         let background_music_path = music_path;
         app.insert_resource(BackgroundPlayer::new(&background_music_path));
-        app.add_systems(
-            Update,
-            play_background_music.run_if(in_state(GameState::Active)),
-        );
 
+        let sound_and_music_systems = (
+            trigger_door_opening_noise,
+            trigger_trap_going_off_noise,
+            trigger_treasure_claimed_noise,
+            play_background_music.run_if(in_state(GameState::Active)),
+            trigger_bonus_score_noise,
+        );
+        app.add_systems(Update, sound_and_music_systems);
         app.add_systems(
             OnEnter(GameState::GameOver),
             play_game_over_song.run_if(in_state(GameState::GameOver)),
         );
 
-        app.insert_resource(temporary_ui_time);
-        app.add_systems(Startup, spawn_bonus_scores_ui.after(spawn_statistics_ui));
-        app.add_systems(
-            Update,
-            (show_bonus_scores_on_exit, hide_bonus_scores_after_time),
-        );
-        app.add_systems(Update, trigger_bonus_score_noise);
+        // This section deals with how interactions are handled in the game
+        // from outside sources, mainly from Twitch.
+
+        // TODO: Remove this after playtesting.
+        app.add_systems(Update, map_mouse_click_to_uv);
+        //app.add_systems(Update, map_twitch_click_to_uv);
     }
 }
 
