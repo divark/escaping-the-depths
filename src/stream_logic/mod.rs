@@ -1,5 +1,6 @@
 pub mod animation;
 pub mod background_music;
+pub mod networking;
 pub mod sfx;
 pub mod ui;
 
@@ -26,6 +27,7 @@ use crate::{
         },
     },
     stream_logic::{
+        networking::{TwitchClickListener, map_twitch_clicks_to_uv},
         sfx::trigger_bonus_score_noise,
         ui::{
             TemporaryUITime, hide_bonus_scores_after_time, show_bonus_scores_on_exit,
@@ -129,7 +131,9 @@ impl Plugin for StreamLogic {
 
         // TODO: Remove this after playtesting.
         app.add_systems(Update, map_mouse_click_to_uv);
-        //app.add_systems(Update, map_twitch_click_to_uv);
+
+        app.insert_resource(TwitchClickListener::connect("103834034"));
+        app.add_systems(Update, map_twitch_clicks_to_uv);
     }
 }
 
