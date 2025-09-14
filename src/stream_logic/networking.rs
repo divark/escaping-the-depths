@@ -12,6 +12,18 @@ pub struct TwitchClickListener {
     message_receiver: UnboundedReceiver<ViewerClick>,
 }
 
+fn get_viewer_click_from_response(response_text: &str) -> Result<ViewerClick> {
+    let json_response = serde_json::from_str::<Value>(response_text)?;
+    if json_response.get("type")?.as_str()? == "click" {
+        return Err("Not a click event.");
+    }
+
+    let uv_x = json_response.get("x")?.as_f64()? as f32;
+    let uv_y = json_response.get("y")?.as_f64()? as f32;
+
+    Ok(ViewerClick::new(uv_x, uv_y))
+}
+
 impl TwitchClickListener {
     pub fn connect(channel_id: &str) -> Self {
         let _rt = tokio::runtime::Builder::new_multi_thread()
@@ -39,16 +51,13 @@ impl TwitchClickListener {
 
                     let response_text = response.into_text().unwrap();
                     let response_text = response_text.as_str();
-                    if let Ok(json_response) = serde_json::from_str::<Value>(response_text) {
-                        if let Some(uv_x) = json_response["x"].as_f64() {
-                            if let Some(uv_y) = json_response["y"].as_f64() {
-                                let write_status =
-                                    message_writer.send(ViewerClick::new(uv_x as f32, uv_y as f32));
 
-                                if write_status.is_err() {
-                                    break;
-                                }
-                            }
+                    if let Ok(viewer_click) = get_viewer_click_from_response(response_text) {
+                        let write_status =
+                            message_writer.send(ViewerClick::new(uv_x as f32, uv_y as f32));
+
+                        if write_status.is_err() {
+                            break;
                         }
                     }
                 }
