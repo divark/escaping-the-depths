@@ -46,6 +46,7 @@ impl Plugin for StreamLogic {
                     primary_window: Some(Window {
                         resolution: WindowResolution::new(1280.0, 720.0)
                             .with_scale_factor_override(1.0),
+                        decorations: false,
                         ..default()
                     }),
                     ..default()
