@@ -24,6 +24,7 @@ use traveling::{
 
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub enum GameState {
+    Start,
     #[default]
     Active,
     GameOver,

@@ -13,8 +13,8 @@ use sfx::{
     trigger_door_opening_noise, trigger_trap_going_off_noise, trigger_treasure_claimed_noise,
 };
 use ui::{
-    prepare_screen_ui, spawn_game_over_screen, spawn_health_ui, update_game_over_screen,
-    update_health_ui,
+    despawn_start_screen, prepare_screen_ui, spawn_game_over_screen, spawn_health_ui,
+    spawn_start_screen, start_the_game_on_enter, update_game_over_screen, update_health_ui,
 };
 
 use crate::{
@@ -72,12 +72,21 @@ impl Plugin for StreamLogic {
         let core_logic = CoreLogic::new(movement_time, game_over_time, room_generator, tile_sizing);
         app.add_plugins(core_logic);
 
+        app.insert_state(GameState::Start);
         app.add_systems(Startup, spawn_first_level);
 
         // Everything in this section sets up and interacts with the Graphical User Interface
         // for the game.
         let temporary_ui_time = TemporaryUITime::new(Duration::from_secs(3));
         app.insert_resource(temporary_ui_time);
+
+        app.add_systems(OnEnter(GameState::Start), spawn_start_screen);
+        app.add_systems(
+            Update,
+            start_the_game_on_enter.run_if(in_state(GameState::Start)),
+        );
+        app.add_systems(OnExit(GameState::Start), despawn_start_screen);
+
         let ui_setup_systems = (
             prepare_screen_ui,
             spawn_statistics_ui.after(prepare_screen_ui),

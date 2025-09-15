@@ -34,6 +34,13 @@ impl<C: Component> TextSection<C> {
             label,
         }
     }
+
+    pub fn new_with_text(font_size: usize, text: &str, label: C) -> Self {
+        let mut text_section = TextSection::new(font_size, label);
+        text_section.text = Text::new(text);
+
+        text_section
+    }
 }
 
 struct ScoresUI {
@@ -120,6 +127,60 @@ pub fn prepare_screen_ui(mut commands: Commands) {
             whole_screen.spawn((top_half_screen, TopHalfScreen));
             whole_screen.spawn((bottom_half_screen, BottomHalfScreen));
         });
+}
+
+#[derive(Component)]
+pub struct GameStartScreen;
+
+#[derive(Component)]
+pub struct GameTitle;
+
+#[derive(Component)]
+pub struct GameStartOptions;
+
+pub fn spawn_start_screen(mut commands: Commands) {
+    let start_screen = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        flex_direction: FlexDirection::Column,
+        ..default()
+    };
+
+    let game_name = TextSection::new_with_text(60, "Escaping the Depths\n", GameTitle);
+    let game_start_options = TextSection::new_with_text(
+        36,
+        "Singleplayer\nc> Multiplayer (Twitch)",
+        GameStartOptions,
+    );
+
+    commands
+        .spawn((start_screen, GameStartScreen))
+        .with_children(|start_screen| {
+            start_screen.spawn(game_name);
+            start_screen.spawn(game_start_options);
+        });
+}
+
+pub fn start_the_game_on_enter(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut next_game_state: ResMut<NextState<GameState>>,
+) {
+    if !keyboard_input.just_pressed(KeyCode::Enter) {
+        return;
+    }
+
+    next_game_state.set(GameState::Active);
+}
+
+pub fn despawn_start_screen(
+    whole_screen: Query<Entity, With<GameStartScreen>>,
+    mut commands: Commands,
+) {
+    for whole_screen_entity in whole_screen {
+        commands.entity(whole_screen_entity).despawn();
+    }
 }
 
 pub fn spawn_statistics_ui(
@@ -265,7 +326,7 @@ pub fn spawn_game_over_screen(mut commands: Commands) {
 }
 
 pub fn update_game_over_screen(
-    mut game_over_screen: Query<(&mut Visibility, &mut Text), (With<GameOverScreen>,)>,
+    mut game_over_screen: Query<(&mut Visibility, &mut Text), With<GameOverScreen>>,
     game_state: Res<State<GameState>>,
     game_over_timer: Query<&GameOverTimer, Changed<GameOverTimer>>,
 ) {
@@ -275,6 +336,10 @@ pub fn update_game_over_screen(
 
     let (mut game_over_screen_visibility, mut game_over_screen_text) =
         game_over_screen.single_mut().unwrap();
+
+    if game_state.get() == &GameState::Start {
+        return;
+    }
 
     if game_state.get() == &GameState::Active {
         *game_over_screen_visibility = Visibility::Hidden;

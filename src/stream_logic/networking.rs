@@ -71,11 +71,7 @@ impl TwitchClickListener {
     }
 
     pub fn read(&mut self) -> Option<ViewerClick> {
-        if let Ok(viewer_click) = self.message_receiver.try_recv() {
-            Some(viewer_click)
-        } else {
-            None
-        }
+        self.message_receiver.try_recv().ok()
     }
 }
 
