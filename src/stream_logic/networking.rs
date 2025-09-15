@@ -14,14 +14,14 @@ pub struct TwitchClickListener {
 
 fn get_viewer_click_from_response(response_text: &str) -> Option<ViewerClick> {
     let json_response = serde_json::from_str::<Value>(response_text).ok()?;
-    if json_response.get("type")?.as_str()? == "click" {
+    if json_response.get("type")?.as_str()? != "click" {
         return None;
     }
 
-    let uv_x = json_response.get("x")?.as_f64()? as f32;
-    let uv_y = json_response.get("y")?.as_f64()? as f32;
+    let uv_x = json_response.get("x")?.as_str()?.parse::<f32>().ok()?;
+    let uv_y = json_response.get("y")?.as_str()?.parse::<f32>().ok()?;
 
-    Some(ViewerClick::new(uv_x, uv_y))
+    Some(ViewerClick::new(uv_x, 1.0 - uv_y))
 }
 
 impl TwitchClickListener {
