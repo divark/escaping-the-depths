@@ -7,7 +7,7 @@ use tungstenite::connect;
 
 #[derive(Resource)]
 pub struct TwitchClickListener {
-    _rt: Runtime,
+    _rt: Option<Runtime>,
     _heat_click_listener: JoinHandle<()>,
     message_receiver: UnboundedReceiver<ViewerClick>,
 }
@@ -64,7 +64,7 @@ impl TwitchClickListener {
         });
 
         Self {
-            _rt,
+            _rt: Some(_rt),
             _heat_click_listener,
             message_receiver,
         }
@@ -72,6 +72,20 @@ impl TwitchClickListener {
 
     pub fn read(&mut self) -> Option<ViewerClick> {
         self.message_receiver.try_recv().ok()
+    }
+}
+
+impl Drop for TwitchClickListener {
+    fn drop(&mut self) {
+        let threads_running = self._rt.take().unwrap();
+
+        // Without this, the game will listen to the
+        // heat endpoint until it has been disconnected.
+        //
+        // If the game shuts down, we want it to disconnect
+        // right away. This makes it happen by killing the threads
+        // immediately.
+        threads_running.shutdown_background();
     }
 }
 
