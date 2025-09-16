@@ -353,7 +353,7 @@ pub fn update_game_over_screen(
         .expect("update_game_over_screen: Could not find game over timer");
 
     game_over_screen_text.0 = format!(
-        "Game Over\nContinue? {}",
+        "Game Over\nRestarting in {}",
         game_over_timer.get_timer().remaining().as_secs()
     );
 }

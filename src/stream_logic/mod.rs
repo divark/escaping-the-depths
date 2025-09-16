@@ -57,7 +57,7 @@ impl Plugin for StreamLogic {
         // This section serves as preferences on how fast aspects like
         // moving entities and when to restart the game should happen.
         let movement_time = MovementTime::new(Duration::from_secs(1));
-        let game_over_time = GameOverTime::new(Duration::from_secs(20));
+        let game_over_time = GameOverTime::new(Duration::from_secs(10));
 
         // This section deals with how rooms are created in the game as the
         // explorer navigates the depths.
