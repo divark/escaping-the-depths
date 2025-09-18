@@ -1,19 +1,62 @@
+use std::time::Duration;
+
+use futures_util::StreamExt;
+use futures_util::stream::SplitStream;
+use tokio::net::TcpStream;
+use tokio::time::timeout;
+
 use crate::core_logic::interacting::ViewerClick;
 use bevy::prelude::*;
 use serde_json::Value;
+use tokio::runtime::Runtime;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
-use tokio::{runtime::Runtime, task::JoinHandle};
-use tungstenite::connect;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
 
 #[derive(Resource)]
 pub struct TwitchClickListener {
     _rt: Option<Runtime>,
-    _heat_click_listener: JoinHandle<()>,
     message_receiver: UnboundedReceiver<ViewerClick>,
 }
 
-fn get_viewer_click_from_response(response_text: &str) -> Option<ViewerClick> {
-    let json_response = serde_json::from_str::<Value>(response_text).ok()?;
+async fn read_heat_response(
+    connection: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+) -> Option<Value> {
+    let response_timeout = Duration::from_secs(30);
+
+    let response = timeout(response_timeout, connection.next())
+        .await
+        .ok()??
+        .ok()?;
+    let response_text = response
+        .into_text()
+        .expect("read_heat_response: Could not convert response to text.");
+    let response_text = response_text.as_str();
+    let response_json = serde_json::from_str::<Value>(response_text)
+        .expect("read_heat_response: Response is not in JSON.");
+    Some(response_json)
+}
+
+async fn verify_connected_to_heat_api(
+    connection: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+) {
+    let response_json = read_heat_response(connection)
+        .await
+        .expect("verify_connected_to_heat_api: Could not read system response.");
+    let valid_response = response_json["type"] == "system"
+        && response_json["message"] == "Connected to Heat API server.";
+    if !valid_response {
+        panic!("verify_connected_to_heat_api: Did not get system response.");
+    }
+}
+
+async fn read_click_event(
+    connection: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+) -> Option<ViewerClick> {
+    let json_response = read_heat_response(connection).await?;
+    get_viewer_click_from_response(json_response)
+}
+
+fn get_viewer_click_from_response(json_response: Value) -> Option<ViewerClick> {
     if json_response.get("type")?.as_str()? != "click" {
         return None;
     }
@@ -24,48 +67,44 @@ fn get_viewer_click_from_response(response_text: &str) -> Option<ViewerClick> {
     Some(ViewerClick::new(uv_x, 1.0 - uv_y))
 }
 
+async fn connect_to_heat_api(
+    twitch_channel_id: String,
+) -> SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+    let connection_url = format!("wss://heat-api.j38.net/channel/{}", twitch_channel_id);
+    let (connection, _) = connect_async(&connection_url)
+        .await
+        .expect("connect: Cannot connect to heat URL.");
+    let (_, mut connection_reader) = connection.split();
+    verify_connected_to_heat_api(&mut connection_reader).await;
+
+    println!("connect_to_heat_api: Successfully connected to heat endpoint.");
+
+    connection_reader
+}
+
 impl TwitchClickListener {
     pub fn connect(channel_id: &str) -> Self {
         let _rt = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
+            .enable_time()
             .build()
             .expect("connect: Could not prepare networking for click listening.");
 
         let twitch_channel_id = String::from(channel_id);
         let (message_writer, message_receiver) = mpsc::unbounded_channel();
-        let _heat_click_listener = _rt.spawn(async move {
+        _rt.spawn(async move {
             loop {
-                let connection_url =
-                    format!("wss://heat-api.j38.net/channel/{}", twitch_channel_id);
-                let (mut connection, initial_response) =
-                    connect(&connection_url).expect("connect: Cannot connect to heat URL.");
-                println!(
-                    "Connected to {}.\nInitial Response: {:?}",
-                    connection_url, initial_response
-                );
-
-                while let Ok(response) = connection.read() {
-                    if !response.is_text() {
-                        continue;
-                    }
-
-                    let response_text = response.into_text().unwrap();
-                    let response_text = response_text.as_str();
-
-                    if let Some(viewer_click) = get_viewer_click_from_response(response_text) {
-                        let write_status = message_writer.send(viewer_click);
-
-                        if write_status.is_err() {
-                            break;
-                        }
-                    }
+                let mut connection_reader = connect_to_heat_api(twitch_channel_id.clone()).await;
+                while let Some(click_event) = read_click_event(&mut connection_reader).await {
+                    message_writer
+                        .send(click_event)
+                        .expect("Cannot broadcast viewer clicks anymore");
                 }
             }
         });
 
         Self {
             _rt: Some(_rt),
-            _heat_click_listener,
             message_receiver,
         }
     }
