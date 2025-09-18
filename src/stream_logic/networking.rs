@@ -94,6 +94,12 @@ pub fn map_twitch_clicks_to_uv(
     mut viewer_click_broadcaster: EventWriter<ViewerClick>,
 ) {
     while let Some(twitch_click) = twitch_click_listener.read() {
+        println!(
+            "{}: Received click event. x = {}, y = {}",
+            chrono::Local::now(),
+            twitch_click.get_x(),
+            twitch_click.get_y()
+        );
         viewer_click_broadcaster.write(twitch_click);
     }
 }
