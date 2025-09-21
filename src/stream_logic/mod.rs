@@ -62,7 +62,7 @@ impl Plugin for StreamLogic {
         // This section deals with how rooms are created in the game as the
         // explorer navigates the depths.
         let tile_size = 16;
-        let tile_scale = 2;
+        let tile_scale = 3;
         let tile_sizing = TileSize::new(tile_size, tile_scale);
 
         let min_size = WorldTileDimensions::new(4, 4);
