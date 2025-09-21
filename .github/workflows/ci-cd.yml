@@ -69,11 +69,11 @@ jobs:
 
       - name: Create archive for release (Unix-based OSes)
         if: runner.os != 'Windows'
-        run: tar -czvf target/release/escaping-the-depths escaping-the-depths-${{ matrix.os }}.tar.gz
+        run: tar -czvf escaping-the-depths-${{ matrix.os }}.tar.gz target/release/escaping-the-depths
 
       - name: Create archive for release (Windows)
         if: runner.os == 'Windows'
-        run: tar -czvf target/release/escaping-the-depths.exe escaping-the-depths-${{ matrix.os }}.tar.gz
+        run: tar -czvf escaping-the-depths-${{ matrix.os }}.tar.gz target/release/escaping-the-depths.exe
 
       - name: Create/update continuous release
         uses: ncipollo/release-action@v1
@@ -81,5 +81,4 @@ jobs:
           name: "Continuous Release"
           makeLatest: true
           allowUpdates: true
-          generateReleaseNotes: true
           artifacts: "escaping-the-depths-${{ matrix.os }}.tar.gz"
