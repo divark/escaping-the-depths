@@ -168,7 +168,7 @@ fn map_mouse_click_to_uv(
         return;
     }
 
-    if !mouse_state.pressed(MouseButton::Left) {
+    if !mouse_state.just_pressed(MouseButton::Left) {
         return;
     }
 
