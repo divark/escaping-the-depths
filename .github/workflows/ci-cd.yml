@@ -67,16 +67,19 @@ jobs:
       - name: Build a release of the project
         run: cargo build --release
 
-      - name: Upload the project binary if this is not a release (Unix-based OSes).
-        uses: actions/upload-artifact@v4
-        if: github.ref_type != 'tag' && runner.os != 'Windows'
-        with:
-          path: target/release/escaping-the-depths
-          name: escaping-the-depths-${{ matrix.os }}
+      - name: Create archive for release (Unix-based OSes)
+        if: runner.os != 'Windows'
+        run: tar -czvf target/release/escaping-the-depths escaping-the-depths-${{ matrix.os }}.tar.gz
 
-      - name: Upload the project binary if this is not a release (Windows).
-        uses: actions/upload-artifact@v4
-        if: github.ref_type != 'tag' && runner.os == 'Windows'
+      - name: Create archive for release (Windows)
+        if: runner.os == 'Windows'
+        run: tar -czvf target/release/escaping-the-depths.exe escaping-the-depths-${{ matrix.os }}.tar.gz
+
+      - name: Create/update continuous release
+        uses: ncipollo/release-action@v1
         with:
-          path: target/release/escaping-the-depths.exe
-          name: escaping-the-depths-${{ matrix.os }}
+          name: "Continuous Release"
+          makeLatest: true
+          allowUpdates: true
+          generateReleaseNotes: true
+          artifacts: "escaping-the-depths-${{ matrix.os }}.tar.gz"
