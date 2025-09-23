@@ -155,19 +155,34 @@ pub fn spawn_start_screen(mut commands: Commands) {
         GameStartOptions,
     );
 
+    let time_to_exit_start_screen = TemporaryUITime::new(Duration::from_secs(30));
+
     commands
-        .spawn((start_screen, GameStartScreen))
+        .spawn((
+            start_screen,
+            GameStartScreen,
+            TemporaryUITimer::new(&time_to_exit_start_screen),
+        ))
         .with_children(|start_screen| {
             start_screen.spawn(game_name);
             start_screen.spawn(game_start_options);
         });
 }
 
-pub fn start_the_game_on_enter(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+pub fn start_the_game_after_some_time(
+    mut start_screen_timer: Query<&mut TemporaryUITimer, With<GameStartScreen>>,
+    time: Res<Time>,
     mut next_game_state: ResMut<NextState<GameState>>,
 ) {
-    if !keyboard_input.just_pressed(KeyCode::Enter) {
+    if start_screen_timer.is_empty() {
+        return;
+    }
+
+    let mut start_screen_ui_timer = start_screen_timer.single_mut().unwrap();
+    let start_screen_ui_timer = start_screen_ui_timer.get_timer_mut();
+    start_screen_ui_timer.tick(time.delta());
+
+    if !start_screen_ui_timer.finished() {
         return;
     }
 

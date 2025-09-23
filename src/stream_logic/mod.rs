@@ -14,7 +14,7 @@ use sfx::{
 };
 use ui::{
     despawn_start_screen, prepare_screen_ui, spawn_game_over_screen, spawn_health_ui,
-    spawn_start_screen, start_the_game_on_enter, update_game_over_screen, update_health_ui,
+    spawn_start_screen, start_the_game_after_some_time, update_game_over_screen, update_health_ui,
 };
 
 use crate::{
@@ -84,7 +84,7 @@ impl Plugin for StreamLogic {
         app.add_systems(OnEnter(GameState::Start), spawn_start_screen);
         app.add_systems(
             Update,
-            start_the_game_on_enter.run_if(in_state(GameState::Start)),
+            start_the_game_after_some_time.run_if(in_state(GameState::Start)),
         );
         app.add_systems(OnExit(GameState::Start), despawn_start_screen);
 
