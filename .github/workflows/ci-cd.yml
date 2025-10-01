@@ -69,7 +69,9 @@ jobs:
 
       - name: Create archive for release (Unix-based OSes)
         if: runner.os != 'Windows'
-        run: tar -czvf escaping-the-depths-${{ matrix.os }}.tar.gz -C target/release escaping-the-depths
+        run: |
+          strip target/release/escaping-the-depths
+          tar -czvf escaping-the-depths-${{ matrix.os }}.tar.gz -C target/release escaping-the-depths
 
       - name: Create archive for release (Windows)
         if: runner.os == 'Windows'
