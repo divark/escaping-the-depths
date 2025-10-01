@@ -358,7 +358,7 @@ impl PathTarget {
     }
 
     fn compute_expected_position(&self, source: f32, target: f32) -> f32 {
-        if self.movement_timer.finished() {
+        if self.movement_timer.is_finished() {
             return target;
         }
 
@@ -577,7 +577,7 @@ pub fn unlock_exit_door_with_explorer(
 }
 
 pub fn unlock_exit_door_with_viewer_click(
-    mut movement_changes: EventReader<LogicalCoordinates>,
+    mut movement_changes: MessageReader<LogicalCoordinates>,
     hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
     mut exit_door: Query<&mut ExitDoorState>,
 ) {

@@ -30,7 +30,7 @@ impl<C: Component> TextSection<C> {
         Self {
             text: Text::new(""),
             font: TextFont::from_font_size(font_size as f32),
-            text_layout: TextLayout::new_with_justify(JustifyText::Center),
+            text_layout: TextLayout::new_with_justify(Justify::Center),
             label,
         }
     }
@@ -182,7 +182,7 @@ pub fn start_the_game_after_some_time(
     let start_screen_ui_timer = start_screen_ui_timer.get_timer_mut();
     start_screen_ui_timer.tick(time.delta());
 
-    if !start_screen_ui_timer.finished() {
+    if !start_screen_ui_timer.is_finished() {
         return;
     }
 

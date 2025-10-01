@@ -44,7 +44,7 @@ impl Plugin for StreamLogic {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        resolution: WindowResolution::new(1280.0, 720.0)
+                        resolution: WindowResolution::new(1280, 720)
                             .with_scale_factor_override(1.0),
                         decorations: false,
                         ..default()
@@ -149,7 +149,7 @@ impl Plugin for StreamLogic {
 
 /// Spawns the initial room when the application starts.
 fn spawn_first_level(
-    mut level_spawner_broadcaster: EventWriter<ChangeRoom>,
+    mut level_spawner_broadcaster: MessageWriter<ChangeRoom>,
     mut room_generator: ResMut<RandomizedRoomGenerator>,
 ) {
     let explorer_staring_position = LogicalCoordinates::new(1, 1);
@@ -162,7 +162,7 @@ fn spawn_first_level(
 fn map_mouse_click_to_uv(
     mouse_state: Res<ButtonInput<MouseButton>>,
     window_info: Query<&Window>,
-    mut viewer_click_broadcaster: EventWriter<ViewerClick>,
+    mut viewer_click_broadcaster: MessageWriter<ViewerClick>,
 ) {
     if window_info.is_empty() {
         return;

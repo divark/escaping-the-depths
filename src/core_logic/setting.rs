@@ -86,7 +86,7 @@ impl WorldTileDimensions {
     }
 }
 
-#[derive(Event, Component, Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
+#[derive(Message, Component, Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
 pub struct LogicalCoordinates {
     x: usize,
     y: usize,
@@ -208,7 +208,7 @@ impl CaveRoom {
     }
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct ChangeRoom(CaveRoom);
 
 impl ChangeRoom {
@@ -221,7 +221,7 @@ impl ChangeRoom {
     }
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct LoadRoom(CaveRoom);
 
 impl LoadRoom {
@@ -234,7 +234,7 @@ impl LoadRoom {
     }
 }
 
-#[derive(Event, Clone, Debug)]
+#[derive(Message, Clone, Debug)]
 pub struct PlaceRoomObject {
     object_type: RoomObject,
     x: usize,
@@ -306,7 +306,7 @@ pub struct HiddenFloorSwitch;
 
 fn spawn_room(
     cave_room: &CaveRoom,
-    place_tile_broadcaster: &mut EventWriter<PlaceRoomObject>,
+    place_tile_broadcaster: &mut MessageWriter<PlaceRoomObject>,
     commands: &mut Commands,
 ) {
     let cave_room_tiles = cave_room.get_tiles();
@@ -327,7 +327,7 @@ fn spawn_room(
 
 fn spawn_objects_in_room(
     cave_room: &CaveRoom,
-    place_tile_broadcaster: &mut EventWriter<PlaceRoomObject>,
+    place_tile_broadcaster: &mut MessageWriter<PlaceRoomObject>,
 ) {
     let cave_room_objects = cave_room.get_objects();
     for room_object in cave_room_objects {
@@ -373,8 +373,8 @@ fn spawn_room_traversal_graph(cave_room: &CaveRoom, commands: &mut Commands) {
 }
 
 pub fn spawn_new_room(
-    mut spawn_room_requests: EventReader<LoadRoom>,
-    mut place_tile_broadcaster: EventWriter<PlaceRoomObject>,
+    mut spawn_room_requests: MessageReader<LoadRoom>,
+    mut place_tile_broadcaster: MessageWriter<PlaceRoomObject>,
     tile_scale: Res<TileSize>,
     mut commands: Commands,
 ) {
@@ -390,7 +390,7 @@ pub fn spawn_new_room(
 }
 
 pub fn spawn_next_room<T>(
-    mut change_room_broadcaster: EventWriter<ChangeRoom>,
+    mut change_room_broadcaster: MessageWriter<ChangeRoom>,
     explorer: Query<(&LogicalCoordinates, &ExplorerState), Changed<LogicalCoordinates>>,
     exit_door: Query<(&LogicalCoordinates, &ExitDoorState)>,
     armed_traps: Query<&TrapState>,
@@ -476,7 +476,7 @@ pub fn reset_to_level_one_after_game_over(
 
 pub fn respawn_level_one<T>(
     mut room_generator: ResMut<T>,
-    mut change_room_broadcaster: EventWriter<ChangeRoom>,
+    mut change_room_broadcaster: MessageWriter<ChangeRoom>,
 ) where
     T: Resource + RoomGenerating,
 {
@@ -488,8 +488,8 @@ pub fn respawn_level_one<T>(
 }
 
 pub fn despawn_current_room(
-    mut change_room_requests: EventReader<ChangeRoom>,
-    mut spawn_room_broadcaster: EventWriter<LoadRoom>,
+    mut change_room_requests: MessageReader<ChangeRoom>,
+    mut spawn_room_broadcaster: MessageWriter<LoadRoom>,
     mut commands: Commands,
     all_room_tiles: Query<Entity, With<LogicalCoordinates>>,
     room_graph: Query<Entity, With<Graph>>,
@@ -635,7 +635,7 @@ impl ExplorerBundle {
 }
 
 pub fn place_tile(
-    mut place_tile_requests: EventReader<PlaceRoomObject>,
+    mut place_tile_requests: MessageReader<PlaceRoomObject>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     tile_scale: Res<TileSize>,

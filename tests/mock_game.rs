@@ -3,10 +3,12 @@ use std::time::Duration;
 
 use bevy::ecs::component::Mutable;
 use bevy::input::InputPlugin;
+use bevy::mesh::MeshPlugin;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::WgpuSettings;
 use bevy::sprite::SpritePlugin;
 use bevy::state::app::StatesPlugin;
+use bevy::text::TextPlugin;
 use bevy::window::WindowResolution;
 use cucumber::World;
 
@@ -104,12 +106,14 @@ impl MockGame {
         app.add_plugins(InputPlugin);
         app.add_plugins(WindowPlugin {
             primary_window: Some(Window {
-                resolution: WindowResolution::new(1280.0, 720.0),
+                resolution: WindowResolution::new(1280, 720),
                 ..default()
             }),
             ..default()
         });
         app.add_plugins(AssetPlugin::default());
+        app.add_plugins(MeshPlugin);
+        app.add_plugins(TextPlugin);
         app.add_plugins(RenderPlugin {
             render_creation: WgpuSettings {
                 backends: None,
@@ -135,11 +139,11 @@ impl MockGame {
 
     fn broadcast<T>(&mut self, event: T)
     where
-        T: Event,
+        T: Message,
     {
         self.app
             .world_mut()
-            .send_event(event)
+            .write_message(event)
             .expect("broadcast: Could not send event.");
 
         self.tick();

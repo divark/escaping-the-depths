@@ -130,7 +130,7 @@ impl Drop for TwitchClickListener {
 
 pub fn map_twitch_clicks_to_uv(
     mut twitch_click_listener: ResMut<TwitchClickListener>,
-    mut viewer_click_broadcaster: EventWriter<ViewerClick>,
+    mut viewer_click_broadcaster: MessageWriter<ViewerClick>,
 ) {
     while let Some(twitch_click) = twitch_click_listener.read() {
         println!(

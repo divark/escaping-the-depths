@@ -180,7 +180,7 @@ pub fn claim_treasure_with_explorer(
 }
 
 pub fn claim_treasure_with_viewer_click(
-    mut explorer_movement: EventReader<LogicalCoordinates>,
+    mut explorer_movement: MessageReader<LogicalCoordinates>,
     mut treasures: Query<(
         Entity,
         &LogicalCoordinates,
@@ -275,7 +275,7 @@ pub fn start_game_over_countdown_on_death(
 }
 
 pub fn disarm_trap_with_viewer_click(
-    mut viewer_tiles_clicked: EventReader<LogicalCoordinates>,
+    mut viewer_tiles_clicked: MessageReader<LogicalCoordinates>,
     mut traps: Query<(&LogicalCoordinates, &mut TrapState)>,
 ) {
     if traps.is_empty() {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::setting::{LogicalCoordinates, TileSize};
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct ViewerClick {
     uv_x: f32,
     uv_y: f32,
@@ -47,8 +47,8 @@ fn convert_to_tilepos(game_coordinates: Transform, tile_size: f32) -> LogicalCoo
 }
 
 pub fn convert_viewer_click_to_tile_click(
-    mut viewer_clicks: EventReader<ViewerClick>,
-    mut movement_broadcaster: EventWriter<LogicalCoordinates>,
+    mut viewer_clicks: MessageReader<ViewerClick>,
+    mut movement_broadcaster: MessageWriter<LogicalCoordinates>,
     window_info: Query<&Window>,
     tile_scaling: Res<TileSize>,
     camera: Query<&Transform, With<Camera2d>>,

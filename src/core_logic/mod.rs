@@ -103,11 +103,11 @@ impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
 
 impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
     fn build(&self, app: &mut App) {
-        app.add_event::<LoadRoom>();
-        app.add_event::<ChangeRoom>();
-        app.add_event::<PlaceRoomObject>();
-        app.add_event::<LogicalCoordinates>();
-        app.add_event::<ViewerClick>();
+        app.add_message::<LoadRoom>();
+        app.add_message::<ChangeRoom>();
+        app.add_message::<PlaceRoomObject>();
+        app.add_message::<LogicalCoordinates>();
+        app.add_message::<ViewerClick>();
 
         app.init_state::<GameState>();
         app.insert_resource(self.tile_size.clone());
