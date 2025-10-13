@@ -29,3 +29,7 @@ harness = false
 [[test]]
 name = "qol"
 harness = false
+
+[[test]]
+name = "surviving-the-trip-mvp"
+harness = false
