@@ -2,39 +2,20 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use bevy::prelude::*;
 
-use super::{
-    MovementTime,
-    setting::{
-        ExplorerState, HiddenFloorSwitch, LogicalCoordinates, RoomObject, WorldTileDimensions,
-    },
-};
-
-#[derive(Clone, Copy, Debug, Component, PartialEq)]
-pub enum ExitDoorState {
-    Closed,
-    Open,
-}
+use super::setting::{LogicalCoordinates, WorldTileDimensions};
 
 #[derive(Clone)]
 pub struct NodeData {
     location: LogicalCoordinates,
-    tile_type: RoomObject,
 }
 
 impl NodeData {
-    pub fn new(location: LogicalCoordinates, tile_type: RoomObject) -> Self {
-        Self {
-            location,
-            tile_type,
-        }
+    pub fn new(location: LogicalCoordinates) -> Self {
+        Self { location }
     }
 
     pub fn get_location(&self) -> &LogicalCoordinates {
         &self.location
-    }
-
-    pub fn get_type(&self) -> &RoomObject {
-        &self.tile_type
     }
 }
 
@@ -126,18 +107,11 @@ pub struct Graph {
 }
 
 impl Graph {
-    pub fn from_tiles(
-        tiles: &Vec<(LogicalCoordinates, RoomObject)>,
-        world_size: &WorldTileDimensions,
-    ) -> Self {
+    pub fn from_tiles(tiles: &Vec<LogicalCoordinates>, world_size: &WorldTileDimensions) -> Self {
         let mut nodes = Vec::new();
 
-        for (tile_location, tile_type) in tiles {
-            if tile_type == &RoomObject::Wall {
-                continue;
-            }
-
-            let node_data = NodeData::new(*tile_location, *tile_type);
+        for tile_location in tiles {
+            let node_data = NodeData::new(*tile_location);
             let node_id = tile_location.to_1d(world_size);
             let tile_node = WorldNode::new(node_id, node_data);
             nodes.push(tile_node);
@@ -317,13 +291,6 @@ impl Pathfinding {
             .map(|path_node| *path_node.get_location())
             .collect()
     }
-
-    pub fn get_types(&self) -> Vec<RoomObject> {
-        self.path
-            .iter()
-            .map(|path_node| *path_node.get_type())
-            .collect()
-    }
 }
 
 #[derive(Component)]
@@ -395,206 +362,5 @@ impl PathTarget {
 
     pub fn get_logical_target(&self) -> LogicalCoordinates {
         self.logical_target
-    }
-}
-
-pub fn make_explorer_go_to_exit_door(
-    exit_door: Query<(&ExitDoorState, &LogicalCoordinates), Changed<ExitDoorState>>,
-    mut explorer: Query<(
-        Entity,
-        &LogicalCoordinates,
-        &mut ExplorerState,
-        Option<&PathTarget>,
-        Option<&mut Pathfinding>,
-    )>,
-    room_traversal_graph: Query<&Graph>,
-    mut commands: Commands,
-) {
-    if exit_door.is_empty() || explorer.is_empty() || room_traversal_graph.is_empty() {
-        return;
-    }
-
-    let (
-        explorer_entity,
-        explorer_location,
-        mut explorer_state,
-        explorer_current_target,
-        explorer_wandering_path,
-    ) = explorer
-        .single_mut()
-        .expect("make_explorer_go_to_exit_door: Could not find explorer.");
-    let (exit_door_state, exit_door_location) = exit_door
-        .single()
-        .expect("make_explorer_go_to_exit_door: Could not get exit door.");
-    let room_graph = room_traversal_graph
-        .single()
-        .expect("make_explorer_go_to_exit_door: Could not get room graph");
-
-    if *exit_door_state == ExitDoorState::Closed {
-        return;
-    }
-
-    if *explorer_state != ExplorerState::Wandering {
-        return;
-    }
-
-    let explorer_path = if let Some(next_explorer_location) = explorer_current_target {
-        Pathfinding::shortest_path(
-            &next_explorer_location.get_logical_target(),
-            exit_door_location,
-            room_graph,
-        )
-    } else {
-        Pathfinding::shortest_path(explorer_location, exit_door_location, room_graph)
-    };
-
-    if let Some(mut current_explorer_path) = explorer_wandering_path {
-        *current_explorer_path = explorer_path;
-    } else {
-        commands.entity(explorer_entity).insert(explorer_path);
-    }
-
-    *explorer_state = ExplorerState::Exiting;
-}
-
-pub fn set_explorer_target(
-    mut explorer: Query<(Entity, &Transform, &mut Pathfinding), Without<PathTarget>>,
-    tiles: Query<(&LogicalCoordinates, &Transform)>,
-    movement_time: Res<MovementTime>,
-    mut commands: Commands,
-) {
-    if explorer.is_empty() {
-        return;
-    }
-
-    let (explorer_entity, explorer_position, mut explorer_path) = explorer
-        .single_mut()
-        .expect("set_explorer_target: Could not find explorer.");
-
-    if !explorer_path.is_traveling() {
-        commands.entity(explorer_entity).remove::<Pathfinding>();
-        return;
-    }
-
-    let explorer_logical_target = *explorer_path.pop_front().get_location();
-    let tile_position = *tiles
-        .iter()
-        .find(|tile| *tile.0 == explorer_logical_target)
-        .map(|tile| tile.1)
-        .expect("set_explorer_target: Could not find tile's transform.");
-    let explorer_target = PathTarget::new(
-        explorer_logical_target,
-        tile_position,
-        *explorer_position,
-        movement_time.get_timer(),
-    );
-    commands.entity(explorer_entity).insert(explorer_target);
-}
-
-pub fn move_explorer_to_next_tile(
-    mut explorer: Query<
-        (
-            Entity,
-            &mut Transform,
-            &mut LogicalCoordinates,
-            &mut PathTarget,
-        ),
-        With<ExplorerState>,
-    >,
-    time: Res<Time>,
-    mut commands: Commands,
-) {
-    if explorer.is_empty() {
-        return;
-    }
-
-    let (
-        explorer_entity,
-        mut explorer_position,
-        mut explorer_logical_position,
-        mut explorer_target,
-    ) = explorer
-        .single_mut()
-        .expect("move_explorer: Could not find explorer.");
-
-    let new_explorer_position = explorer_target.advance(&time);
-    *explorer_position = new_explorer_position;
-
-    if explorer_target.has_been_reached() {
-        commands.entity(explorer_entity).remove::<PathTarget>();
-        *explorer_logical_position = explorer_target.get_logical_target();
-    }
-}
-
-pub fn make_explorer_wander(
-    mut explorer: Query<
-        (Entity, &LogicalCoordinates),
-        (Added<ExplorerState>, Without<Pathfinding>),
-    >,
-    room_traversal_graph: Query<&Graph>,
-    mut commands: Commands,
-) {
-    if explorer.is_empty() || room_traversal_graph.is_empty() {
-        return;
-    }
-
-    let room_graph = room_traversal_graph
-        .single()
-        .expect("make_explorer_wander: Could not find graph for the room.");
-
-    let (explorer_entity, explorer_position) = explorer
-        .single_mut()
-        .expect("make_explorer_wander: Could not find explorer.");
-
-    let explorer_path = Pathfinding::explore_all(explorer_position, room_graph);
-    commands.entity(explorer_entity).insert(explorer_path);
-}
-
-pub fn unlock_exit_door_with_explorer(
-    movement_changes: Query<
-        &LogicalCoordinates,
-        (With<ExplorerState>, Changed<LogicalCoordinates>),
-    >,
-    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
-    mut exit_door: Query<&mut ExitDoorState>,
-) {
-    if movement_changes.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
-        return;
-    }
-
-    for movement_coordinates in movement_changes.iter() {
-        let hidden_floor_switch_coordinates = hidden_floor_switch.single().expect(
-            "unlock_hidden_door_with_explorer: Could not find the coordinates of the hidden floor switch.",
-        );
-        let mut exit_door_state = exit_door
-            .single_mut()
-            .expect("unlock_exit_door_with_explorer: Could not find the exit door.");
-
-        if *movement_coordinates == *hidden_floor_switch_coordinates {
-            *exit_door_state = ExitDoorState::Open;
-        }
-    }
-}
-
-pub fn unlock_exit_door_with_viewer_click(
-    mut movement_changes: MessageReader<LogicalCoordinates>,
-    hidden_floor_switch: Query<&LogicalCoordinates, With<HiddenFloorSwitch>>,
-    mut exit_door: Query<&mut ExitDoorState>,
-) {
-    if movement_changes.is_empty() || exit_door.is_empty() || hidden_floor_switch.is_empty() {
-        return;
-    }
-
-    for movement_coordinates in movement_changes.read() {
-        let hidden_floor_switch_coordinates = hidden_floor_switch.single().expect(
-            "unlock_hidden_door_with_viewer_click: Could not find the coordinates of the hidden floor switch.",
-        );
-        let mut exit_door_state = exit_door
-            .single_mut()
-            .expect("unlock_exit_door_with_viewer_click: Could not find the exit door.");
-
-        if *movement_coordinates == *hidden_floor_switch_coordinates {
-            *exit_door_state = ExitDoorState::Open;
-        }
     }
 }

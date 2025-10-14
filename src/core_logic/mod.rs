@@ -1,26 +1,11 @@
 pub mod interacting;
-pub mod scoring;
 pub mod setting;
 pub mod traveling;
 
 use std::time::Duration;
 
 use bevy::prelude::*;
-use interacting::{ViewerClick, convert_viewer_click_to_tile_click};
-use scoring::{
-    ExplorerHealth, claim_treasure_with_explorer, claim_treasure_with_viewer_click,
-    disarm_trap_with_viewer_click, hurt_explorer_with_armed_trap, initialize_records,
-    start_game_over_countdown_on_death,
-};
-use setting::{
-    ChangeRoom, LoadRoom, LogicalCoordinates, PlaceRoomObject, RoomGenerating, TileSize,
-    despawn_current_room, place_tile, reset_to_level_one_after_game_over, respawn_level_one,
-    spawn_new_room, spawn_next_room,
-};
-use traveling::{
-    make_explorer_go_to_exit_door, make_explorer_wander, move_explorer_to_next_tile,
-    set_explorer_target, unlock_exit_door_with_explorer, unlock_exit_door_with_viewer_click,
-};
+use interacting::ViewerClick;
 
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -78,81 +63,26 @@ impl GameOverTimer {
     }
 }
 
-pub struct CoreLogic<T: RoomGenerating + Resource + Clone> {
+pub struct CoreLogic {
     movement_time: MovementTime,
     game_over_time: GameOverTime,
-    room_generator: T,
-    tile_size: TileSize,
 }
 
-impl<T: RoomGenerating + Resource + Clone> CoreLogic<T> {
-    pub fn new(
-        movement_time: MovementTime,
-        game_over_time: GameOverTime,
-        room_generator: T,
-        tile_size: TileSize,
-    ) -> Self {
+impl CoreLogic {
+    pub fn new(movement_time: MovementTime, game_over_time: GameOverTime) -> Self {
         Self {
             movement_time,
             game_over_time,
-            room_generator,
-            tile_size,
         }
     }
 }
 
-impl<T: RoomGenerating + Resource + Clone> Plugin for CoreLogic<T> {
+impl Plugin for CoreLogic {
     fn build(&self, app: &mut App) {
-        app.add_message::<LoadRoom>();
-        app.add_message::<ChangeRoom>();
-        app.add_message::<PlaceRoomObject>();
-        app.add_message::<LogicalCoordinates>();
         app.add_message::<ViewerClick>();
 
         app.init_state::<GameState>();
-        app.insert_resource(self.tile_size.clone());
-        app.insert_resource(ExplorerHealth::new(3, 3));
         app.insert_resource(self.movement_time.clone());
         app.insert_resource(self.game_over_time.clone());
-        app.insert_resource(self.room_generator.clone());
-
-        app.add_systems(Startup, initialize_records);
-        app.add_systems(Update, despawn_current_room);
-        app.add_systems(Update, spawn_new_room.after(despawn_current_room));
-        app.add_systems(Update, place_tile.after(spawn_new_room));
-        app.add_systems(Update, spawn_next_room::<T>);
-
-        let clicking_systems = (
-            convert_viewer_click_to_tile_click,
-            unlock_exit_door_with_viewer_click,
-            claim_treasure_with_viewer_click,
-            disarm_trap_with_viewer_click,
-        );
-        app.add_systems(Update, clicking_systems.run_if(in_state(GameState::Active)));
-
-        let automatic_behavior_systems = (
-            make_explorer_wander,
-            unlock_exit_door_with_explorer.after(make_explorer_wander),
-            make_explorer_go_to_exit_door.after(unlock_exit_door_with_explorer),
-            set_explorer_target,
-            move_explorer_to_next_tile,
-            claim_treasure_with_explorer,
-            hurt_explorer_with_armed_trap,
-            start_game_over_countdown_on_death,
-        );
-        app.add_systems(
-            Update,
-            automatic_behavior_systems.run_if(in_state(GameState::Active)),
-        );
-
-        app.add_systems(
-            Update,
-            reset_to_level_one_after_game_over.run_if(in_state(GameState::GameOver)),
-        );
-
-        app.add_systems(
-            OnExit(GameState::GameOver),
-            respawn_level_one::<T>.after(reset_to_level_one_after_game_over),
-        );
     }
 }

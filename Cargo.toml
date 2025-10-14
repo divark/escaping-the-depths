@@ -1,10 +1,11 @@
 [package]
-name = "escaping-the-depths"
+name = "surviving-the-trip"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 bevy = { version = "^0.17", features = ["wayland", "wav", "mp3"] }
+tiled = "^0.14"
 rand = "^0.9"
 
 tokio-tungstenite = { version = "^0.27", features = ["native-tls"] }
@@ -19,15 +20,7 @@ cucumber = "^0.21"
 futures = "^0.3"
 
 [[test]]
-name = "mvp"
-harness = false
-
-[[test]]
 name = "audio"
-harness = false
-
-[[test]]
-name = "qol"
 harness = false
 
 [[test]]

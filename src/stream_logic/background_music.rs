@@ -105,8 +105,7 @@ impl BackgroundPlayer {
     }
 
     pub fn contains_song(&self, song_filename_to_find: String) -> bool {
-        let found_song_filename = self
-            .songs_found
+        self.songs_found
             .iter()
             .map(|song_filepath| {
                 song_filepath
@@ -116,9 +115,7 @@ impl BackgroundPlayer {
                     .unwrap()
                     .to_string()
             })
-            .any(|song_filename| song_filename == song_filename_to_find);
-
-        found_song_filename
+            .any(|song_filename| song_filename == song_filename_to_find)
     }
 
     pub fn pick(&self, picked_song_idx: usize) -> PathBuf {

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use escaping_the_depths::stream_logic::StreamLogic;
+use surviving_the_trip::stream_logic::StreamLogic;
 
 fn main() {
     let mut streaming_application = App::new();

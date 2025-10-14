@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use cucumber::{World, given, then, when};
-use escaping_the_depths::stream_logic::background_music::BackgroundPlayer;
+use surviving_the_trip::stream_logic::background_music::BackgroundPlayer;
 
 #[derive(Debug, World, Default)]
 pub struct AudioTesting {

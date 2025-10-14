@@ -70,18 +70,18 @@ jobs:
       - name: Create archive for release (Unix-based OSes)
         if: runner.os != 'Windows'
         run: |
-          strip target/release/escaping-the-depths
-          tar -czvf escaping-the-depths-${{ matrix.os }}.tar.gz -C target/release escaping-the-depths
+          strip target/release/surviving-the-trip
+          tar -czvf surviving-the-trip-${{ matrix.os }}.tar.gz -C target/release surviving-the-trip
 
       - name: Create archive for release (Windows)
         if: runner.os == 'Windows'
-        run: tar -czvf escaping-the-depths-${{ matrix.os }}.tar.gz -C target/release escaping-the-depths.exe
+        run: tar -czvf surviving-the-trip-${{ matrix.os }}.tar.gz -C target/release surviving-the-trip.exe
 
       - name: Create/update continuous release
         uses: ncipollo/release-action@v1
         with:
-          name: "Continuous Release"
+          name: "Continuous Release - Surviving the Trip"
           tag: "latest"
           makeLatest: true
           allowUpdates: true
-          artifacts: "escaping-the-depths-${{ matrix.os }}.tar.gz"
+          artifacts: "surviving-the-trip-${{ matrix.os }}.tar.gz"
