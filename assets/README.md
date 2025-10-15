@@ -8,6 +8,8 @@ this will serve as a references page if anyone wants to know what I'm using.
 - [Map Tiles](https://0x72.itch.io/dungeontileset-ii)
 - [Coin sound sound effect](https://opengameart.org/content/512-sound-effects-8-bit-style)
 - [Door opening and trap triggering sound effect](https://opengameart.org/content/sfx-the-ultimate-2017-8-bit-mini-pack)
+- [Zelda-like Tilesets and Sprites](https://opengameart.org/content/zelda-like-tilesets-and-sprites)
+- [School Bus](https://opengameart.org/content/school-bus)
 
 ### Songs
 - [Aquaria](https://opengameart.org/content/aquaria)

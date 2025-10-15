@@ -6,3 +6,5 @@ assets/*
 .zed
 .vscode
 *.DS_Store
+
+*.drawio.bkp

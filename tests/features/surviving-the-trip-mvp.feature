@@ -6,9 +6,9 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         # world_tile_width = map_width / tile_width
         # world_tile_height = map_height / tile_width
         #
-        # map_width = 1280, tile_width = 16 => 1280 / 16 = 80
-        # map_height = 720 - 180 = 540, tile_width = 16 => 540 / 16 = 33.75 or about 34
-        Then the size of the map should be 80 by 34.
+        # map_width = 1280, tile_width = 32 => 1280 / 32 = 40
+        # map_height = 720, tile_width = 32=> 720 / 32 = 22.5 or about 23
+        Then the size of the map should be 40 by 23.
 
     Scenario: The Hunger bar ticks down as time passes.
         Given a hunger bar with a duration of 10 seconds,
