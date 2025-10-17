@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 
 use bevy::ecs::component::Mutable;
 use bevy::input::InputPlugin;
@@ -13,7 +13,7 @@ use cucumber::World;
 
 use bevy::prelude::*;
 
-use surviving_the_trip::core_logic::setting::*;
+use surviving_the_trip::core_logic::{CoreLogic, GameOverTime, MovementTime, setting::*};
 
 #[derive(Debug, World)]
 #[world(init = Self::new)]
@@ -49,6 +49,10 @@ impl MockGame {
         app.add_plugins(SpritePlugin);
         app.add_plugins(StatesPlugin);
         app.add_plugins(DefaultPickingPlugins);
+
+        let movement_time = MovementTime::new(Duration::from_secs(0));
+        let game_over_time = GameOverTime::new(Duration::from_secs(0));
+        app.add_plugins(CoreLogic::new(movement_time, game_over_time));
 
         Self {
             app,

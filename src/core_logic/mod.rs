@@ -7,6 +7,8 @@ use std::time::Duration;
 use bevy::prelude::*;
 use interacting::ViewerClick;
 
+use crate::core_logic::setting::{ChangeMap, LoadMap, load_tiled_map};
+
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub enum GameState {
     Start,
@@ -80,9 +82,13 @@ impl CoreLogic {
 impl Plugin for CoreLogic {
     fn build(&self, app: &mut App) {
         app.add_message::<ViewerClick>();
+        app.add_message::<LoadMap>();
+        app.add_message::<ChangeMap>();
 
         app.init_state::<GameState>();
         app.insert_resource(self.movement_time.clone());
         app.insert_resource(self.game_over_time.clone());
+
+        app.add_systems(Update, load_tiled_map);
     }
 }

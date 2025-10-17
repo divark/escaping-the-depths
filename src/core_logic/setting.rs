@@ -117,6 +117,83 @@ impl ChangeMap {
     }
 }
 
+#[derive(Message)]
+pub struct LoadMap(Map);
+
+impl LoadMap {
+    pub fn new(change_map_event: ChangeMap) -> Self {
+        let map_to_load = change_map_event.get_map().clone();
+        Self(map_to_load)
+    }
+
+    pub fn get_map(&self) -> &Map {
+        &self.0
+    }
+}
+
+struct BevySpriteLoader<'a> {
+    asset_server: &'a AssetServer,
+    texture_atlas_layouts: &'a mut Assets<TextureAtlasLayout>,
+}
+
+impl<'a> BevySpriteLoader<'a> {
+    pub fn new(
+        asset_server: &'a AssetServer,
+        texture_atlas_layouts: &'a mut Assets<TextureAtlasLayout>,
+    ) -> Self {
+        Self {
+            asset_server,
+            texture_atlas_layouts,
+        }
+    }
+}
+
+/// Returns the Tile's Sprite based on its location as a SpriteBundle.
+fn get_tile_sprite_from_tiled(
+    tile_logical_coordinates: LogicalCoordinates,
+    tiled_map: &Map,
+    sprite_loader: &mut BevySpriteLoader,
+) -> SpriteBundle {
+    SpriteBundle::default()
+}
+
+/// Converts a Tiled map into a series of Tile locations and their sprites.
+pub fn load_tiled_map(
+    mut load_tiled_map_reader: MessageReader<LoadMap>,
+    asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut commands: Commands,
+) {
+    let mut bevy_sprite_loader = BevySpriteLoader::new(&asset_server, &mut texture_atlas_layouts);
+    for loaded_tile_map in load_tiled_map_reader
+        .read()
+        .map(|load_map_event| load_map_event.get_map())
+    {
+        let mut tile_bundles = Vec::new();
+
+        let map_width = loaded_tile_map.width as usize;
+        let map_height = loaded_tile_map.height as usize;
+
+        for y in 0..map_height {
+            for x in 0..map_width {
+                let tile_logical_coordinates = LogicalCoordinates::new(x, y);
+                let tile_sprite = get_tile_sprite_from_tiled(
+                    tile_logical_coordinates,
+                    loaded_tile_map,
+                    &mut bevy_sprite_loader,
+                );
+                tile_bundles.push(TileBundle::new(tile_sprite, tile_logical_coordinates));
+            }
+        }
+
+        for rendered_tile in tile_bundles {
+            commands.spawn(rendered_tile);
+        }
+
+        commands.spawn(WorldTileDimensions::new(map_width, map_height));
+    }
+}
+
 #[derive(Bundle, Default)]
 pub struct SpriteBundle {
     sprite: Sprite,
@@ -137,4 +214,13 @@ impl SpriteBundle {
 pub struct TileBundle {
     sprite_bundle: SpriteBundle,
     logical_coordinates: LogicalCoordinates,
+}
+
+impl TileBundle {
+    pub fn new(sprite_bundle: SpriteBundle, logical_coordinates: LogicalCoordinates) -> Self {
+        Self {
+            sprite_bundle,
+            logical_coordinates,
+        }
+    }
 }
