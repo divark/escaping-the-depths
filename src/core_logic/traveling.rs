@@ -62,6 +62,7 @@ impl AdjacencyList {
                 let left_node_position = LogicalCoordinates::new(
                     current_node_location.get_x() - 1,
                     current_node_location.get_y(),
+                    0,
                 );
                 let left_node_id = left_node_position.to_1d(world_size);
 
@@ -78,6 +79,7 @@ impl AdjacencyList {
                 let top_node_position = LogicalCoordinates::new(
                     current_node_location.get_x(),
                     current_node_location.get_y() - 1,
+                    0,
                 );
                 let top_node_id = top_node_position.to_1d(world_size);
 

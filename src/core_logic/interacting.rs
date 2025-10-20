@@ -43,7 +43,7 @@ fn adjust_from_camera(screen_coordinates: Transform, camera: &Transform) -> Tran
 fn convert_to_tilepos(game_coordinates: Transform, tile_size: f32) -> LogicalCoordinates {
     let x_pos = (game_coordinates.translation.x / tile_size).round();
     let y_pos = (game_coordinates.translation.y / tile_size).round();
-    LogicalCoordinates::new(x_pos as usize, y_pos as usize)
+    LogicalCoordinates::new(x_pos as usize, y_pos as usize, 0)
 }
 
 pub fn convert_viewer_click_to_tile_click(

@@ -27,9 +27,15 @@ fn load_campsite_map(game: &mut MockGame) {
     game.tick();
 }
 
-#[then(regex = r"the size of the map should be (\d+) by (\d+).")]
-fn verify_size_of_map(game: &mut MockGame, expected_width: usize, expected_height: usize) {
-    let expected_map_size = WorldTileDimensions::new(expected_width, expected_height);
+#[then(regex = r"the size of the map should be (\d+) by (\d+) by (\d+).")]
+fn verify_size_of_map(
+    game: &mut MockGame,
+    expected_width: usize,
+    expected_height: usize,
+    expected_depth: usize,
+) {
+    let expected_map_size =
+        WorldTileDimensions::new(expected_width, expected_height, expected_depth);
     let actual_map_size = *game.get_one::<WorldTileDimensions>();
     assert_eq!(expected_map_size, actual_map_size);
 }

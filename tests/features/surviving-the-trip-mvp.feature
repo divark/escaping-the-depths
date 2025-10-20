@@ -8,7 +8,8 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         #
         # map_width = 1280, tile_width = 32 => 1280 / 32 = 40
         # map_height = 720, tile_width = 32=> 720 / 32 = 22.5 or about 23
-        Then the size of the map should be 40 by 23.
+        # map_depth = number of layers = 3 (Overworld, Trees and Details, Bus)
+        Then the size of the map should be 40 by 23 by 3.
 
     Scenario: The Hunger bar ticks down as time passes.
         Given a hunger bar with a duration of 10 seconds,
