@@ -13,7 +13,9 @@ use cucumber::World;
 
 use bevy::prelude::*;
 
-use surviving_the_trip::core_logic::{CoreLogic, GameOverTime, MovementTime, setting::*};
+use surviving_the_trip::core_logic::{
+    CoreLogic, GameOverTime, MovementTime, progressing::HungerBarTime, setting::*,
+};
 
 #[derive(Debug, World)]
 #[world(init = Self::new)]
@@ -52,7 +54,12 @@ impl MockGame {
 
         let movement_time = MovementTime::new(Duration::from_secs(0));
         let game_over_time = GameOverTime::new(Duration::from_secs(0));
-        app.add_plugins(CoreLogic::new(movement_time, game_over_time));
+        let hunger_bar_time = HungerBarTime::new(Duration::from_secs(0));
+        app.add_plugins(CoreLogic::new(
+            movement_time,
+            game_over_time,
+            hunger_bar_time,
+        ));
 
         Self {
             app,

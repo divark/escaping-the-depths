@@ -7,7 +7,7 @@ use background_music::{BackgroundPlayer, play_background_music, play_game_over_s
 use bevy::{prelude::*, window::WindowResolution};
 
 use crate::{
-    core_logic::{CoreLogic, GameOverTime, GameState, MovementTime},
+    core_logic::{CampersState, CoreLogic, GameOverTime, MovementTime, progressing::HungerBarTime},
     stream_logic::networking::{TwitchClickListener, map_twitch_clicks_to_uv},
 };
 
@@ -33,13 +33,14 @@ impl Plugin for StreamLogic {
         // moving entities and when to restart the game should happen.
         let movement_time = MovementTime::new(Duration::from_secs(1));
         let game_over_time = GameOverTime::new(Duration::from_secs(10));
+        let hunger_bar_time = HungerBarTime::new(Duration::from_secs(1));
 
         // This section deals with how rooms are created in the game as the
         // explorer navigates the depths.
-        let core_logic = CoreLogic::new(movement_time, game_over_time);
+        let core_logic = CoreLogic::new(movement_time, game_over_time, hunger_bar_time);
         app.add_plugins(core_logic);
 
-        app.insert_state(GameState::Start);
+        app.insert_state(CampersState::Start);
 
         // This section deals with all of the sounds and music heard during the game.
         let music_path = PathBuf::from("assets/background_music/");
@@ -54,11 +55,12 @@ impl Plugin for StreamLogic {
         let background_music_path = music_path;
         app.insert_resource(BackgroundPlayer::new(&background_music_path));
 
-        let sound_and_music_systems = (play_background_music.run_if(in_state(GameState::Active)),);
+        let sound_and_music_systems =
+            (play_background_music.run_if(in_state(CampersState::Alive)),);
         app.add_systems(Update, sound_and_music_systems);
         app.add_systems(
-            OnEnter(GameState::GameOver),
-            play_game_over_song.run_if(in_state(GameState::GameOver)),
+            OnEnter(CampersState::Dead),
+            play_game_over_song.run_if(in_state(CampersState::Dead)),
         );
 
         // This section deals with how interactions are handled in the game

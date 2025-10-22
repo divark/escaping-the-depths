@@ -1,4 +1,5 @@
 pub mod interacting;
+pub mod progressing;
 pub mod setting;
 pub mod traveling;
 
@@ -7,14 +8,20 @@ use std::time::Duration;
 use bevy::prelude::*;
 use interacting::ViewerClick;
 
-use crate::core_logic::setting::{ChangeMap, LoadMap, load_tiled_map};
+use crate::core_logic::{
+    progressing::{
+        HungerBar, HungerBarTime, decrease_hunger_bar_over_time, determine_campers_state,
+        spawn_hunger_bar,
+    },
+    setting::{ChangeMap, LoadMap, load_tiled_map},
+};
 
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
-pub enum GameState {
+pub enum CampersState {
     Start,
     #[default]
-    Active,
-    GameOver,
+    Alive,
+    Dead,
 }
 
 #[derive(Component, Clone, Copy, PartialEq)]
@@ -68,13 +75,19 @@ impl GameOverTimer {
 pub struct CoreLogic {
     movement_time: MovementTime,
     game_over_time: GameOverTime,
+    hunger_bar_decrease_time: HungerBarTime,
 }
 
 impl CoreLogic {
-    pub fn new(movement_time: MovementTime, game_over_time: GameOverTime) -> Self {
+    pub fn new(
+        movement_time: MovementTime,
+        game_over_time: GameOverTime,
+        hunger_bar_decrease_time: HungerBarTime,
+    ) -> Self {
         Self {
             movement_time,
             game_over_time,
+            hunger_bar_decrease_time,
         }
     }
 }
@@ -85,9 +98,18 @@ impl Plugin for CoreLogic {
         app.add_message::<LoadMap>();
         app.add_message::<ChangeMap>();
 
-        app.init_state::<GameState>();
+        app.init_state::<CampersState>();
         app.insert_resource(self.movement_time.clone());
         app.insert_resource(self.game_over_time.clone());
+
+        app.insert_resource(self.hunger_bar_decrease_time.clone());
+        app.insert_resource(HungerBar::default());
+        app.add_systems(Startup, spawn_hunger_bar);
+        app.add_systems(Update, decrease_hunger_bar_over_time);
+        app.add_systems(
+            Update,
+            determine_campers_state.after(decrease_hunger_bar_over_time),
+        );
 
         app.add_systems(Update, load_tiled_map);
     }

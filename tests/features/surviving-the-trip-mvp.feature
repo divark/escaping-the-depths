@@ -12,13 +12,15 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         Then the size of the map should be 40 by 23 by 3.
 
     Scenario: The Hunger bar ticks down as time passes.
-        Given a hunger bar with a duration of 10 seconds,
+        Given a hunger bar set to 100% full,
+        And the hunger bar decreases by 10% every second,
         When 5 seconds have passed,
         Then the hunger bar should be at 50%.
-        And all campers should still be alive.
+        And all campers should be alive.
 
     Scenario: The game ends when the hunger bar reaches zero.
-        Given a hunger bar with a duration of 10 seconds,
+        Given a hunger bar set to 100% full,
+        And the hunger bar decreases by 10% every second,
         When 10 seconds have passed,
         Then the hunger bar should be at 0%.
         And all campers should be dead.
