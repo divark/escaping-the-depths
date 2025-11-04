@@ -14,7 +14,9 @@ use cucumber::World;
 use bevy::prelude::*;
 
 use surviving_the_trip::core_logic::{
-    CoreLogic, GameOverTime, MovementTime, progressing::HungerBarTime, setting::*,
+    CoreLogic, GameOverTime, MovementTime,
+    progressing::{HungerBarTime, ObjectivesDirectory},
+    setting::*,
 };
 
 #[derive(Debug, World)]
@@ -60,6 +62,10 @@ impl MockGame {
             game_over_time,
             hunger_bar_time,
         ));
+
+        let objectives_file_path = PathBuf::from("tests/assets/objectives/");
+        let objectives_directory_in_test = ObjectivesDirectory::new(objectives_file_path);
+        app.insert_resource(objectives_directory_in_test);
 
         Self {
             app,
@@ -131,6 +137,17 @@ impl MockGame {
             .iter(self.app.world_mut())
             .next()
             .expect("get_with: Could not find component with dependency.")
+    }
+
+    pub fn get_all<T>(&mut self) -> Vec<&T>
+    where
+        T: Component,
+    {
+        self.app
+            .world_mut()
+            .query::<&T>()
+            .iter(self.app.world_mut())
+            .collect()
     }
 
     pub fn get_all_without<T, F>(&mut self) -> Vec<&T>

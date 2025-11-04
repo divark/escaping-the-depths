@@ -25,19 +25,19 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         Then the hunger bar should be at 0%.
         And all campers should be dead.
 
-    Scenario: Some player should have a prompt when attempting an objective.
-        Given a campsite map called 'campsite_1.tmx',
-        When the campsite map is rendered,
-        And "Player 1" attempts the 2nd objective,
-        Then the prompt should have the description "There seem to be fish swimming in there."
-        And the prompt should ask "What do you do?" with the options "Try spearfishing with a stick nearby, Look for dead fish along the river, Collect some water in your flask and continue elsewhere."
-
     Scenario: A list of objectives should show up depending on the loaded map.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
-        Then there should be two objectives.
-        And the 1st objective should be "Seek sticks."
-        And the 2nd objective should be "Find food."
+        Then there should be 2 objectives.
+        And the 1st objective should be called 'Seek sticks.'
+        And the 2nd objective should be called 'Find food.'
+
+    Scenario: Some player should have a prompt when attempting an objective.
+        Given a campsite map called 'campsite_1.tmx',
+        When the campsite map is rendered,
+        And 'Player 1' attempts the 2nd objective,
+        Then the prompt should have the description "There seem to be fish swimming in there."
+        And the prompt should ask "What do you do?" with the options "Try spearfishing with a stick nearby, Look for dead fish along the river, Collect some water in your flask and continue elsewhere."
 
     Scenario: An attempted objective shows up on the contributions list.
         Given a campsite map called 'campsite_1.tmx',

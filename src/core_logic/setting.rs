@@ -135,9 +135,21 @@ impl ChangeMap {
 pub struct LoadMap(Map);
 
 impl LoadMap {
-    pub fn new(change_map_event: ChangeMap) -> Self {
+    pub fn new(change_map_event: &ChangeMap) -> Self {
         let map_to_load = change_map_event.get_map().clone();
         Self(map_to_load)
+    }
+
+    /// Returns the filename without the extension for the loaded
+    /// map.
+    pub fn get_name(&self) -> String {
+        self.0
+            .source
+            .file_stem()
+            .expect("get_name: File does not have a name.")
+            .to_str()
+            .unwrap()
+            .to_string()
     }
 
     pub fn get_map(&self) -> &Map {
@@ -291,9 +303,30 @@ fn get_tile_sprite_from_tiled(
     })
 }
 
+/// Unloads the current map rendered before loading the new one.
+pub fn unload_current_map(
+    mut change_map_reader: MessageReader<ChangeMap>,
+    mut load_map_broadcaster: MessageWriter<LoadMap>,
+    rendered_tiles: Query<Entity, With<LogicalCoordinates>>,
+    map_size: Query<Entity, With<WorldTileDimensions>>,
+    mut commands: Commands,
+) {
+    for change_map_event in change_map_reader.read() {
+        for rendered_tile_entity in &rendered_tiles {
+            commands.entity(rendered_tile_entity).despawn();
+        }
+
+        if let Ok(map_size_entity) = map_size.single() {
+            commands.entity(map_size_entity).despawn();
+        }
+
+        load_map_broadcaster.write(LoadMap::new(change_map_event));
+    }
+}
+
 /// Converts a Tiled map into a series of Tile locations and their sprites.
 pub fn load_tiled_map(
-    mut load_tiled_map_reader: MessageReader<ChangeMap>,
+    mut load_tiled_map_reader: MessageReader<LoadMap>,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands: Commands,

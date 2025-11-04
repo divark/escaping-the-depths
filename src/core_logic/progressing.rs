@@ -1,8 +1,9 @@
-use std::time::Duration;
+use std::{fs::File, io::BufReader, path::PathBuf, time::Duration};
 
 use bevy::prelude::*;
+use serde_json::Value;
 
-use crate::core_logic::CampersState;
+use crate::core_logic::{CampersState, setting::LoadMap};
 
 /// Represents the hunger of all campers in the game.
 ///
@@ -127,4 +128,80 @@ pub fn determine_campers_state(
     }
 
     campers_state.set(CampersState::Dead);
+}
+
+/// Represents some Objective shown on the screen for campers/viewers
+/// to complete, such as 'Seek Food' or 'Find firewood.'
+#[derive(Component)]
+pub struct CamperObjective {
+    label: String,
+}
+
+impl CamperObjective {
+    pub fn new(label: String) -> Self {
+        Self { label }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.label.clone()
+    }
+}
+
+/// A resource holding the location of where to load objective files.
+#[derive(Resource)]
+pub struct ObjectivesDirectory(PathBuf);
+
+impl ObjectivesDirectory {
+    pub fn new(objectives_file_path: PathBuf) -> Self {
+        Self(objectives_file_path)
+    }
+
+    pub fn get_path(&self) -> &PathBuf {
+        &self.0
+    }
+}
+
+/// Returns a BufferedReader from the loaded Objectives file, or panics if
+/// there's a problem with the file.
+fn load_objective_file(
+    objectives_directory: &ObjectivesDirectory,
+    loaded_map_name: String,
+) -> BufReader<File> {
+    let objective_file_name = loaded_map_name + "_objectives.json";
+    let mut objective_file_path = PathBuf::from(objectives_directory.get_path());
+    objective_file_path.push(objective_file_name);
+
+    let loaded_objective_file =
+        File::open(objective_file_path).expect("load_objective_file: Could not load file.");
+    BufReader::new(loaded_objective_file)
+}
+
+/// Spawns a series of Objectives for the camper based on the currently loaded map.
+pub fn load_map_objectives(
+    mut loaded_map_reader: MessageReader<LoadMap>,
+    objectives_directory: Res<ObjectivesDirectory>,
+    mut commands: Commands,
+) {
+    if loaded_map_reader.is_empty() {
+        return;
+    }
+
+    let loaded_map = loaded_map_reader.read().next().unwrap();
+    let loaded_map_name = loaded_map.get_name();
+
+    let objectives_file = load_objective_file(&objectives_directory, loaded_map_name);
+    let objectives_json: Value = serde_json::from_reader(objectives_file)
+        .expect("load_map_objectives: Could not read from objectives file");
+    let loaded_objectives = objectives_json["objectives"]
+        .as_array()
+        .expect("load_map_objectives: Could not get array from objectives file.");
+
+    for objective_json_object in loaded_objectives {
+        let objective_name = objective_json_object["name"]
+            .as_str()
+            .expect("load_map_objectives: Could not get name field from objective item.")
+            .to_string();
+        let camper_objective = CamperObjective::new(objective_name);
+        commands.spawn(camper_objective);
+    }
 }

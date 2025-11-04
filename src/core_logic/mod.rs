@@ -11,9 +11,9 @@ use interacting::ViewerClick;
 use crate::core_logic::{
     progressing::{
         HungerBar, HungerBarTime, decrease_hunger_bar_over_time, determine_campers_state,
-        spawn_hunger_bar,
+        load_map_objectives, spawn_hunger_bar,
     },
-    setting::{ChangeMap, LoadMap, load_tiled_map},
+    setting::{ChangeMap, LoadMap, load_tiled_map, unload_current_map},
 };
 
 #[derive(States, Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
@@ -111,6 +111,7 @@ impl Plugin for CoreLogic {
             determine_campers_state.after(decrease_hunger_bar_over_time),
         );
 
-        app.add_systems(Update, load_tiled_map);
+        app.add_systems(Update, (unload_current_map, load_tiled_map));
+        app.add_systems(Update, load_map_objectives.after(load_tiled_map));
     }
 }

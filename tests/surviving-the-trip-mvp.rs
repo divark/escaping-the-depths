@@ -7,7 +7,7 @@ use mock_game::*;
 
 use surviving_the_trip::core_logic::{
     CampersState,
-    progressing::HungerBar,
+    progressing::{CamperObjective, HungerBar},
     setting::{ChangeMap, WorldTileDimensions},
 };
 
@@ -50,6 +50,9 @@ fn load_campsite_map(game: &mut MockGame) {
     let tiled_map_path = game.tiled_map_path.clone();
     let spawn_map_request = ChangeMap::new(tiled_map_path);
     game.broadcast(spawn_map_request);
+    // One tick to unload the current map,
+    game.tick();
+    // And another tick to load the new map.
     game.tick();
 }
 
@@ -90,6 +93,26 @@ fn verify_camper_state(game: &mut MockGame, expected_campers_state_string: Strin
     let expected_campers_state = parse_campers_state(expected_campers_state_string);
     let actual_campers_state = *game.get_game_state::<CampersState>().get();
     assert_eq!(expected_campers_state, actual_campers_state);
+}
+
+#[then(regex = r"there should be (\d+) objectives.")]
+fn verify_num_objectives(game: &mut MockGame, expected_num_objectives: usize) {
+    let actual_num_objectives = game.get_all::<CamperObjective>().len();
+    assert_eq!(expected_num_objectives, actual_num_objectives);
+}
+
+#[then(regex = r"the (\d+).+ objective should be called '(.+)'")]
+fn verify_objective_name(
+    game: &mut MockGame,
+    objective_num: usize,
+    expected_objective_name: String,
+) {
+    let all_objectives = game.get_all::<CamperObjective>();
+    let objective_idx = objective_num - 1;
+    let selected_objective = all_objectives[objective_idx];
+
+    let actual_objective_name = selected_objective.get_name();
+    assert_eq!(expected_objective_name, actual_objective_name);
 }
 
 fn main() {
