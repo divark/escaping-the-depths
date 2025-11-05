@@ -7,7 +7,7 @@ use mock_game::*;
 
 use surviving_the_trip::core_logic::{
     CampersState,
-    progressing::{CamperObjective, HungerBar},
+    progressing::{CamperObjective, HungerBar, Landmark},
     setting::{ChangeMap, WorldTileDimensions},
 };
 
@@ -101,7 +101,7 @@ fn verify_num_objectives(game: &mut MockGame, expected_num_objectives: usize) {
     assert_eq!(expected_num_objectives, actual_num_objectives);
 }
 
-#[then(regex = r"the (\d+).+ objective should be called '(.+)'")]
+#[then(regex = r"the (\d+)[a-z]+ objective should be called '(.+)'")]
 fn verify_objective_name(
     game: &mut MockGame,
     objective_num: usize,
@@ -113,6 +113,125 @@ fn verify_objective_name(
 
     let actual_objective_name = selected_objective.get_name();
     assert_eq!(expected_objective_name, actual_objective_name);
+}
+
+#[then(regex = r"the name of the (\d+)[a-z]+ landmark should be '(.+)'")]
+fn verify_landmark_name(game: &mut MockGame, landmark_num: usize, expected_landmark_name: String) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+
+    let actual_landmark_name = selected_landmark.get_name();
+    assert_eq!(expected_landmark_name, actual_landmark_name);
+}
+
+#[then(regex = r"the description of the (\d+)[a-z]+ landmark should be '(.+)'")]
+fn verify_landmark_description(
+    game: &mut MockGame,
+    landmark_num: usize,
+    expected_landmark_description: String,
+) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+
+    let actual_landmark_description = selected_landmark.get_description();
+    assert_eq!(expected_landmark_description, actual_landmark_description);
+}
+
+#[then(
+    regex = r"the objective of the (\d+)[a-z]+ scenario from the (\d+)[a-z]+ landmark should be '(.+)'"
+)]
+fn verify_landmark_choice_type(
+    game: &mut MockGame,
+    scenario_num: usize,
+    landmark_num: usize,
+    expected_landmark_type: String,
+) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+    let selected_scenario = selected_landmark.get_scenario(scenario_num - 1);
+
+    let actual_landmark_type = selected_scenario.get_type();
+    assert_eq!(expected_landmark_type, actual_landmark_type);
+}
+
+#[then(
+    regex = r"the description of the (\d+)[a-z]+ scenario from the (\d+)[a-z]+ landmark should be '(.+)'"
+)]
+fn verify_landmark_scenario_description(
+    game: &mut MockGame,
+    scenario_num: usize,
+    landmark_num: usize,
+    expected_landmark_scenario_description: String,
+) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+    let selected_scenario = selected_landmark.get_scenario(scenario_num - 1);
+
+    let actual_landmark_scenario_description = selected_scenario.get_description();
+    assert_eq!(
+        expected_landmark_scenario_description,
+        actual_landmark_scenario_description
+    );
+}
+
+#[then(
+    regex = r"the description of the (\d+)[a-z]+ choice from the (\d+)[a-z]+ scenario in the (\d+)[a-z]+ landmark should be '(.+)'"
+)]
+fn verify_landmark_choice_description(
+    game: &mut MockGame,
+    choice_num: usize,
+    scenario_num: usize,
+    landmark_num: usize,
+    expected_landmark_choice_description: String,
+) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+    let selected_scenario = selected_landmark.get_scenario(scenario_num - 1);
+    let selected_choice = selected_scenario.get_choice(choice_num - 1);
+
+    let actual_landmark_choice_description = selected_choice.get_description();
+    assert_eq!(
+        expected_landmark_choice_description,
+        actual_landmark_choice_description
+    );
+}
+
+#[then(
+    regex = r"the success result of the (\d+)[a-z]+ choice from the (\d+)[a-z]+ scenario in the (\d+)[a-z]+ landmark should be '(.+)'"
+)]
+fn verify_landmark_choice_success_result(
+    game: &mut MockGame,
+    choice_num: usize,
+    scenario_num: usize,
+    landmark_num: usize,
+    expected_success_result: String,
+) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+    let selected_scenario = selected_landmark.get_scenario(scenario_num - 1);
+    let selected_choice = selected_scenario.get_choice(choice_num - 1);
+
+    let actual_success_result = selected_choice.get_success_result();
+    assert_eq!(expected_success_result, actual_success_result);
+}
+
+#[then(
+    regex = r"the failure result of the (\d+)[a-z]+ choice from the (\d+)[a-z]+ scenario in the (\d+)[a-z]+ landmark should be '(.+)'"
+)]
+fn verify_landmark_choice_failure_result(
+    game: &mut MockGame,
+    choice_num: usize,
+    scenario_num: usize,
+    landmark_num: usize,
+    expected_failure_result: String,
+) {
+    let all_landmarks = game.get_all::<Landmark>();
+    let selected_landmark = all_landmarks[landmark_num - 1];
+    let selected_scenario = selected_landmark.get_scenario(scenario_num - 1);
+    let selected_choice = selected_scenario.get_choice(choice_num - 1);
+
+    let actual_failure_result = selected_choice.get_failure_result();
+    assert_eq!(expected_failure_result, actual_failure_result);
 }
 
 fn main() {

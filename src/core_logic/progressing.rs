@@ -176,6 +176,210 @@ fn load_objective_file(
     BufReader::new(loaded_objective_file)
 }
 
+/// Spawns into the game the list of objectives from the provided objectives json file
+/// already loaded.
+fn spawn_map_objectives(objectives_json: &Value, commands: &mut Commands) {
+    let objective_names: Vec<String> = objectives_json["objectives"]
+        .as_array()
+        .expect("spawn_map_objectives: Could not find objectives array in json.")
+        .iter()
+        .map(|objective_json_value| objective_json_value.as_str().unwrap().to_string())
+        .collect();
+
+    for objective_name in objective_names {
+        let parsed_objective = CamperObjective::new(objective_name);
+        commands.spawn(parsed_objective);
+    }
+}
+
+/// Represents some setting with a series of scenarios that can take place there.
+#[derive(Component)]
+pub struct Landmark {
+    name: String,
+    description: String,
+    scenarios: Vec<LandmarkScenario>,
+}
+
+impl Landmark {
+    pub fn new(name: String, description: String) -> Self {
+        Self {
+            name,
+            description,
+            scenarios: Vec::new(),
+        }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn get_description(&self) -> String {
+        self.description.clone()
+    }
+
+    pub fn add_scenario(&mut self, scenario: LandmarkScenario) {
+        self.scenarios.push(scenario);
+    }
+
+    pub fn get_scenario(&self, scenario_num: usize) -> &LandmarkScenario {
+        &self.scenarios[scenario_num]
+    }
+}
+
+/// Represents some situation with a series of choices to do.
+pub struct LandmarkScenario {
+    objective_type: String,
+    description: String,
+
+    choices: Vec<ScenarioChoice>,
+}
+
+impl LandmarkScenario {
+    pub fn new(objective_type: String, description: String) -> Self {
+        Self {
+            objective_type,
+            description,
+            choices: Vec::new(),
+        }
+    }
+
+    pub fn get_type(&self) -> String {
+        self.objective_type.clone()
+    }
+
+    pub fn get_description(&self) -> String {
+        self.description.clone()
+    }
+
+    pub fn add_choice(&mut self, choice: ScenarioChoice) {
+        self.choices.push(choice);
+    }
+
+    pub fn get_choice(&self, choice_num: usize) -> &ScenarioChoice {
+        &self.choices[choice_num]
+    }
+}
+
+/// Represents an action that a camper/viewer can do that yields some result.
+pub struct ScenarioChoice {
+    description: String,
+
+    success_description: String,
+    failure_description: String,
+}
+
+impl ScenarioChoice {
+    pub fn new(description: String) -> Self {
+        Self {
+            description,
+            success_description: String::new(),
+            failure_description: String::new(),
+        }
+    }
+
+    pub fn get_description(&self) -> String {
+        self.description.clone()
+    }
+
+    pub fn set_success(&mut self, success_description: String) {
+        self.success_description = success_description;
+    }
+
+    pub fn get_success_result(&self) -> String {
+        self.success_description.clone()
+    }
+
+    pub fn set_failure(&mut self, failure_description: String) {
+        self.failure_description = failure_description;
+    }
+
+    pub fn get_failure_result(&self) -> String {
+        self.failure_description.clone()
+    }
+}
+
+/// Returns a Scenario Choice parsed from a JSON object.
+fn parse_choice(scenario_choice_entry: &Value) -> ScenarioChoice {
+    let choice_description = scenario_choice_entry["choice_description"]
+        .as_str()
+        .expect(
+            "parse_choice: Could not find choice_description field for the scenario in the json.",
+        )
+        .to_string();
+    let mut parsed_objective_choice = ScenarioChoice::new(choice_description);
+
+    let success_description = scenario_choice_entry["results"]["success"]
+        .as_str()
+        .expect("parse_choice: Could not find success field in json.")
+        .to_string();
+    parsed_objective_choice.set_success(success_description);
+    let failure_description = scenario_choice_entry["results"]["failure"]
+        .as_str()
+        .expect("parse_choice: Could not find failure field in json.")
+        .to_string();
+    parsed_objective_choice.set_failure(failure_description);
+
+    parsed_objective_choice
+}
+
+/// Returns a Landmark Scenario parsed from a JSON object.
+fn parse_scenario(scenario_entry: &Value) -> LandmarkScenario {
+    let objective_type = scenario_entry["objective"]
+        .as_str()
+        .expect("parse_scenario: Could not find objective field for scenario in json.")
+        .to_string();
+    let scenario_description = scenario_entry["scenario_description"]
+        .as_str()
+        .expect("parse_scenario: Could not find description field for scenario in json.")
+        .to_string();
+    let mut parsed_landmark_scenario = LandmarkScenario::new(objective_type, scenario_description);
+
+    let choice_entries = scenario_entry["choices"]
+        .as_array()
+        .expect("parse_scenario: Could not find choices in objectives json.");
+    for choice_entry in choice_entries {
+        let parsed_choice = parse_choice(choice_entry);
+        parsed_landmark_scenario.add_choice(parsed_choice);
+    }
+
+    parsed_landmark_scenario
+}
+
+/// Returns a Landmark parsed from a JSON object.
+fn parse_landmark(landmark_json_entry: &Value) -> Landmark {
+    let landmark_name = landmark_json_entry["name"]
+        .as_str()
+        .expect("parse_landmark: Could not find name for landmark in json.")
+        .to_string();
+    let landmark_description = landmark_json_entry["landmark_description"]
+        .as_str()
+        .expect("parse_landmark: Could not find description for landmark in json.")
+        .to_string();
+    let mut parsed_landmark = Landmark::new(landmark_name, landmark_description);
+
+    let scenario_entries = landmark_json_entry["scenarios"]
+        .as_array()
+        .expect("parse_landmark: Could not find scenarios in objectives json.");
+    for scenario_entry in scenario_entries {
+        let parsed_scenario = parse_scenario(scenario_entry);
+        parsed_landmark.add_scenario(parsed_scenario);
+    }
+
+    parsed_landmark
+}
+
+/// Spawns into the game the list of landmarks from the provided objectives json file
+/// already loaded.
+fn spawn_landmarks(objectives_json: &Value, commands: &mut Commands) {
+    let landmark_entries = objectives_json["landmarks"]
+        .as_array()
+        .expect("spawn_landmarks: Could not find list of landmarks in objectives json.");
+    for landmark_entry in landmark_entries {
+        let parsed_landmark = parse_landmark(landmark_entry);
+        commands.spawn(parsed_landmark);
+    }
+}
+
 /// Spawns a series of Objectives for the camper based on the currently loaded map.
 pub fn load_map_objectives(
     mut loaded_map_reader: MessageReader<LoadMap>,
@@ -192,16 +396,7 @@ pub fn load_map_objectives(
     let objectives_file = load_objective_file(&objectives_directory, loaded_map_name);
     let objectives_json: Value = serde_json::from_reader(objectives_file)
         .expect("load_map_objectives: Could not read from objectives file");
-    let loaded_objectives = objectives_json["objectives"]
-        .as_array()
-        .expect("load_map_objectives: Could not get array from objectives file.");
 
-    for objective_json_object in loaded_objectives {
-        let objective_name = objective_json_object["name"]
-            .as_str()
-            .expect("load_map_objectives: Could not get name field from objective item.")
-            .to_string();
-        let camper_objective = CamperObjective::new(objective_name);
-        commands.spawn(camper_objective);
-    }
+    spawn_map_objectives(&objectives_json, &mut commands);
+    spawn_landmarks(&objectives_json, &mut commands);
 }

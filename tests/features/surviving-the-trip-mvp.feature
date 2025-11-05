@@ -32,12 +32,19 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         And the 1st objective should be called 'Seek sticks.'
         And the 2nd objective should be called 'Find food.'
 
-    Scenario: Some player should have a prompt when attempting an objective.
+    Scenario: A landmark should have a description and options.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
-        And 'Player 1' attempts the 2nd objective,
-        Then the prompt should have the description "There seem to be fish swimming in there."
-        And the prompt should ask "What do you do?" with the options "Try spearfishing with a stick nearby, Look for dead fish along the river, Collect some water in your flask and continue elsewhere."
+
+        Then the name of the 1st landmark should be 'River'.
+        And the description of the 1st landmark should be 'You stumble upon a river with water violently moving to the east.'
+
+        And the objective of the 1st scenario from the 1st landmark should be 'Find food.'
+        And the description of the 1st scenario from the 1st landmark should be 'There seem to be fish swimming in there. What do you do?'
+
+        And the description of the 1st choice from the 1st scenario in the 1st landmark should be 'Try spearfishing with a stick nearby.'
+        And the success result of the 1st choice from the 1st scenario in the 1st landmark should be 'You manage to impale a pretty big fish. Nice!'
+        And the failure result of the 1st choice from the 1st scenario in the 1st landmark should be 'You try and try, but these fish keep avoiding your spear. Some water splashes you in the groin, and you feel quite ashamed.'
 
     Scenario: An attempted objective shows up on the contributions list.
         Given a campsite map called 'campsite_1.tmx',

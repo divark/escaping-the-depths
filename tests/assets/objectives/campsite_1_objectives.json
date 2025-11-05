@@ -1,10 +1,24 @@
 {
-  "objectives": [
+  "objectives": ["Seek sticks.", "Find food."],
+  "landmarks": [
     {
-      "name": "Seek sticks."
-    },
-    {
-      "name": "Find food."
+      "name": "River",
+      "landmark_description": "You stumble upon a river with water violently moving to the east.",
+      "scenarios": [
+        {
+          "objective": "Find food.",
+          "scenario_description": "There seem to be fish swimming in there. What do you do?",
+          "choices": [
+            {
+              "choice_description": "Try spearfishing with a stick nearby.",
+              "results": {
+                "success": "You manage to impale a pretty big fish. Nice!",
+                "failure": "You try and try, but these fish keep avoiding your spear. Some water splashes you in the groin, and you feel quite ashamed."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
