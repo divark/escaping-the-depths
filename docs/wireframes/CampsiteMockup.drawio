@@ -1,32 +1,44 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.1.1 Chrome/132.0.6834.210 Electron/34.3.3 Safari/537.36" version="26.1.1">
   <diagram name="Page-1" id="xewvpsqnBfnYhgI2zR8S">
-    <mxGraphModel dx="1759" dy="987" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1222" dy="1845" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-1" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry width="1280" height="720" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-2" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-2" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry y="480" width="1280" height="240" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-3" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;What would you like to do?&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-3" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;What would you like to do?&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry y="480" width="1280" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-4" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-4" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry y="540" width="640" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-5" value="" style="shape=mxgraph.signs.food.cans_and_bottles;html=1;pointerEvents=1;fillColor=#000000;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-5" value="" style="shape=mxgraph.signs.food.cans_and_bottles;html=1;pointerEvents=1;fillColor=#000000;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
           <mxGeometry x="60" y="581" width="74" height="98" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-6" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;Find Food&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-6" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;Find Food&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="220" y="580" width="290" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-7" value="" style="shape=switch;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-7" value="" style="shape=switch;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="680" y="600" width="60" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-8" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;Seek firewood&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="MQW2FVd8GpxbIlzt7XtZ-8" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;Seek firewood&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="850" y="597.5" width="260" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="VKGLQSGVMErf-3HTcMIj-1" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Objectives&lt;/h1&gt;&lt;p&gt;Food [ ] [ ] [ ]&lt;/p&gt;&lt;p&gt;Sticks [ ] [ ]&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="8.5" y="10" width="177" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="VKGLQSGVMErf-3HTcMIj-3" value="" style="html=1;shadow=0;dashed=0;shape=mxgraph.bootstrap.rrect;rSize=5;fillColor=#E9ECEF;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="240" y="60" width="800" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="VKGLQSGVMErf-3HTcMIj-4" value="" style="html=1;shadow=0;dashed=0;shape=mxgraph.bootstrap.leftButton;rSize=5;fillColor=#0085FC;strokeColor=none;resizeHeight=1;" vertex="1" parent="VKGLQSGVMErf-3HTcMIj-3">
+          <mxGeometry width="250" height="20" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VKGLQSGVMErf-3HTcMIj-5" value="&lt;font style=&quot;font-size: 36px;&quot;&gt;Health&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="565" y="10" width="150" height="50" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

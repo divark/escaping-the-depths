@@ -2,6 +2,28 @@ use bevy::prelude::*;
 
 use super::setting::{LogicalCoordinates, TileSize};
 
+pub enum ObjectiveResult {
+    Fail,
+    Success,
+}
+
+#[derive(Message)]
+pub struct ObjectiveAttempt {
+    player_name: String,
+    objective_num: usize,
+    attempt_status: ObjectiveResult,
+}
+
+impl ObjectiveAttempt {
+    pub fn new(player_name: String, objective_num: usize, attempt_status: ObjectiveResult) -> Self {
+        Self {
+            player_name,
+            objective_num,
+            attempt_status,
+        }
+    }
+}
+
 #[derive(Message)]
 pub struct ViewerClick {
     uv_x: f32,

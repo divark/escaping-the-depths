@@ -7,6 +7,7 @@ use mock_game::*;
 
 use surviving_the_trip::core_logic::{
     CampersState,
+    interacting::{ObjectiveAttempt, ObjectiveResult},
     progressing::{CamperObjective, HungerBar, Landmark},
     setting::{ChangeMap, WorldTileDimensions},
 };
@@ -61,6 +62,13 @@ fn tick_per_second(game: &mut MockGame, seconds_to_pass: usize) {
     for _i in 0..seconds_to_pass {
         game.tick();
     }
+}
+
+#[when(regex = r"'(.+)' fails the (\d+)[a-z]+ objective.")]
+fn simulate_player_failing(game: &mut MockGame, player_name: String, objective_num: usize) {
+    let objective_attempt =
+        ObjectiveAttempt::new(player_name, objective_num, ObjectiveResult::Fail);
+    game.broadcast(objective_attempt);
 }
 
 #[then(regex = r"the size of the map should be (\d+) by (\d+) by (\d+).")]

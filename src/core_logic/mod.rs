@@ -9,6 +9,7 @@ use bevy::prelude::*;
 use interacting::ViewerClick;
 
 use crate::core_logic::{
+    interacting::ObjectiveAttempt,
     progressing::{
         HungerBar, HungerBarTime, decrease_hunger_bar_over_time, determine_campers_state,
         load_map_objectives, spawn_hunger_bar,
@@ -94,6 +95,7 @@ impl CoreLogic {
 
 impl Plugin for CoreLogic {
     fn build(&self, app: &mut App) {
+        app.add_message::<ObjectiveAttempt>();
         app.add_message::<ViewerClick>();
         app.add_message::<LoadMap>();
         app.add_message::<ChangeMap>();
