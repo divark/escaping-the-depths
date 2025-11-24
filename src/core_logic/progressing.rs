@@ -3,7 +3,11 @@ use std::{fs::File, io::BufReader, path::PathBuf, time::Duration};
 use bevy::prelude::*;
 use serde_json::Value;
 
-use crate::core_logic::{CampersState, setting::LoadMap};
+use crate::core_logic::{
+    CampersState,
+    interacting::{ObjectiveAttempt, ObjectiveResult},
+    setting::LoadMap,
+};
 
 /// Represents the hunger of all campers in the game.
 ///
@@ -95,6 +99,72 @@ impl HungerBarTimer {
     /// desired duration.
     pub fn finished(&self) -> bool {
         self.0.is_finished()
+    }
+}
+
+/// Represents a list of successful actions done by campers.
+#[derive(Component, Debug, Default)]
+pub struct ContributionsList {
+    contributions: Vec<String>,
+}
+
+/// Converts an objective name into an achieved message.
+/// Example: 'Find food.' -> 'found food!'
+fn get_achieved_objective_msg(objective_name: &str) -> String {
+    let mut objective_message = objective_name.to_lowercase();
+    // 1. Remove the '.' at the end.
+    objective_message
+        .pop()
+        .expect("get_achieved_objective_msg: An empty string was given.");
+
+    // 2. Past tense the verb in the sentence.
+    // Example: 'find' -> 'found'
+    let mut objective_split_on_whitespace = objective_message.split_whitespace();
+    let objective_action = objective_split_on_whitespace
+        .next()
+        .expect("get_achieved_objective_msg: Could not find action.");
+    let past_tense_action = match objective_action {
+        "find" => "found",
+        "seek" => "found",
+        _ => panic!(
+            "get_achieved_objective_msg: Unrecognized action given: {}",
+            objective_action
+        ),
+    };
+
+    let objective_completed = objective_split_on_whitespace
+        .next()
+        .expect("get_achieved_objective_msg: Could not get what was achieved.");
+
+    format!("{} {}!", past_tense_action, objective_completed)
+}
+
+impl ContributionsList {
+    pub fn contains(&self, contribution: &String) -> bool {
+        self.contributions.contains(contribution)
+    }
+
+    /// Converts an objective attempt into a recorded contribution.
+    pub fn record(&mut self, objective_attempt: &ObjectiveAttempt) {
+        let camper_name = objective_attempt.get_camper_name();
+        let camper_objective_achieved =
+            get_achieved_objective_msg(objective_attempt.get_objective());
+        let contribution = format!("{} {}", camper_name, camper_objective_achieved);
+        self.contributions.push(contribution);
+    }
+}
+
+/// Records all successful attempts of an objective from the campers.
+pub fn record_camper_contribution(
+    mut objective_attempts: MessageReader<ObjectiveAttempt>,
+    mut contributions_list: Single<&mut ContributionsList>,
+) {
+    for objective_attempt in objective_attempts.read() {
+        if objective_attempt.get_status() == ObjectiveResult::Fail {
+            continue;
+        }
+
+        contributions_list.record(objective_attempt);
     }
 }
 
@@ -190,6 +260,8 @@ fn spawn_map_objectives(objectives_json: &Value, commands: &mut Commands) {
         let parsed_objective = CamperObjective::new(objective_name);
         commands.spawn(parsed_objective);
     }
+
+    commands.spawn(ContributionsList::default());
 }
 
 /// Represents some setting with a series of scenarios that can take place there.

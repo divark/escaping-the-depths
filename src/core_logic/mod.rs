@@ -12,7 +12,7 @@ use crate::core_logic::{
     interacting::ObjectiveAttempt,
     progressing::{
         HungerBar, HungerBarTime, decrease_hunger_bar_over_time, determine_campers_state,
-        load_map_objectives, spawn_hunger_bar,
+        load_map_objectives, record_camper_contribution, spawn_hunger_bar,
     },
     setting::{ChangeMap, LoadMap, load_tiled_map, unload_current_map},
 };
@@ -115,5 +115,7 @@ impl Plugin for CoreLogic {
 
         app.add_systems(Update, (unload_current_map, load_tiled_map));
         app.add_systems(Update, load_map_objectives.after(load_tiled_map));
+
+        app.add_systems(Update, record_camper_contribution);
     }
 }

@@ -49,14 +49,14 @@ Feature: All of the basic features are implemented for Surviving the Trip.
     Scenario: A failed objective should not show up on the contributions list.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
-        And 'Player 1' fails the 1st objective,
-        Then "Player 1 found food!" should not be in the contributions list.
+        And 'Player 1' fails the 2nd scenario's objective,
+        Then 'Player 1 found food!' should not be in the contributions list.
 
     Scenario: A completed objective shows up on the contributions list.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
-        And 'Player 1' succeeds in the 1st objective,
-        Then "Player 1 found food!" should be in the contributions list.
+        And 'Player 1' succeeds the 2nd scenario's objective,
+        Then 'Player 1 found food!' should be in the contributions list.
 
     Scenario: A camper heads into the meadows when a player attempts an objective.
         Given a campsite map called 'campsite_1.tmx',
@@ -68,14 +68,14 @@ Feature: All of the basic features are implemented for Surviving the Trip.
     Scenario: A camper heads back from the meadows when completing an objective.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
-        And 'Player 1' succeeds in the 1st objective,
+        And 'Player 1' succeeds the 1st scenario's objective,
         Then the camper for 'Player 1' should appear outside of the meadows.
         And the camper for 'Player 1' should be heading back to the bus.
 
     Scenario: A camper heads back from the meadows when failing an objective.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
-        And 'Player 1' fails in the 1st objective,
+        And 'Player 1' fails the 1st scenario's objective,
         Then the camper for 'Player 1' should appear outside of the meadows.
         And the camper for 'Player 1' should be heading back to the bus.
 

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use super::setting::{LogicalCoordinates, TileSize};
 
+#[derive(Clone, Copy, PartialEq)]
 pub enum ObjectiveResult {
     Fail,
     Success,
@@ -10,17 +11,33 @@ pub enum ObjectiveResult {
 #[derive(Message)]
 pub struct ObjectiveAttempt {
     player_name: String,
-    objective_num: usize,
+    objective_completed: String,
     attempt_status: ObjectiveResult,
 }
 
 impl ObjectiveAttempt {
-    pub fn new(player_name: String, objective_num: usize, attempt_status: ObjectiveResult) -> Self {
+    pub fn new(
+        player_name: String,
+        objective_completed: String,
+        attempt_status: ObjectiveResult,
+    ) -> Self {
         Self {
             player_name,
-            objective_num,
+            objective_completed,
             attempt_status,
         }
+    }
+
+    pub fn get_camper_name(&self) -> &String {
+        &self.player_name
+    }
+
+    pub fn get_objective(&self) -> &String {
+        &self.objective_completed
+    }
+
+    pub fn get_status(&self) -> ObjectiveResult {
+        self.attempt_status
     }
 }
 

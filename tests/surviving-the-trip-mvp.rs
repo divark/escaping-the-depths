@@ -8,7 +8,7 @@ use mock_game::*;
 use surviving_the_trip::core_logic::{
     CampersState,
     interacting::{ObjectiveAttempt, ObjectiveResult},
-    progressing::{CamperObjective, HungerBar, Landmark},
+    progressing::{CamperObjective, ContributionsList, HungerBar, Landmark},
     setting::{ChangeMap, WorldTileDimensions},
 };
 
@@ -64,10 +64,23 @@ fn tick_per_second(game: &mut MockGame, seconds_to_pass: usize) {
     }
 }
 
-#[when(regex = r"'(.+)' fails the (\d+)[a-z]+ objective.")]
-fn simulate_player_failing(game: &mut MockGame, player_name: String, objective_num: usize) {
+#[when(regex = r"'(.+)' fails the (\d+)[a-z]+ scenario's objective.")]
+fn simulate_player_failing(game: &mut MockGame, player_name: String, scenario_num: usize) {
+    let scenario_objective = game.get_all::<CamperObjective>()[scenario_num - 1];
+    let objective_name = scenario_objective.get_name();
+
     let objective_attempt =
-        ObjectiveAttempt::new(player_name, objective_num, ObjectiveResult::Fail);
+        ObjectiveAttempt::new(player_name, objective_name, ObjectiveResult::Fail);
+    game.broadcast(objective_attempt);
+}
+
+#[when(regex = r"'(.+)' succeeds the (\d+)[a-z]+ scenario's objective.")]
+fn simulate_player_succeeding(game: &mut MockGame, player_name: String, scenario_num: usize) {
+    let scenario_objective = game.get_all::<CamperObjective>()[scenario_num - 1];
+    let objective_name = scenario_objective.get_name();
+
+    let objective_attempt =
+        ObjectiveAttempt::new(player_name, objective_name, ObjectiveResult::Success);
     game.broadcast(objective_attempt);
 }
 
@@ -240,6 +253,24 @@ fn verify_landmark_choice_failure_result(
 
     let actual_failure_result = selected_choice.get_failure_result();
     assert_eq!(expected_failure_result, actual_failure_result);
+}
+
+#[then(regex = r"'(.+)' should not be in the contributions list.")]
+fn verify_contribution_does_not_exist(game: &mut MockGame, expected_contribution: String) {
+    let contributions_list = game.get_one::<ContributionsList>();
+    let contribution_not_recorded = !contributions_list.contains(&expected_contribution);
+    assert!(contribution_not_recorded);
+}
+
+#[then(regex = r"'(.+)' should be in the contributions list.")]
+fn verify_contribution_exists(game: &mut MockGame, expected_contribution: String) {
+    let contributions_list = game.get_one::<ContributionsList>();
+    let contribution_recorded = contributions_list.contains(&expected_contribution);
+    assert!(
+        contribution_recorded,
+        "Contribution not found. Contributions contains {:?}",
+        contributions_list
+    );
 }
 
 fn main() {
