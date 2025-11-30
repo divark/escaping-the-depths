@@ -183,10 +183,8 @@ impl<'a> BevySpriteLoader<'a> {
         let y = tile_logical_coordinates.get_y();
         let z = tile_logical_coordinates.get_z();
         let tile = tiled_map
-            .get_layer(z)
-            .expect("load_sprite_from_tiled: Layer does not exist.")
-            .as_tile_layer()
-            .expect("load_sprite_from_tiled: Layer is not a Tile layer")
+            .get_layer(z)?
+            .as_tile_layer()?
             .get_tile(x as i32, y as i32)?;
 
         let tile_tileset_path = tile.get_tileset().source.clone();
@@ -198,23 +196,17 @@ impl<'a> BevySpriteLoader<'a> {
         &mut self,
         tiled_map: &Map,
         tile_logical_coordinates: &LogicalCoordinates,
-    ) -> TextureAtlas {
+    ) -> Option<TextureAtlas> {
         let x = tile_logical_coordinates.get_x();
         let y = tile_logical_coordinates.get_y();
         let z = tile_logical_coordinates.get_z();
         let tile = tiled_map
-            .get_layer(z)
-            .expect("get_tile_sprite_from_tiled: Layer does not exist.")
-            .as_tile_layer()
-            .expect("get_tile_sprite_from_tiled: Layer is not a Tile layer")
-            .get_tile(x as i32, y as i32)
-            .expect("get_tile_sprite_from_tiled: Tile does not exist on the Tile layer.");
+            .get_layer(z)?
+            .as_tile_layer()?
+            .get_tile(x as i32, y as i32)?;
         let tile_sprite_idx = tile.tileset_index();
         let tile_tilesheet = tile.get_tileset();
-        let tile_tilesheet_image = tile_tilesheet
-            .image
-            .as_ref()
-            .expect("load_tilesheet_atlas: Could not find tilesheet image.");
+        let tile_tilesheet_image = tile_tilesheet.image.as_ref()?;
         let tile_width = tile_tilesheet.tile_width;
         let tile_height = tile_tilesheet.tile_height;
 
@@ -229,10 +221,10 @@ impl<'a> BevySpriteLoader<'a> {
         );
         let loaded_tile_tilesheet_atlas = self.texture_atlas_layouts.add(tilesheet_atlas_layout);
 
-        TextureAtlas {
+        Some(TextureAtlas {
             layout: loaded_tile_tilesheet_atlas,
             index: tile_sprite_idx,
-        }
+        })
     }
 
     /// Returns a Sprite for the given Tile in the Tiled map if it exists, or None otherwise.
@@ -243,7 +235,8 @@ impl<'a> BevySpriteLoader<'a> {
     ) -> Option<Sprite> {
         let tile_tileset_image =
             self.load_sprite_from_tiled(tiled_map, tile_logical_coordinates)?;
-        let tile_tilesheet_atlas = self.load_tilesheet_atlas(tiled_map, tile_logical_coordinates);
+        let tile_tilesheet_atlas =
+            self.load_tilesheet_atlas(tiled_map, tile_logical_coordinates)?;
 
         Some(Sprite::from_atlas_image(
             tile_tileset_image,
@@ -337,6 +330,7 @@ pub fn load_tiled_map(
         .map(|load_map_event| load_map_event.get_map())
     {
         let mut tile_bundles = Vec::new();
+        // let mut locations_of_interest: Vec<MapLocationBundle> = Vec::new();
 
         let map_depth = loaded_tile_map.layers().len();
         let map_width = loaded_tile_map.width as usize;

@@ -2,24 +2,39 @@ use bevy::prelude::*;
 
 use super::setting::{LogicalCoordinates, TileSize};
 
+#[derive(Message)]
+pub struct ObjectiveAttempt {
+    player_name: String,
+    objective_attempted: String,
+}
+
+impl ObjectiveAttempt {
+    pub fn new(player_name: String, objective_attempted: String) -> Self {
+        Self {
+            player_name,
+            objective_attempted,
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
-pub enum ObjectiveResult {
+pub enum ScenarioResult {
     Fail,
     Success,
 }
 
 #[derive(Message)]
-pub struct ObjectiveAttempt {
+pub struct ScenarioAttempt {
     player_name: String,
     objective_completed: String,
-    attempt_status: ObjectiveResult,
+    attempt_status: ScenarioResult,
 }
 
-impl ObjectiveAttempt {
+impl ScenarioAttempt {
     pub fn new(
         player_name: String,
         objective_completed: String,
-        attempt_status: ObjectiveResult,
+        attempt_status: ScenarioResult,
     ) -> Self {
         Self {
             player_name,
@@ -36,7 +51,7 @@ impl ObjectiveAttempt {
         &self.objective_completed
     }
 
-    pub fn get_status(&self) -> ObjectiveResult {
+    pub fn get_status(&self) -> ScenarioResult {
         self.attempt_status
     }
 }

@@ -7,7 +7,7 @@ use mock_game::*;
 
 use surviving_the_trip::core_logic::{
     CampersState,
-    interacting::{ObjectiveAttempt, ObjectiveResult},
+    interacting::{ObjectiveAttempt, ScenarioAttempt, ScenarioResult},
     progressing::{CamperObjective, ContributionsList, HungerBar, Landmark},
     setting::{ChangeMap, WorldTileDimensions},
 };
@@ -64,23 +64,31 @@ fn tick_per_second(game: &mut MockGame, seconds_to_pass: usize) {
     }
 }
 
-#[when(regex = r"'(.+)' fails the (\d+)[a-z]+ scenario's objective.")]
+#[when(regex = r"'(.+)' fails the (\d+)[a-z]+ scenario's objective,")]
 fn simulate_player_failing(game: &mut MockGame, player_name: String, scenario_num: usize) {
     let scenario_objective = game.get_all::<CamperObjective>()[scenario_num - 1];
     let objective_name = scenario_objective.get_name();
 
-    let objective_attempt =
-        ObjectiveAttempt::new(player_name, objective_name, ObjectiveResult::Fail);
-    game.broadcast(objective_attempt);
+    let scenario_attempt = ScenarioAttempt::new(player_name, objective_name, ScenarioResult::Fail);
+    game.broadcast(scenario_attempt);
 }
 
-#[when(regex = r"'(.+)' succeeds the (\d+)[a-z]+ scenario's objective.")]
+#[when(regex = r"'(.+)' succeeds the (\d+)[a-z]+ scenario's objective,")]
 fn simulate_player_succeeding(game: &mut MockGame, player_name: String, scenario_num: usize) {
     let scenario_objective = game.get_all::<CamperObjective>()[scenario_num - 1];
     let objective_name = scenario_objective.get_name();
 
-    let objective_attempt =
-        ObjectiveAttempt::new(player_name, objective_name, ObjectiveResult::Success);
+    let scenario_attempt =
+        ScenarioAttempt::new(player_name, objective_name, ScenarioResult::Success);
+    game.broadcast(scenario_attempt);
+}
+
+#[when(regex = r"'(.+)' attempts the (\d+)[a-z]+ objective,")]
+fn when_player_attempts_objective(game: &mut MockGame, player_name: String, objective_num: usize) {
+    let scenario_objective = game.get_all::<CamperObjective>()[objective_num - 1];
+    let objective_name = scenario_objective.get_name();
+
+    let objective_attempt = ObjectiveAttempt::new(player_name, objective_name);
     game.broadcast(objective_attempt);
 }
 
@@ -271,6 +279,11 @@ fn verify_contribution_exists(game: &mut MockGame, expected_contribution: String
         "Contribution not found. Contributions contains {:?}",
         contributions_list
     );
+}
+
+#[then(regex = r"the camper for '(.+)' should appear outside of the bus.")]
+fn verify_player_outside_of_bus(game: &mut MockGame, expected_player_name: String) {
+    assert!(false);
 }
 
 fn main() {

@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::core_logic::{
     CampersState,
-    interacting::{ObjectiveAttempt, ObjectiveResult},
+    interacting::{ScenarioAttempt, ScenarioResult},
     setting::LoadMap,
 };
 
@@ -145,7 +145,7 @@ impl ContributionsList {
     }
 
     /// Converts an objective attempt into a recorded contribution.
-    pub fn record(&mut self, objective_attempt: &ObjectiveAttempt) {
+    pub fn record(&mut self, objective_attempt: &ScenarioAttempt) {
         let camper_name = objective_attempt.get_camper_name();
         let camper_objective_achieved =
             get_achieved_objective_msg(objective_attempt.get_objective());
@@ -156,11 +156,11 @@ impl ContributionsList {
 
 /// Records all successful attempts of an objective from the campers.
 pub fn record_camper_contribution(
-    mut objective_attempts: MessageReader<ObjectiveAttempt>,
+    mut objective_attempts: MessageReader<ScenarioAttempt>,
     mut contributions_list: Single<&mut ContributionsList>,
 ) {
     for objective_attempt in objective_attempts.read() {
-        if objective_attempt.get_status() == ObjectiveResult::Fail {
+        if objective_attempt.get_status() == ScenarioResult::Fail {
             continue;
         }
 
