@@ -150,6 +150,18 @@ impl MockGame {
             .collect()
     }
 
+    pub fn get_all_containing<T, F>(&mut self) -> Vec<(&T, &F)>
+    where
+        T: Component,
+        F: Component,
+    {
+        self.app
+            .world_mut()
+            .query::<(&T, &F)>()
+            .iter(self.app.world_mut())
+            .collect()
+    }
+
     pub fn get_all_without<T, F>(&mut self) -> Vec<&T>
     where
         T: Component,

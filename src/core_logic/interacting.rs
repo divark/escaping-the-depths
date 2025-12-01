@@ -1,6 +1,46 @@
 use bevy::prelude::*;
 
+use crate::core_logic::traveling::Pathfinding;
+
 use super::setting::{LogicalCoordinates, TileSize};
+
+#[derive(Component)]
+pub struct CamperInformation {
+    camper_name: String,
+}
+
+impl CamperInformation {
+    pub fn new(camper_name: String) -> Self {
+        Self { camper_name }
+    }
+
+    pub fn get_camper_name(&self) -> &String {
+        &self.camper_name
+    }
+}
+
+#[derive(Bundle)]
+pub struct CamperBundle {
+    camper_info: CamperInformation,
+    camper_physical_location: Transform,
+    travel_path: Pathfinding,
+}
+
+impl CamperBundle {
+    pub fn new(
+        camper_name: &String,
+        camper_physical_location: Transform,
+        travel_path: Pathfinding,
+    ) -> Self {
+        let camper_info = CamperInformation::new(camper_name.clone());
+
+        Self {
+            camper_info,
+            camper_physical_location,
+            travel_path,
+        }
+    }
+}
 
 #[derive(Message)]
 pub struct ObjectiveAttempt {
@@ -14,6 +54,10 @@ impl ObjectiveAttempt {
             player_name,
             objective_attempted,
         }
+    }
+
+    pub fn get_camper_name(&self) -> &String {
+        &self.player_name
     }
 }
 

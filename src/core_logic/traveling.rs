@@ -2,6 +2,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use bevy::prelude::*;
 
+use crate::core_logic::interacting::{CamperBundle, ObjectiveAttempt};
+
 use super::setting::{LogicalCoordinates, WorldTileDimensions};
 
 #[derive(Clone)]
@@ -364,5 +366,36 @@ impl PathTarget {
 
     pub fn get_logical_target(&self) -> LogicalCoordinates {
         self.logical_target
+    }
+}
+
+#[derive(Component, PartialEq)]
+pub struct OutsideOfBus;
+
+#[derive(Component, PartialEq)]
+pub struct MeadowEntrance;
+
+/// Spawns and moves a camper to the meadows when they attempt an objective.
+pub fn move_camper_to_meadows(
+    mut objective_attempts: MessageReader<ObjectiveAttempt>,
+    outside_of_bus_location: Single<(&LogicalCoordinates, &Transform), With<OutsideOfBus>>,
+    meadow_location: Single<&LogicalCoordinates, With<MeadowEntrance>>,
+    traversal_graph: Single<&Graph>,
+    mut commands: Commands,
+) {
+    let (outside_of_bus_logical_location, outside_of_bus_physical_location) =
+        *outside_of_bus_location;
+    for objective_attempt in objective_attempts.read() {
+        let path_to_meadows = Pathfinding::shortest_path(
+            outside_of_bus_logical_location,
+            *meadow_location,
+            *traversal_graph,
+        );
+
+        commands.spawn(CamperBundle::new(
+            objective_attempt.get_camper_name(),
+            *outside_of_bus_physical_location,
+            path_to_meadows,
+        ));
     }
 }

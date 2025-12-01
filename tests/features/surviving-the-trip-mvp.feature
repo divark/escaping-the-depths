@@ -83,7 +83,7 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
         And 'Player 1' attempts the 1st objective,
-        And "Player 2" attempts the 1st objective,
+        And 'Player 2' attempts the 1st objective,
         And all objectives are completed,
         Then the camper for 'Player 1' should appear outside of the meadows.
         And the camper for 'Player 1' should be heading back to the bus.

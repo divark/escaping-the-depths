@@ -7,9 +7,10 @@ use mock_game::*;
 
 use surviving_the_trip::core_logic::{
     CampersState,
-    interacting::{ObjectiveAttempt, ScenarioAttempt, ScenarioResult},
+    interacting::{CamperInformation, ObjectiveAttempt, ScenarioAttempt, ScenarioResult},
     progressing::{CamperObjective, ContributionsList, HungerBar, Landmark},
-    setting::{ChangeMap, WorldTileDimensions},
+    setting::{ChangeMap, LogicalCoordinates, WorldTileDimensions},
+    traveling::OutsideOfBus,
 };
 
 /// Returns a CampersState parsed from an expected string in the form of
@@ -283,7 +284,19 @@ fn verify_contribution_exists(game: &mut MockGame, expected_contribution: String
 
 #[then(regex = r"the camper for '(.+)' should appear outside of the bus.")]
 fn verify_player_outside_of_bus(game: &mut MockGame, expected_player_name: String) {
-    assert!(false);
+    let error_message = format!(
+        "verify_player_outside_of_bus: Could not find camper with name {}",
+        expected_player_name
+    );
+
+    let camper_location = *game
+        .get_all_containing::<LogicalCoordinates, CamperInformation>()
+        .iter()
+        .find(|location_info| *location_info.1.get_camper_name() == expected_player_name)
+        .expect(&error_message)
+        .0;
+    let outside_bus_location = *game.get_with::<LogicalCoordinates, OutsideOfBus>();
+    assert_eq!(camper_location, outside_bus_location);
 }
 
 fn main() {

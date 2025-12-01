@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use bevy::prelude::*;
 use tiled::{Loader, Map};
 
+use crate::core_logic::traveling::Graph;
+
 pub const WALLS_OFFSET: usize = 2;
 
 #[derive(Resource, Clone)]
@@ -317,6 +319,69 @@ pub fn unload_current_map(
     }
 }
 
+/// Returns a collection of Tiles converted into TileBundles.
+fn get_bevy_tiles(
+    tiled_map: &Map,
+    tiled_map_dimensions: &WorldTileDimensions,
+    bevy_sprite_loader: &mut BevySpriteLoader,
+) -> Vec<TileBundle> {
+    let mut tile_bundles = Vec::new();
+
+    let map_depth = tiled_map_dimensions.get_depth();
+    let map_height = tiled_map_dimensions.get_height();
+    let map_width = tiled_map_dimensions.get_width();
+
+    for z in 0..map_depth {
+        for y in 0..map_height {
+            for x in 0..map_width {
+                let tile_logical_coordinates = LogicalCoordinates::new(x, y, z);
+                if let Some(tile_sprite) = get_tile_sprite_from_tiled(
+                    &tile_logical_coordinates,
+                    tiled_map,
+                    bevy_sprite_loader,
+                ) {
+                    tile_bundles.push(TileBundle::new(tile_sprite, tile_logical_coordinates));
+                }
+            }
+        }
+    }
+
+    tile_bundles
+}
+
+/// Spawns Locations of Interest (objects) found from the Tiled map.
+fn spawn_locations_of_interest(
+    tiled_map: &Map,
+    tiled_map_dimensions: &WorldTileDimensions,
+    commands: &mut Commands,
+) {
+    let map_depth = tiled_map_dimensions.get_depth();
+    let map_height = tiled_map_dimensions.get_height();
+    let map_width = tiled_map_dimensions.get_width();
+
+    for z in 0..map_depth {
+        for y in 0..map_height {
+            for x in 0..map_width {
+                let tile_logical_coordinates = LogicalCoordinates::new(x, y, z);
+                // TODO: Find a Tiled object, and map it into a LocationOfInterest bundle.
+            }
+        }
+    }
+}
+
+/// Returns a Traversal Graph parsed from a list of Tile Bundles.
+fn get_traversal_graph(
+    tile_bundles: &[TileBundle],
+    tiled_map_dimensions: &WorldTileDimensions,
+) -> Graph {
+    let tile_logical_coordinates: Vec<LogicalCoordinates> = tile_bundles
+        .iter()
+        .map(|tile_bundle| tile_bundle.logical_coordinates)
+        .collect();
+
+    Graph::from_tiles(&tile_logical_coordinates, tiled_map_dimensions)
+}
+
 /// Converts a Tiled map into a series of Tile locations and their sprites.
 pub fn load_tiled_map(
     mut load_tiled_map_reader: MessageReader<LoadMap>,
@@ -329,29 +394,22 @@ pub fn load_tiled_map(
         .read()
         .map(|load_map_event| load_map_event.get_map())
     {
-        let mut tile_bundles = Vec::new();
-        // let mut locations_of_interest: Vec<MapLocationBundle> = Vec::new();
-
         let map_depth = loaded_tile_map.layers().len();
         let map_width = loaded_tile_map.width as usize;
         let map_height = loaded_tile_map.height as usize;
 
         let tiled_map_dimensions = WorldTileDimensions::new(map_width, map_height, map_depth);
 
-        for z in 0..map_depth {
-            for y in 0..map_height {
-                for x in 0..map_width {
-                    let tile_logical_coordinates = LogicalCoordinates::new(x, y, z);
-                    if let Some(tile_sprite) = get_tile_sprite_from_tiled(
-                        &tile_logical_coordinates,
-                        loaded_tile_map,
-                        &mut bevy_sprite_loader,
-                    ) {
-                        tile_bundles.push(TileBundle::new(tile_sprite, tile_logical_coordinates));
-                    }
-                }
-            }
-        }
+        let tile_bundles = get_bevy_tiles(
+            loaded_tile_map,
+            &tiled_map_dimensions,
+            &mut bevy_sprite_loader,
+        );
+
+        let traversal_graph = get_traversal_graph(&tile_bundles, &tiled_map_dimensions);
+        commands.spawn(traversal_graph);
+
+        spawn_locations_of_interest(loaded_tile_map, &tiled_map_dimensions, &mut commands);
 
         for rendered_tile in tile_bundles {
             commands.spawn(rendered_tile);
