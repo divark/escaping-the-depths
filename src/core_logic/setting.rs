@@ -343,7 +343,7 @@ fn get_logical_from_tiled_object(object: &Object, tile_size: u32) -> LogicalCoor
     let object_logical_x = object.x as usize / tile_size as usize;
     let object_logical_y = object.y as usize / tile_size as usize;
 
-    LogicalCoordinates::new(object_logical_x, object_logical_y, 1)
+    LogicalCoordinates::new(object_logical_x, object_logical_y, 0)
 }
 
 /// Returns a Transform inferred from logical coordinates found in a Tiled map.
@@ -378,7 +378,6 @@ fn spawn_locations_of_interest(tiled_map: &Map, commands: &mut Commands) {
         .as_object_layer()
         .unwrap();
     for object in tile_object_layer.objects() {
-        // TODO: Address object offset in Tiled
         let object_logical_position = get_logical_from_tiled_object(&object, tiled_map.tile_width);
         let object_physical_position =
             get_physical_coordinates(&object_logical_position, tiled_map);

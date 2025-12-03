@@ -18,7 +18,6 @@ use crate::core_logic::{
 /// <~> = The chunks of percentage removed so far (percent decrease)
 #[derive(Resource)]
 pub struct HungerBar {
-    total_percentage: usize,
     current_percentage: usize,
 
     percent_decrease: usize,
@@ -26,11 +25,9 @@ pub struct HungerBar {
 
 impl Default for HungerBar {
     fn default() -> Self {
-        let total_percentage = 100;
         let current_percentage = 0;
         let percent_decrease = 1;
         Self {
-            total_percentage,
             current_percentage,
             percent_decrease,
         }

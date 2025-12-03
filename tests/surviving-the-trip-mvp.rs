@@ -10,7 +10,7 @@ use surviving_the_trip::core_logic::{
     interacting::{CamperInformation, ObjectiveAttempt, ScenarioAttempt, ScenarioResult},
     progressing::{CamperObjective, ContributionsList, HungerBar, Landmark},
     setting::{ChangeMap, LogicalCoordinates, WorldTileDimensions},
-    traveling::OutsideOfBus,
+    traveling::{MeadowEntrance, OutsideOfBus, Pathfinding},
 };
 
 /// Returns a CampersState parsed from an expected string in the form of
@@ -284,19 +284,31 @@ fn verify_contribution_exists(game: &mut MockGame, expected_contribution: String
 
 #[then(regex = r"the camper for '(.+)' should appear outside of the bus.")]
 fn verify_player_outside_of_bus(game: &mut MockGame, expected_player_name: String) {
-    let error_message = format!(
-        "verify_player_outside_of_bus: Could not find camper with name {}",
-        expected_player_name
-    );
+    let all_campers_found = game.get_all_containing::<LogicalCoordinates, CamperInformation>();
+    assert_eq!(all_campers_found.len(), 1, "No campers were found.");
 
-    let camper_location = *game
-        .get_all_containing::<LogicalCoordinates, CamperInformation>()
+    let camper_location = *all_campers_found
         .iter()
         .find(|location_info| *location_info.1.get_camper_name() == expected_player_name)
-        .expect(&error_message)
+        .expect("verify_player_outside_of_bus: Could not find camper.")
         .0;
     let outside_bus_location = *game.get_with::<LogicalCoordinates, OutsideOfBus>();
     assert_eq!(camper_location, outside_bus_location);
+}
+
+#[then(regex = r"the camper for '(.+)' should be heading into the meadows.")]
+fn verify_player_heading_to_meadows(game: &mut MockGame, expected_player_name: String) {
+    let meadow_location = *game.get_with::<LogicalCoordinates, MeadowEntrance>();
+
+    let camper_found = game.get_all_containing::<Pathfinding, CamperInformation>();
+    let player_target_location = *camper_found
+        .iter()
+        .find(|camper| camper.1.get_camper_name() == &expected_player_name)
+        .expect("verify_player_heading_to_meadows: Could not find camper.")
+        .0
+        .get_destination();
+
+    assert_eq!(meadow_location, player_target_location);
 }
 
 fn main() {

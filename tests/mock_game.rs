@@ -26,6 +26,7 @@ pub struct MockGame {
     pub tiled_map_path: PathBuf,
 }
 
+#[allow(dead_code)]
 impl MockGame {
     pub fn new() -> Self {
         let mut app = App::new();

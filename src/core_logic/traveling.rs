@@ -114,11 +114,18 @@ impl Graph {
     pub fn from_tiles(tiles: &Vec<LogicalCoordinates>, world_size: &WorldTileDimensions) -> Self {
         let mut nodes = Vec::new();
 
+        let mut seen_node_ids = HashSet::new();
         for tile_location in tiles {
             let node_data = NodeData::new(*tile_location);
             let node_id = tile_location.to_1d(world_size);
+            if seen_node_ids.contains(&node_id) {
+                continue;
+            }
+
             let tile_node = WorldNode::new(node_id, node_data);
             nodes.push(tile_node);
+
+            seen_node_ids.insert(node_id);
         }
         nodes.sort_by_key(|node1| node1.get_id());
 
@@ -395,6 +402,7 @@ pub fn move_camper_to_meadows(
         commands.spawn(CamperBundle::new(
             objective_attempt.get_camper_name(),
             *outside_of_bus_physical_location,
+            *outside_of_bus_logical_location,
             path_to_meadows,
         ));
     }

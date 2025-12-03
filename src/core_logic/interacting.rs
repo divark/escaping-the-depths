@@ -23,6 +23,7 @@ impl CamperInformation {
 pub struct CamperBundle {
     camper_info: CamperInformation,
     camper_physical_location: Transform,
+    camper_logical_location: LogicalCoordinates,
     travel_path: Pathfinding,
 }
 
@@ -30,6 +31,7 @@ impl CamperBundle {
     pub fn new(
         camper_name: &String,
         camper_physical_location: Transform,
+        camper_logical_location: LogicalCoordinates,
         travel_path: Pathfinding,
     ) -> Self {
         let camper_info = CamperInformation::new(camper_name.clone());
@@ -37,6 +39,7 @@ impl CamperBundle {
         Self {
             camper_info,
             camper_physical_location,
+            camper_logical_location,
             travel_path,
         }
     }
