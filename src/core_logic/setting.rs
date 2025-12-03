@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use bevy::prelude::*;
-use tiled::{Loader, Map};
+use tiled::{Loader, Map, Object};
 
-use crate::core_logic::traveling::Graph;
+use crate::core_logic::traveling::{Graph, MeadowEntrance, OutsideOfBus};
 
 pub const WALLS_OFFSET: usize = 2;
 
@@ -255,18 +255,7 @@ fn flip_physical_y_coordinate(
     tile_logical_coordinates: &LogicalCoordinates,
     tiled_map: &Map,
 ) -> f32 {
-    let tile_height = tiled_map
-        .get_layer(tile_logical_coordinates.get_z())
-        .expect("flip_physical_y_coordinate: Layer does not exist.")
-        .as_tile_layer()
-        .expect("flip_physical_y_coordinate: This is not a Tile layer.")
-        .get_tile(
-            tile_logical_coordinates.get_x() as i32,
-            tile_logical_coordinates.get_y() as i32,
-        )
-        .expect("flip_physical_y_coordinate: Tile does not exist on the Tile layer.")
-        .get_tileset()
-        .tile_height;
+    let tile_height = tiled_map.tile_height;
     let tile_map_height = tiled_map.height * tiled_map.tile_height;
 
     let tile_logical_y = tile_logical_coordinates.get_y();
@@ -349,22 +338,69 @@ fn get_bevy_tiles(
     tile_bundles
 }
 
-/// Spawns Locations of Interest (objects) found from the Tiled map.
-fn spawn_locations_of_interest(
-    tiled_map: &Map,
-    tiled_map_dimensions: &WorldTileDimensions,
-    commands: &mut Commands,
-) {
-    let map_depth = tiled_map_dimensions.get_depth();
-    let map_height = tiled_map_dimensions.get_height();
-    let map_width = tiled_map_dimensions.get_width();
+/// Returns LogicalCoordinates inferred from an object found in a Tiled map.
+fn get_logical_from_tiled_object(object: &Object, tile_size: u32) -> LogicalCoordinates {
+    let object_logical_x = object.x as usize / tile_size as usize;
+    let object_logical_y = object.y as usize / tile_size as usize;
 
-    for z in 0..map_depth {
-        for y in 0..map_height {
-            for x in 0..map_width {
-                let tile_logical_coordinates = LogicalCoordinates::new(x, y, z);
-                // TODO: Find a Tiled object, and map it into a LocationOfInterest bundle.
+    LogicalCoordinates::new(object_logical_x, object_logical_y, 1)
+}
+
+/// Returns a Transform inferred from logical coordinates found in a Tiled map.
+fn get_physical_coordinates(
+    logical_coordinates: &LogicalCoordinates,
+    tiled_map: &Map,
+) -> Transform {
+    // ASSUMPTION: The tile height and tile width are the same.
+    let tile_size = tiled_map.tile_height as usize;
+
+    let x = logical_coordinates.get_x() * tile_size;
+    let flipped_y = flip_physical_y_coordinate(logical_coordinates, tiled_map);
+    let z = logical_coordinates.get_z();
+    Transform::from_xyz(x as f32, flipped_y, z as f32)
+}
+
+/// Spawns Locations of Interest (objects) found from the Tiled map.
+fn spawn_locations_of_interest(tiled_map: &Map, commands: &mut Commands) {
+    let locations_of_interest_layer_num = 1;
+    let is_not_object_layer = tiled_map
+        .get_layer(locations_of_interest_layer_num)
+        .is_none_or(|layer| {
+            layer.as_object_layer().is_none() || layer.name != "Locations of Interest"
+        });
+    if is_not_object_layer {
+        panic!("spawn_locations_of_interest: Could not find Locations of Interest layer");
+    }
+
+    let tile_object_layer = tiled_map
+        .get_layer(locations_of_interest_layer_num)
+        .unwrap()
+        .as_object_layer()
+        .unwrap();
+    for object in tile_object_layer.objects() {
+        // TODO: Address object offset in Tiled
+        let object_logical_position = get_logical_from_tiled_object(&object, tiled_map.tile_width);
+        let object_physical_position =
+            get_physical_coordinates(&object_logical_position, tiled_map);
+        match object.name.as_str() {
+            "Outside of Bus" => {
+                commands.spawn((
+                    object_logical_position,
+                    object_physical_position,
+                    OutsideOfBus,
+                ));
             }
+            "Meadows" => {
+                commands.spawn((
+                    object_logical_position,
+                    object_physical_position,
+                    MeadowEntrance,
+                ));
+            }
+            _ => panic!(
+                "spawn_locations_of_interest: Unknown object found: {}",
+                object.name
+            ),
         }
     }
 }
@@ -409,7 +445,7 @@ pub fn load_tiled_map(
         let traversal_graph = get_traversal_graph(&tile_bundles, &tiled_map_dimensions);
         commands.spawn(traversal_graph);
 
-        spawn_locations_of_interest(loaded_tile_map, &tiled_map_dimensions, &mut commands);
+        spawn_locations_of_interest(loaded_tile_map, &mut commands);
 
         for rendered_tile in tile_bundles {
             commands.spawn(rendered_tile);
