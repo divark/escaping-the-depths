@@ -65,6 +65,13 @@ Feature: All of the basic features are implemented for Surviving the Trip.
         Then the camper for 'Player 1' should appear outside of the bus.
         And the camper for 'Player 1' should be heading into the meadows.
 
+    Scenario: A camper is no longer seen once they finish traveling to any destination.
+        Given a campsite map called 'campsite_1.tmx',
+        When the campsite map is rendered,
+        And 'Player 1' attempts the 1st objective,
+        And 'Player 1' finishes traveling,
+        Then there should be 0 campers present.
+
     Scenario: A camper heads back from the meadows when completing an objective.
         Given a campsite map called 'campsite_1.tmx',
         When the campsite map is rendered,
